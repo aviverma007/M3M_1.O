@@ -19,7 +19,9 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/dashboard'
+  // After login: return to the page that bounced the user here, otherwise pick a portfolio.
+  // (RequirePortfolio sends them to the picker anyway if none is chosen yet.)
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/select-portfolio'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

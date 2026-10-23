@@ -10,6 +10,12 @@
   --color-link: #1d5fd6;
   --color-field: #e8f0fe;
   --color-page: #f3f4f6;
+  --color-ink: #14204a;
+  --color-cta: #00a63e;
+  --color-cta-hover: #00913a;
+  --color-accent: #00c853;
+  --color-tile: #eef4ff;
+  --color-icon: #2563eb;
 }
 
 html,

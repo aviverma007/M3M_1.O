@@ -31,4 +31,5 @@ Put the company logo at `frontend/public/brand/m3m-logo.png`. It replaces the te
 |---|---|
 | `/login` | Login |
 | `/forgot-password` | Forgot password |
-| `/dashboard` | Placeholder (protected) |
+| `/select-portfolio` | Choose M3M Noida / M3M Gurgaon / Smartworld (after login) |
+| `/dashboard` | Placeholder (needs login + portfolio) |

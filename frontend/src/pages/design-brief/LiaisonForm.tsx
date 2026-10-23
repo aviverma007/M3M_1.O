@@ -1,4 +1,7 @@
-/* PLACEHOLDER — to be implemented (original: LiaisonForm) */
+/* Liaison inputs — /design-brief/liaison (original: LiaisonForm-GhqbgbfH) */
+import DepartmentForm from '@/components/design-brief/DepartmentForm'
+import { LIAISON_FIELDS } from '@/components/design-brief/fields'
+
 export default function LiaisonForm() {
-  return <div className="p-6 text-gray-500">LiaisonForm — coming soon</div>
+  return <DepartmentForm config={{ path: 'liaison', title: 'Liaison', fields: LIAISON_FIELDS, look: 'liaison', spacer: true }} />
 }

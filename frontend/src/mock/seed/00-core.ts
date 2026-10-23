@@ -1,9 +1,9 @@
 /**
- * Core seed data: users, projects, module catalogue, roles, notifications, audit logs.
+ * Core seed data: users, projects, module catalogue, notifications, audit logs (roles: seed/admin.ts).
  * All names/projects here are FICTIONAL sample data.
  */
 import { registerSeed } from '../db'
-import { MODULE_CATALOGUE, PERMISSION_CATALOGUE } from '../catalogue'
+import { MODULE_CATALOGUE } from '../catalogue'
 
 export const DEMO_PASSWORD = 'Password@123'
 
@@ -38,21 +38,7 @@ registerSeed((db) => {
   /* ---------------- module catalogue ---------------- */
   MODULE_CATALOGUE.forEach((m) => db.table('modules').insert({ ...m, description: null, status: 'active' }))
 
-  /* ---------------- roles ---------------- */
-  const roleDefs: Array<{ roleName: string; description: string; enabled: number }> = [
-    { roleName: 'super_admin', description: 'Full access to all modules and settings', enabled: 999 },
-    { roleName: 'design_admin', description: 'Manages design modules and design team', enabled: 999 },
-    { roleName: 'general_admin', description: 'Manages projects and department inputs', enabled: 14 },
-    { roleName: 'design_contributor', description: 'Contributes to design modules', enabled: 10 },
-    { roleName: 'general_contributor', description: 'PMO access — department inputs only', enabled: 6 },
-  ]
-  roleDefs.forEach((r) =>
-    db.table('roles').insert({
-      roleName: r.roleName,
-      description: r.description,
-      permissions: PERMISSION_CATALOGUE.map((p, i) => ({ name: p, access: 'write', status: i < r.enabled })),
-    }),
-  )
+  /* roles: seeded by seed/admin.ts (table accessRoles) */
 
   /* ---------------- projects ---------------- */
   const sample = [
@@ -62,10 +48,10 @@ registerSeed((db) => {
     ['Riverside Court', 'residential', 'mid-end', 'Delivered', 'Sector 89, Gurugram', 'Smartworld'],
     ['The Atrium Mall', 'commercial', 'enclosed_mall', 'Ongoing (RERA Obtained)', 'Sector 98, Noida', 'M3M Noida'],
     ['Palm Residences', 'residential', 'premium', 'Ongoing (RERA Obtained)', 'Sector 94, Noida', 'M3M Noida'],
-    ['Market Street', 'commercial', 'high_street', 'Future (License Applied)', 'Sector 72, Noida', 'M3M Noida'],
+    ['Market Street', 'commercial', 'hi_street', 'Future (License Applied)', 'Sector 72, Noida', 'M3M Noida'],
     ['Golf Vista', 'residential', 'affluent', 'Ongoing (RERA Obtained)', 'Golf Course Ext. Road, Gurugram', 'M3M Gurgaon'],
     ['Crest Towers', 'residential', 'premium', 'Future (License Applied)', 'Sector 79, Gurugram', 'M3M Gurgaon'],
-    ['Urban Square', 'commercial', 'high_street', 'Ongoing (RERA Obtained)', 'Sector 67, Gurugram', 'M3M Gurgaon'],
+    ['Urban Square', 'commercial', 'hi_street', 'Ongoing (RERA Obtained)', 'Sector 67, Gurugram', 'M3M Gurgaon'],
     ['Lakeview Enclave', 'residential', 'mid-end', 'Ongoing (RERA Obtained)', 'IMT Manesar, Sector M9', 'Smartworld'],
   ] as const
   sample.forEach(([name, projectType, category, cls, location, lc], i) => {

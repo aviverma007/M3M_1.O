@@ -1,4 +1,7 @@
-/* PLACEHOLDER — to be implemented (original: IDSpecificationsForm) */
+/* ID Specifications: /dashboard/project/:projectId/design-chapters/id-specifications (original IDSpecificationsForm). */
+import SpecsPage from '@/components/design-chapters/SpecsPage'
+import { ID_SPECS_CONFIG } from '@/components/design-chapters/specsConfig'
+
 export default function IDSpecificationsForm() {
-  return <div className="p-6 text-gray-500">IDSpecificationsForm — coming soon</div>
+  return <SpecsPage cfg={ID_SPECS_CONFIG} />
 }

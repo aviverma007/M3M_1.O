@@ -18,7 +18,7 @@ export type User = {
 export type Portfolio = 'M3M Noida' | 'M3M Gurgaon' | 'Smartworld'
 
 export type ProjectType = 'residential' | 'commercial' | 'mixed'
-export type ProjectCategory = 'mid-end' | 'premium' | 'affluent' | 'high_street' | 'enclosed_mall'
+export type ProjectCategory = 'mid-end' | 'premium' | 'affluent' | 'hi_street' | 'enclosed_mall'
 
 export type Project = {
   id: number

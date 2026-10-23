@@ -1,4 +1,7 @@
-/* PLACEHOLDER — to be implemented (original: CommonAreaForm) */
+/* Common Area: /dashboard/project/:projectId/design-chapters/common-area (original CommonAreaForm). */
+import SpecsPage from '@/components/design-chapters/SpecsPage'
+import { COMMON_AREA_CONFIG } from '@/components/design-chapters/specsConfig'
+
 export default function CommonAreaForm() {
-  return <div className="p-6 text-gray-500">CommonAreaForm — coming soon</div>
+  return <SpecsPage cfg={COMMON_AREA_CONFIG} />
 }

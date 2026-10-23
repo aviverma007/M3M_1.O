@@ -99,6 +99,9 @@ route('GET', '/project/:id/module', ({ params, query }) => {
             moduleStatus: pm.moduleStatus,
             completedChapters: pm.completedChapters,
             status: pm.status,
+            // Design Brief module: link to the MO-approved brief once final submission is done
+            moApprovedDocUrl:
+              m.name === 'Design Brief' ? (db.table('designBriefSummaries').first((s) => s.projectId === p.id)?.moApprovedDocUrl ?? null) : null,
           }
         : null,
       moduleChapters: chapters.map((c) => ({ id: c.id, title: c.title, chapterNumber: c.chapterNumber })),
@@ -127,7 +130,3 @@ route('GET', '/project/:id/exportCommercial', ({ params }) => {
   return ok({ fileName: `${p.name}.csv`, mimeType: 'text/csv', content: 'Field,Value\nname,' + p.name })
 })
 route('POST', '/project/:id/import', () => ok(null, 'Imported successfully'))
-route('POST', '/module/sample/:id', ({ params }) => {
-  const m = db.table('modules').find(params.id)
-  return ok({ fileName: `${m?.name ?? 'module'}-sample.csv`, mimeType: 'text/csv', content: 'Parameter,Value\n' })
-})

@@ -18,7 +18,10 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <ViewOnlyProvider>
           <AuthProvider>
-            <App />
+            {/* same root wrapper as the original app */}
+            <div className="bg-gray-100">
+              <App />
+            </div>
           </AuthProvider>
         </ViewOnlyProvider>
       </BrowserRouter>

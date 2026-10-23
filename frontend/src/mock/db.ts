@@ -8,7 +8,7 @@
 
 const STORAGE_KEY = 'm3m.mockdb'
 /** bump to force everyone's browser to reseed after seed data changes */
-export const DB_VERSION = 1
+export const DB_VERSION = 2
 
 type Row = { id: number; [k: string]: unknown }
 type Store = { version: number; tables: Record<string, Row[]>; seq: Record<string, number> }
@@ -27,16 +27,21 @@ function load(): Store | null {
   }
 }
 
-let saveTimer: ReturnType<typeof setTimeout> | null = null
+/* Writes are coalesced into one localStorage write per task (microtask), so a save is on disk
+ * before any navigation/reload can happen. */
+let writeQueued = false
+function flush() {
+  writeQueued = false
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
+  } catch {
+    /* quota / private mode: keep in memory */
+  }
+}
 function persist() {
-  if (saveTimer) clearTimeout(saveTimer)
-  saveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
-    } catch {
-      /* quota / private mode: keep in memory */
-    }
-  }, 50)
+  if (writeQueued) return
+  writeQueued = true
+  queueMicrotask(flush)
 }
 
 export class Table<T extends Row = Row> {

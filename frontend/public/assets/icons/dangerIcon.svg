@@ -1,0 +1,14 @@
+<svg width="20" height="18" viewBox="0 0 20 18" xmlns="http://www.w3.org/2000/svg">
+  <!-- Exclamation mark (red fill) -->
+  <path fill="red" d="M10 6.99999V8.99999M10 13H10.01" />
+  
+  <!-- Outer triangle shape (red fill) -->
+  <path fill="red" d="M3.072 17H16.928C18.468 17 19.43 15.333 18.66 14L11.732 1.99999C10.962 0.666994 9.038 0.666994 8.268 1.99999L1.34 14C0.570001 15.333 1.532 17 3.072 17Z" />
+  
+  <!-- Outer border (white stroke) for the triangle -->
+  <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3.072 17H16.928C18.468 17 19.43 15.333 18.66 14L11.732 1.99999C10.962 0.666994 9.038 0.666994 8.268 1.99999L1.34 14C0.570001 15.333 1.532 17 3.072 17Z" />
+  
+  <!-- Outer border for exclamation mark (white stroke) -->
+  <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10 6.99999V8.99999M10 13H10.01" />
+</svg>
+

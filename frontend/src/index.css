@@ -1,37 +1,146 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* shadcn/ui neutral theme — identical tokens to the original app */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* app brand */
+  --mainTheamColor: #21496b;
+}
 
 @theme {
-  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
-
-  --color-brand-navy: #22476b;
-  --color-brand-navy-hover: #1b3a58;
-  --color-brand-green: #3fae49;
-  --color-brand-blue: #1f4fa3;
-  --color-link: #1d5fd6;
-  --color-field: #e8f0fe;
-  --color-page: #f3f4f6;
-  --color-ink: #14204a;
-  --color-cta: #00a63e;
-  --color-cta-hover: #00913a;
-  --color-accent: #00c853;
-  --color-tile: #eef4ff;
-  --color-icon: #2563eb;
+  --breakpoint-xs: 425px;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-body {
-  @apply bg-page text-gray-900 font-sans antialiased;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-/* Keep Chrome autofill on the same light-blue field colour */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px var(--color-field) inset;
-  -webkit-text-fill-color: #111827;
+/* ---- app-specific utility classes (same names as the original) ---- */
+.theamBtn {
+  cursor: pointer;
+  border-style: solid;
+  color: #21496b;
+  border-width: 1px;
+  border-color: #21496b;
 }
+@media (hover: hover) {
+  .theamBtn:hover {
+    color: #fff;
+    background-color: #21496b;
+  }
+}
+.text-custom { font-size: 18px; }
+@media (min-width: 425px) { .text-custom { font-size: var(--text-lg); line-height: var(--text-lg--line-height); } }
+@media (min-width: 64rem) { .text-custom { font-size: var(--text-2xl); line-height: var(--text-2xl--line-height); } }
+.text-headder { font-size: 18px; }
+@media (min-width: 425px) { .text-headder { font-size: var(--text-lg); line-height: var(--text-lg--line-height); } }
+@media (min-width: 80rem) { .text-headder { font-size: var(--text-xl); line-height: var(--text-xl--line-height); } }
+.typo-basic { font-size: 12.5px; }
+@media (min-width: 40rem) { .typo-basic { font-size: var(--text-sm); line-height: var(--text-sm--line-height); } }
+@media (min-width: 80rem) { .typo-basic { font-size: var(--text-base); line-height: var(--text-base--line-height); } }
+.typo-basic-2 { font-size: 12.5px; }
+@media (min-width: 40rem) { .typo-basic-2 { font-size: 13px; } }
+@media (min-width: 96rem) { .typo-basic-2 { font-size: var(--text-sm); line-height: var(--text-sm--line-height); } }
+.typo-tableHead { font-size: clamp(0.85rem, 2.5vw, 0.9rem); }
+.typo-headding { font-size: clamp(1.1rem, 4vw, 1.2rem); }
+.filterWidth { width: 95svw; }
+@media (min-width: 40rem) { .filterWidth { width: 100%; } }
+@media (min-width: 48rem) { .filterWidth { width: calc(var(--spacing) * 32); } }
+@media (min-width: 64rem) { .filterWidth { width: calc(var(--spacing) * 50); } }
+@media (min-width: 80rem) { .filterWidth { width: calc(var(--spacing) * 60); } }
+@media (min-width: 96rem) { .filterWidth { width: calc(var(--spacing) * 70); } }
+.tabListMaxMin { max-height: calc(var(--spacing) * 9); min-height: calc(var(--spacing) * 9); }
+.compareTableheight { max-height: calc(100dvh - 180px); }
+@media (min-width: 96rem) { .compareTableheight { max-height: calc(100dvh - 320px); } }
+.container { margin: auto; }
+
+/* view-only mode (module browsing without save permission) */
+.view-only-content input,
+.view-only-content textarea,
+.view-only-content select {
+  opacity: 0.75;
+  user-select: none;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  background-color: #f5f5f5 !important;
+}
+.view-only-content button[type="submit"],
+.view-only-content button.save-btn,
+.view-only-content [data-save] {
+  opacity: 0.45;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }

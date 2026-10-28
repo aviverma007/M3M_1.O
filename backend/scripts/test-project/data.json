@@ -1,0 +1,1785 @@
+{
+ "summary": {
+  "consultantStrategyData": [
+   {
+    "id": 1,
+    "type": "Architect",
+    "name": "Atelier Design Studio",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2023-03-27",
+    "remarks": ""
+   },
+   {
+    "id": 2,
+    "type": "MEP Consultant",
+    "name": "Northline MEP Consultants",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 3,
+    "type": "Structural Consultant",
+    "name": "Pillar Structural Engineers",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 4,
+    "type": "Landscape Consultant",
+    "name": "Greenleaf Landscape",
+    "status": "Appointed",
+    "plannedDate": "2023-04-17",
+    "actualDate": "2023-04-17",
+    "remarks": ""
+   },
+   {
+    "id": 5,
+    "type": "Landscape Consultant (Local)",
+    "name": "Verde Landscape (Local)",
+    "status": "Appointed",
+    "plannedDate": "2024-01-11",
+    "actualDate": "2024-01-11",
+    "remarks": ""
+   },
+   {
+    "id": 6,
+    "type": "3D Rendering Consultant",
+    "name": "Pixel Render Studio",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 7,
+    "type": "Cost Consultant (Pre Contract)",
+    "name": "",
+    "status": "Not Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 8,
+    "type": "Cost Consultant (Post Contract)",
+    "name": "",
+    "status": "Not Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 9,
+    "type": "GRIHA Consultant",
+    "name": "EcoRate Advisors",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2022-12-27",
+    "remarks": ""
+   },
+   {
+    "id": 10,
+    "type": "Proof Consultant (Structural)",
+    "name": "Proofcheck Engineering",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 11,
+    "type": "IIT Structural Consultant",
+    "name": "",
+    "status": "Not Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 12,
+    "type": "TEKLA Consultant",
+    "name": "",
+    "status": "Not Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 13,
+    "type": "Interior Designer",
+    "name": "Atelier Design Studio",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2023-03-27",
+    "remarks": ""
+   },
+   {
+    "id": 14,
+    "type": "Scale Model",
+    "name": "Miniature Models Co.",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 15,
+    "type": "Traffic Consultant (Vertical)",
+    "name": "Flowmatrix Traffic",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2024-05-09",
+    "remarks": ""
+   },
+   {
+    "id": 16,
+    "type": "Traffic Consultant (Horizontal)",
+    "name": "Urban Traffic Engineers",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 17,
+    "type": "BIM Consultant",
+    "name": "BIM Works",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 18,
+    "type": "Signage Consultant",
+    "name": "Wayfind Signage",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "",
+    "remarks": ""
+   },
+   {
+    "id": 19,
+    "type": "Fa\u00e7ade Consultant",
+    "name": "Facade Lab",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2023-06-15",
+    "remarks": ""
+   },
+   {
+    "id": 20,
+    "type": "Lighting Consultant",
+    "name": "Lumen Lighting",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2024-05-09",
+    "remarks": ""
+   },
+   {
+    "id": 21,
+    "type": "BOH Consultant",
+    "name": "Backhouse Planners",
+    "status": "Appointed",
+    "plannedDate": "",
+    "actualDate": "2023-10-21",
+    "remarks": ""
+   }
+  ],
+  "approvalsData": [
+   {
+    "id": 0,
+    "type": "Land License",
+    "plannedSubmission": "2026-01-10",
+    "actualSubmission": "",
+    "plannedApproval": "2026-12-01",
+    "actualApproval": "",
+    "remarks": "Received in principle"
+   },
+   {
+    "id": 1,
+    "type": "Zoning & Demarcation",
+    "plannedSubmission": "2026-02-15",
+    "actualSubmission": "",
+    "plannedApproval": "2026-12-01",
+    "actualApproval": "",
+    "remarks": ""
+   },
+   {
+    "id": 2,
+    "type": "Phasing Plan Approval",
+    "plannedSubmission": "",
+    "actualSubmission": "",
+    "plannedApproval": "2026-12-01",
+    "actualApproval": "",
+    "remarks": ""
+   },
+   {
+    "id": 3,
+    "type": "Building Plan",
+    "plannedSubmission": "2026-05-01",
+    "actualSubmission": "",
+    "plannedApproval": "",
+    "actualApproval": "",
+    "remarks": "Revised drawings to be submitted after fire NOC comments are incorporated"
+   },
+   {
+    "id": 4,
+    "type": "RERA",
+    "plannedSubmission": "",
+    "actualSubmission": "",
+    "plannedApproval": "",
+    "actualApproval": "",
+    "remarks": ""
+   }
+  ],
+  "projectScheduleData": {
+   "schedules": [
+    {
+     "id": 1,
+     "task": "Design & Approvals",
+     "duration": "",
+     "start": "2026-01-01",
+     "finish": "2026-06-30",
+     "subTasks": [
+      {
+       "id": 11,
+       "task": "Concept design",
+       "duration": "",
+       "start": "2026-01-01",
+       "finish": "2026-02-28"
+      },
+      {
+       "id": 12,
+       "task": "Building plan approval",
+       "duration": "",
+       "start": "2026-03-01",
+       "finish": "2026-06-30"
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "task": "Construction",
+     "duration": "900",
+     "start": "2026-07-01",
+     "finish": "2028-12-31",
+     "subTasks": []
+    }
+   ],
+   "sections": [
+    {
+     "id": 1,
+     "name": "Residential",
+     "start": "2026-07-01",
+     "finish": "2029-06-30",
+     "days": 1095,
+     "durationMonths": "36.0",
+     "structureMonths": "20"
+    },
+    {
+     "id": 2,
+     "name": "Retail",
+     "start": "",
+     "finish": "",
+     "days": "",
+     "durationMonths": "",
+     "structureMonths": ""
+    }
+   ],
+   "uploadedImages": [
+    {
+     "name": "schedule.jpg",
+     "url": "image:schedule.jpg",
+     "size": ""
+    }
+   ]
+  },
+  "additionalProjectDetailsData": [
+   {
+    "id": 1,
+    "subject": "Logistics Plan",
+    "description": "Comprehensive site logistics including entry/exit points, material storage, and labor movement flow.",
+    "files": [
+     {
+      "name": "master-plan.jpg",
+      "url": "image:master-plan.jpg"
+     }
+    ]
+   }
+  ],
+  "contractingStrategyData": {
+   "contractors": [
+    {
+     "id": 1,
+     "name": "Alpha Infra Builders",
+     "grade": "Grade A",
+     "benchmark": "Two 40-storey residential towers, Gurugram",
+     "previous": "",
+     "remarks": ""
+    },
+    {
+     "id": 2,
+     "name": "Beacon Constructions",
+     "grade": "Grade A",
+     "benchmark": "Group housing project, Noida",
+     "previous": "Yes",
+     "remarks": ""
+    }
+   ],
+   "packages": [
+    {
+     "id": 1,
+     "name": "Package 1",
+     "elements": [
+      {
+       "id": "a",
+       "name": "Facade",
+       "type": "Design & Build",
+       "numberOfContractors": "2",
+       "typeOfContractors": "Specialist",
+       "remarks": ""
+      },
+      {
+       "id": "b",
+       "name": "Element 3",
+       "type": "",
+       "numberOfContractors": "",
+       "typeOfContractors": "",
+       "remarks": ""
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "Package 2",
+     "elements": [
+      {
+       "id": "c",
+       "name": "HVAC",
+       "type": "Item rate",
+       "numberOfContractors": "3",
+       "typeOfContractors": "MEP",
+       "remarks": "VRV"
+      }
+     ]
+    }
+   ],
+   "availableElements": [
+    "Structure"
+   ]
+  },
+  "serviceDesignData": {
+   "mainEntryType": "Residential",
+   "internalDrivewayWidth": "6",
+   "drivewayServing": "All Residential Towers",
+   "inwardRamp": true,
+   "outwardRamp": true,
+   "rampSlopeCompliant": true,
+   "primaryDropOff": true,
+   "usersAllowedAtDropOff": "Both",
+   "vehicleTypesAllowed": "Both (2W + 4W)",
+   "dropOffLevelOptions": "Both",
+   "basementAccessControl": true,
+   "typeOfAccessControl": "RFID + Boom Barrier",
+   "visitorRestriction": true,
+   "fireTower": "Combined Fire + Service",
+   "fireLiftProvided": true,
+   "fireLobbyProvided": true,
+   "fireLiftAsService": true,
+   "driversRooms": true,
+   "serviceToilets": true
+  },
+  "landscapeAmenitiesData": {
+   "landscapeData": {
+    "accessTowerLobbies": true,
+    "accessClubhouse": true,
+    "typeOfAccess": "Pedestrian",
+    "universalAccessibility": true,
+    "landscapeZoning": "Multiple Zones",
+    "typeOfLandscapeZones": "Active/Sports/Kids/Wellness/Community",
+    "greenBeltProvided": true,
+    "greenBeltWidth": "1.5",
+    "greenBeltPurpose": "Buffer + Services",
+    "servicesInGreenBelt": true,
+    "internalDrivewayWidth": "7",
+    "drivewayLocation": "Adjacent to Green Belt",
+    "drivewayWidening": true,
+    "dropOffWidth": "8",
+    "fireTenderAccess": true,
+    "turningRadiusComplied": true,
+    "pedestrianSegregation": true,
+    "landscapeInterface": "Mixed",
+    "drawingReference": "Landscape"
+   },
+   "amenitiesList": [
+    {
+     "head": "Club (Indoor/ Podium-linked)",
+     "items": [
+      "Luxurious Lobby",
+      "Outdoor Swimming Pool (Podium Level)",
+      "Kids' Pool (Club)",
+      "Jacuzzi"
+     ]
+    },
+    {
+     "head": "Sports (Outdoor/ Landscape Integrated)",
+     "items": [
+      "Tenniz Courts",
+      "Pickleball Court",
+      "Outdoor Gym/Corssfit Area",
+      "Joggng Track",
+      "Football lawn"
+     ]
+    },
+    {
+     "head": "Wellness & Leisure (Landscape)",
+     "items": [
+      "PetsPark",
+      "Bio Pond",
+      "Activity Lawn with Amphitheatre (Banquet Lawn)",
+      "Event Lawn"
+     ]
+    },
+    {
+     "head": "Kids & Youth",
+     "items": [
+      "Toddler Play Area",
+      "Young Adult Play Area",
+      "Water Play Area",
+      "Slide & Skating Rink"
+     ]
+    },
+    {
+     "head": "Community/ Social spaces",
+     "items": [
+      "Pavilion",
+      "Tree Pavilion",
+      "Temple Pavilion",
+      "Event Amphitheatre with Stage",
+      "BBQ Pits",
+      "Communal Plaza"
+     ]
+    },
+    {
+     "head": "Landscape/ Green Features",
+     "items": [
+      "Entry Plaza with Feature Tree",
+      "Clubhouse Courtyard",
+      "Tower Courtyards"
+     ]
+    },
+    {
+     "head": "Infrastructure & Connectivity",
+     "items": [
+      "Tower Drop-offs with Arrival Feature Wall",
+      "Surface Parking",
+      "7.5 m Fire Tender Path",
+      "Communal Plaza & Jogging Track Integrated on 7.5 m width"
+     ]
+    }
+   ],
+   "selectedAmenities": [
+    "Outdoor Swimming Pool (Podium Level)",
+    "Kids' Pool (Club)",
+    "Jacuzzi",
+    "Tenniz Courts",
+    "Pickleball Court",
+    "Outdoor Gym/Corssfit Area",
+    "Joggng Track",
+    "Football lawn",
+    "PetsPark",
+    "Bio Pond",
+    "Activity Lawn with Amphitheatre (Banquet Lawn)",
+    "Event Lawn",
+    "Toddler Play Area",
+    "Young Adult Play Area",
+    "Water Play Area",
+    "Slide & Skating Rink",
+    "Pavilion",
+    "Tree Pavilion",
+    "Temple Pavilion",
+    "Event Amphitheatre with Stage",
+    "BBQ Pits",
+    "Communal Plaza",
+    "Entry Plaza with Feature Tree",
+    "Clubhouse Courtyard",
+    "Tower Courtyards",
+    "Tower Drop-offs with Arrival Feature Wall",
+    "Surface Parking",
+    "7.5 m Fire Tender Path",
+    "Communal Plaza & Jogging Track Integrated on 7.5 m width"
+   ]
+  },
+  "projectDetailsLayoutData": {
+   "noOfTowers": "6",
+   "towerHeight": "149.35",
+   "totalArea": "10.70",
+   "layouts": [
+    {
+     "id": 0,
+     "name": "Master Plan",
+     "files": [
+      {
+       "id": 1,
+       "name": "master-plan.jpg",
+       "url": "image:master-plan.jpg",
+       "size": "",
+       "date": ""
+      }
+     ]
+    },
+    {
+     "id": 1,
+     "name": "Site Plan Layout",
+     "files": [
+      {
+       "id": 1,
+       "name": "site-plan.jpg",
+       "url": "image:site-plan.jpg",
+       "size": "",
+       "date": ""
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "Typical Stilt Floor",
+     "files": [
+      {
+       "id": 1,
+       "name": "stilt-floor.jpg",
+       "url": "image:stilt-floor.jpg",
+       "size": "",
+       "date": ""
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "Typical First Floor",
+     "files": []
+    },
+    {
+     "id": 4,
+     "name": "Typical Cluster Plan",
+     "files": [
+      {
+       "id": 1,
+       "name": "cluster-plan.jpg",
+       "url": "image:cluster-plan.jpg",
+       "size": "",
+       "date": ""
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "Basement Plan",
+     "files": [
+      {
+       "id": 1,
+       "name": "basement-plan.jpg",
+       "url": "image:basement-plan.jpg",
+       "size": "",
+       "date": ""
+      }
+     ]
+    }
+   ],
+   "tableRows": [
+    {
+     "type": "Residential",
+     "typology": "TYPE A,A1,B,B1,C,D,E,F,G",
+     "units": [
+      {
+       "type": "TYP A - 3BHK+STUDY+UTILTIY",
+       "count": "218",
+       "size": "2945",
+       "area": 642010,
+       "total": ""
+      },
+      {
+       "type": "TYP A1 - 3BHK+STUDY+UTILTY",
+       "count": "314",
+       "size": "3074.187",
+       "area": 965294.718,
+       "total": ""
+      },
+      {
+       "type": "TYP B - 4BHK+STUDY+UTILITY",
+       "count": "218",
+       "size": "3598.15",
+       "area": 784396.7000000001,
+       "total": ""
+      },
+      {
+       "type": "TYP B1 - 4BHK+STUDY+UTILTIY",
+       "count": "158",
+       "size": "3755.2",
+       "area": 593321.6,
+       "total": ""
+      },
+      {
+       "type": "TYP C- 2BHK+STUDY+UTILTIY",
+       "count": "18",
+       "size": "2440",
+       "area": 43920,
+       "total": ""
+      },
+      {
+       "type": "TYP D-3BHK+STUDY+UTILITY",
+       "count": "18",
+       "size": "3084",
+       "area": 55512,
+       "total": ""
+      },
+      {
+       "type": "TYP E- 4BHK+STUDY+2UTILITY",
+       "count": "6",
+       "size": "8020",
+       "area": 48120,
+       "total": ""
+      },
+      {
+       "type": "TYP F- 4BHK+STUDY+2UTILITY",
+       "count": "4",
+       "size": "8055",
+       "area": 32220,
+       "total": ""
+      },
+      {
+       "type": "TYP G - 4BHK + STUDY+UTILITY+",
+       "count": "2",
+       "size": "7485",
+       "area": 14970,
+       "total": ""
+      }
+     ],
+     "total": 3179765.018
+    },
+    {
+     "type": "Retail",
+     "typology": "G (Tower-5)",
+     "units": [
+      {
+       "type": "Commercial",
+       "count": "",
+       "size": "",
+       "area": 0,
+       "total": ""
+      },
+      {
+       "type": "Office",
+       "count": "",
+       "size": "",
+       "area": 0,
+       "total": ""
+      }
+     ],
+     "total": 0
+    },
+    {
+     "type": "Club",
+     "typology": "G + 1+Terrace",
+     "units": [
+      {
+       "type": "1",
+       "count": "1",
+       "size": "",
+       "area": 0,
+       "total": ""
+      }
+     ],
+     "total": 0
+    }
+   ],
+   "customFields": [],
+   "customFieldsImage": "image:site-plan.jpg"
+  },
+  "phasingPlanData": [
+   {
+    "id": 1,
+    "name": "Phase 1A",
+    "siteArea": "200000",
+    "noOfTowers": "3",
+    "noOfUnits": "480",
+    "farPermissible": "3.5",
+    "farUtilized": "650000",
+    "saPerUnit": "3100",
+    "farPerUnit": "1350",
+    "mapImage": "image:phase-1.jpg"
+   },
+   {
+    "id": 2,
+    "name": "Phase 1B",
+    "siteArea": "266000",
+    "noOfTowers": "3",
+    "noOfUnits": "476",
+    "farPermissible": "3.5",
+    "farUtilized": "",
+    "saPerUnit": "",
+    "farPerUnit": "",
+    "mapImage": "image:phase-2.jpg"
+   }
+  ],
+  "projectLevelDesignData": {
+   "keyRatioInputs": {
+    "buildingHeight": "149.35",
+    "carpetArea": "1674740",
+    "saleableArea": "3179765.02",
+    "balconyArea": "565640",
+    "builtUpArea": "3913106",
+    "far": "2075299",
+    "totalExternalWallArea": "10357",
+    "serviceShaftArea": "18150",
+    "windowToAreaRatio": "43",
+    "permissibleFAR": "2075355",
+    "noOfEWSUnit": "169",
+    "ewsFAR": "44821",
+    "floorToFloorHeightApt": "3.45",
+    "avgWallArea": "44",
+    "noOfUnits": "956",
+    "totalBasementArea": "1032892",
+    "circulationArea": "105077",
+    "totalParkingArea": "73984",
+    "totalNumberOfCars": "2312",
+    "lobbyCorridorWidth": "2.55",
+    "drivewayWidthBasement": "6",
+    "floorToFloorHeightGroundLobby": "5.8",
+    "floorToFloorHeightBasementB1B2": "4.4",
+    "floorToFloorHeightB1GFTower": "4.85",
+    "floorToFloorHeightB1GFNonTower": "4.05",
+    "floorToFloorHeightB2B1": "3.75",
+    "floorToFloorHeightB3B2": "3.75",
+    "avgWallAreaBasement": "1115",
+    "noOfBasements": "4"
+   },
+   "areaStatementInputs": {
+    "licensedAreaSqm": "43300",
+    "todLandSqm": "28750",
+    "nonTodLandSqm": "14335",
+    "commercialSqm": "216.51",
+    "todBaseFar": "2.5",
+    "todGriha": "0.12",
+    "todTdr": "1.5",
+    "nonTodBaseFar": "3.5",
+    "nonTodGriha": "0.12",
+    "nonTodTdr": "1.5",
+    "proposedFarSqm": "192800",
+    "permissibleGcPct": "60",
+    "proposedGcSqm": "9701"
+   },
+   "additionalElements2": {
+    "rows": [
+     {
+      "category": "Total",
+      "bua": "10000",
+      "sa": "",
+      "ca": ""
+     },
+     {
+      "category": "Circulation Area",
+      "bua": "5971",
+      "sa": "",
+      "ca": ""
+     }
+    ],
+    "other": {
+     "groundFloorEntranceLobby": "Double Height",
+     "typicalFloor": "3.45",
+     "stilt": "5.65",
+     "pentHouse": "Yes",
+     "pentHousePlanning": "simplex",
+     "unitsOnGroundFloor": "no",
+     "surfaceDrivewayWidth": "6",
+     "rampsEntryToBasementWidth": "4",
+     "basementClearHeightRamp": "3.55",
+     "basementClearHeightB1": "2.75",
+     "totalParkingBaySize": "12.5",
+     "noOfParkingSlots": "2312",
+     "unitParkingSize": "12.5",
+     "openingsToGroundFloorLobby": "2",
+     "extraParkingReqs": [
+      {
+       "label": "3BHK + STUDY+UTILITY",
+       "value": "2 ECS"
+      },
+      {
+       "label": "4BHK + STUDY+UTILITY",
+       "value": "3 ECS"
+      },
+      {
+       "label": "PENTHOUSE",
+       "value": "4 ECS"
+      }
+     ]
+    }
+   },
+   "clusterConfigs": [
+    {
+     "name": "TOWER 1,4,5,6",
+     "floorFAR": "100",
+     "floorBUA": "100",
+     "nonFARBUA": "4.4",
+     "floorCarpetArea": "100",
+     "floorShaftArea": "7.6",
+     "structureFootprintArea": "4.42",
+     "nonSaleableFAR": "6.46",
+     "windowOpeningArea": "27.36",
+     "externalGlazingArea": "27.9",
+     "wallPerimeterArea": "100"
+    },
+    {
+     "name": "Tower 2,3",
+     "floorFAR": "100",
+     "floorBUA": "100",
+     "nonFARBUA": "4.4",
+     "floorCarpetArea": "100",
+     "floorShaftArea": "7.23",
+     "structureFootprintArea": "4.2",
+     "nonSaleableFAR": "4.55",
+     "windowOpeningArea": "26.87",
+     "externalGlazingArea": "28.15",
+     "wallPerimeterArea": "100"
+    }
+   ],
+   "compareProjectIds": []
+  },
+  "idSpecificationsData": {
+   "flooring_foyer": {
+    "size": "As per slab size and wastage",
+    "type": "Imported Marble",
+    "finish": "Gloss Polished",
+    "skirting": "75mm",
+    "thickness": "18mm +- 1mm"
+   },
+   "flooring_living-dining": {
+    "size": "As per slab size and wastage.",
+    "type": "Imported Marble",
+    "finish": "Gloss Polished",
+    "skirting": "75mm",
+    "thickness": "18mm +- 1mm"
+   },
+   "flooring_kitchen": {
+    "size": "As per slab size and wastage.",
+    "type": "Imported Marble",
+    "finish": "Gloss Polished",
+    "skirting": "75mm",
+    "thickness": "18mm +- 1mm"
+   },
+   "flooring_master-bedroom": {
+    "size": "198mm X 1218mm",
+    "type": "Wooden Flooring (Pre finished Laminated)",
+    "finish": "",
+    "skirting": "75",
+    "thickness": "8 mm"
+   },
+   "flooring_master-toilet": {
+    "size": "600mm X 1200mm",
+    "type": "Vitrified Tiles",
+    "finish": "Satin Matte",
+    "skirting": "",
+    "thickness": "9mm"
+   },
+   "flooring_other-bedrooms": {
+    "size": "198mm X 1218mm",
+    "type": "Wooden Flooring (Pre finished Laminated)",
+    "finish": "Ac4",
+    "skirting": "75mm",
+    "thickness": "8 mm"
+   },
+   "flooring_other-toilets": {
+    "size": "600mm X 1200mm",
+    "type": "",
+    "finish": "Satin Matte",
+    "skirting": "",
+    "thickness": "9mm"
+   },
+   "flooring_servant-room": {
+    "size": "600mm X 600mm",
+    "type": "Vitrified Tiles",
+    "finish": "Glazed",
+    "skirting": "75mm",
+    "thickness": "9mm"
+   },
+   "flooring_utility-balcony": {
+    "size": "600mm X 600mm",
+    "type": "Vitrified Tiles",
+    "finish": "Matte",
+    "skirting": "",
+    "thickness": "9mm"
+   },
+   "flooring_other-balconies": {
+    "size": "Plank tiles + Spacer",
+    "type": "Vitrified Tiles",
+    "finish": "Matte",
+    "skirting": "",
+    "thickness": "9mm"
+   },
+   "wall_foyer": {
+    "typeOfPaint": "Acrylic emulsion",
+    "typeOfPlaster": "Gypsum plaster",
+    "thicknessOfPlaster": "12 mm (average)",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_living-dining": {
+    "typeOfPaint": "Acrylic emulsion",
+    "typeOfPlaster": "Gypsum plaster",
+    "thicknessOfPlaster": "12 mm (average)",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_kitchen": {
+    "typeOfPaint": "Acrylic emulsion",
+    "typeOfPlaster": "",
+    "thicknessOfPlaster": "",
+    "size": "1200 X 600 mm",
+    "type": "Vitrified tile",
+    "finish": "Glazed",
+    "verticalDistanceTile": "upto 2 feet above counter top",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_master-bedroom": {
+    "typeOfPaint": "Acrylic emulsion",
+    "typeOfPlaster": "Gypsum plaster",
+    "thicknessOfPlaster": "12 mm (average)",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_master-toilet": {
+    "typeOfPaint": "",
+    "typeOfPlaster": "",
+    "thicknessOfPlaster": "NA",
+    "size": "1200 X 600 mm",
+    "type": "Vitrified tiles",
+    "finish": "Glazed",
+    "verticalDistanceTile": "Min. 50 mm above false ceiling",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_other-bedrooms": {
+    "typeOfPaint": "Acrylic emulsion",
+    "typeOfPlaster": "Gypsum plaster",
+    "thicknessOfPlaster": "12 mm (average)",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_other-toilets": {
+    "typeOfPaint": "",
+    "typeOfPlaster": "",
+    "thicknessOfPlaster": "NA",
+    "size": "1200 X 600 mm",
+    "type": "Vitrified tiles",
+    "finish": "Glazed",
+    "verticalDistanceTile": "Min. 50 mm above false ceiling",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_servant-room": {
+    "typeOfPaint": "OBD",
+    "typeOfPlaster": "Gypsum plaster",
+    "thicknessOfPlaster": "12 mm (average)",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "",
+    "additional": ""
+   },
+   "wall_utility-balcony": {
+    "typeOfPaint": "Exterior grade, weatherproof",
+    "typeOfPlaster": "",
+    "thicknessOfPlaster": "",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "Matching external",
+    "additional": ""
+   },
+   "wall_other-balconies": {
+    "typeOfPaint": "Exterior grade, weatherproof",
+    "typeOfPlaster": "",
+    "thicknessOfPlaster": "",
+    "size": "",
+    "type": "",
+    "finish": "",
+    "verticalDistanceTile": "",
+    "colorOfPaint": "Matching external",
+    "additional": "Imported marble highlighter wall behind Jacuzzi."
+   },
+   "ceiling_foyer": {
+    "finish": "Gypsum board false ceiling with trap door.",
+    "typeOfPaint": "OBD",
+    "size": "",
+    "type": "",
+    "colorOfPaint": ""
+   },
+   "ceiling_living-dining": {
+    "finish": "6mm average plaster at non false ceiling areas and gypsum board false ceiling with trap door.",
+    "typeOfPaint": "OBD",
+    "size": "",
+    "type": "",
+    "colorOfPaint": ""
+   },
+   "ceiling_kitchen": {
+    "finish": "6mm average plaster at non false ceiling areas and gypsum board false ceiling.",
+    "typeOfPaint": "OBD",
+    "size": "",
+    "type": "",
+    "colorOfPaint": ""
+   },
+   "ceiling_master-bedroom": {
+    "finish": "6mm average plaster at non false ceiling areas and gypsum board false ceiling with trap door.",
+    "typeOfPaint": "OBD",
+    "size": "",
+    "type": "",
+    "colorOfPaint": ""
+   },
+   "ceiling_master-toilet": {
+    "finish": "",
+    "typeOfPaint": "OBD",
+    "size": "Full board",
+    "type": "MR Ceiling with trapdoor",
+    "colorOfPaint": ""
+   },
+   "ceiling_other-bedrooms": {
+    "finish": "6mm average plaster at non false ceiling areas and gypsum board false ceiling.",
+    "typeOfPaint": "OBD",
+    "size": "",
+    "type": "",
+    "colorOfPaint": ""
+   },
+   "ceiling_other-toilets": {
+    "finish": "",
+    "typeOfPaint": "OBD",
+    "size": "Full board",
+    "type": "MR Ceiling with trapdoor",
+    "colorOfPaint": ""
+   },
+   "ceiling_servant-room": {
+    "finish": "Gypsum board ceiling",
+    "typeOfPaint": "OBD",
+    "size": "",
+    "type": "",
+    "colorOfPaint": ""
+   },
+   "ceiling_utility-balcony": {
+    "finish": "6mm gypsum plaster at non false ceiling areas and MR board false ceiling with trap door.",
+    "typeOfPaint": "Exterior grade weatherproof paint",
+    "size": "",
+    "type": "",
+    "colorOfPaint": "As approved."
+   },
+   "ceiling_other-balconies": {
+    "finish": "6mm average gypsum plaster.",
+    "typeOfPaint": "Exterior grade weatherproof paint",
+    "size": "",
+    "type": "",
+    "colorOfPaint": "As approved."
+   },
+   "doors_main-entrance": {
+    "dooropening": "1200mm X 2600mm",
+    "finish": "Veneer",
+    "thickness": "54-64mm as/vendor",
+    "framefinish": "Factory fitted (modular)",
+    "shuttertype": "Fire rated flushed door.",
+    "typeofrebate": "Single",
+    "fireratingfinish": "1 Hour fire rated",
+    "additional": "Magnetic door catcher.",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_threshold": {
+    "dooropening": "",
+    "finish": "Polished",
+    "thickness": "18mm +- 1mm",
+    "framefinish": "",
+    "shuttertype": "",
+    "typeofrebate": "",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "Imported marble",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_railings-handrail": {
+    "dooropening": "",
+    "finish": "",
+    "thickness": "",
+    "framefinish": "",
+    "shuttertype": "",
+    "typeofrebate": "",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "",
+    "glasswidth": "As per facade.",
+    "railingtype": "As per facade",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_balcony-doors-frame": {
+    "dooropening": "",
+    "finish": "",
+    "thickness": "",
+    "framefinish": "",
+    "shuttertype": "",
+    "typeofrebate": "",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "Aluminium",
+    "glasstype": "As per facade",
+    "windowheight": "up to beam bottom level",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_balcony-kitchen-door": {
+    "dooropening": "1405mm X 2600mm",
+    "finish": "Glass",
+    "thickness": "As per facade",
+    "framefinish": "Aluminium",
+    "shuttertype": "",
+    "typeofrebate": "NA",
+    "fireratingfinish": "",
+    "additional": "Size is including the fixed glass portion.",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_master-bedroom-door": {
+    "dooropening": "950mm X 2400mm",
+    "finish": "Laminated",
+    "thickness": "38 mm",
+    "framefinish": "Factory fitted (modular)",
+    "shuttertype": "Flush",
+    "typeofrebate": "Double rebate",
+    "fireratingfinish": "",
+    "additional": "Magnetic door catcher.",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_master-toilet-door": {
+    "dooropening": "850mm X 2400mm",
+    "finish": "Laminated",
+    "thickness": "38 mm",
+    "framefinish": "Factory fitted (modular)",
+    "shuttertype": "Flush",
+    "typeofrebate": "Double rebate",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_other-bedroom-door": {
+    "dooropening": "950mm X 2400mm",
+    "finish": "Laminated",
+    "thickness": "38 mm",
+    "framefinish": "Factory fitted (modular)",
+    "shuttertype": "Flush",
+    "typeofrebate": "Double rebate",
+    "fireratingfinish": "",
+    "additional": "Magnetic door catcher.",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_other-toilet-door": {
+    "dooropening": "850mm X 2400mm",
+    "finish": "Laminated",
+    "thickness": "38 mm",
+    "framefinish": "Factory fitted (modular)",
+    "shuttertype": "Flush",
+    "typeofrebate": "Double rebate",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_servant-room-door": {
+    "dooropening": "850mm X 2400mm",
+    "finish": "Laminated",
+    "thickness": "38 mm",
+    "framefinish": "Factory fitted (modular)",
+    "shuttertype": "Flush",
+    "typeofrebate": "Double rebate",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "",
+    "washingmachinearea": ""
+   },
+   "doors_utility-balcony-specs": {
+    "dooropening": "",
+    "finish": "",
+    "thickness": "",
+    "framefinish": "",
+    "shuttertype": "",
+    "typeofrebate": "",
+    "fireratingfinish": "",
+    "additional": "",
+    "type": "",
+    "glasswidth": "",
+    "railingtype": "",
+    "frametype": "",
+    "glasstype": "",
+    "windowheight": "",
+    "parapettype": "MS Railing",
+    "washingmachinearea": "Plumbing & electrical provisions to be on the same side of utility area"
+   },
+   "electricals_living-dining": {
+    "additional": "Automation for light, fan and AC"
+   },
+   "electricals_kitchen": {
+    "additional": "Hob, gyser, chimney and other switches for the power socket."
+   },
+   "electricals_master-toilet": {
+    "additional": "Automation for light and gyser."
+   },
+   "electricals_other-toilets": {
+    "additional": "Automation for light & gyser."
+   },
+   "bathroom-accessories_master-bathroom": {
+    "additional": "Shower panel, Back & front lit mirror and Modular vanity cabinet."
+   },
+   "bathroom-accessories_other-bathroom": {
+    "additional": "Back & front lit mirror and Modular vanity cabinet."
+   },
+   "kitchen-goods_hob": {
+    "sizeofhob": "90 cm",
+    "typeofhob": "4 burner hob (Glass with Auto Ignition)"
+   },
+   "kitchen-goods_geyser": {
+    "instantgeyser": "3L"
+   },
+   "kitchen-goods_chimney": {
+    "sizeofchimney": "90 cm",
+    "typeofchimney": "Wall Mounted"
+   },
+   "kitchen-goods_cabinets": {
+    "typeofcabinetry": "BWP ply carcass with HDHMR shutter for wet areas and HDHMR carcass with MDF shutter for the rest. Gola profile handles."
+   },
+   "kitchen-goods_sink-drainboard": {
+    "faucettype": "Counter mounted",
+    "typeofsink": "Double bowl sink with drain board",
+    "materialofsink": "SS (Grade 304)"
+   }
+  },
+  "commonAreaData": {
+   "flooring_entrance-lobby": {
+    "size": "As per slab & wastage.",
+    "type": "Imported Marble",
+    "finish": "Gloss polished",
+    "thickness": "18mm +- 1mm.",
+    "flooringTreatment": "",
+    "skirting": ""
+   },
+   "flooring_basement-podium": {
+    "size": "",
+    "type": "",
+    "finish": "",
+    "thickness": "",
+    "flooringTreatment": "Tremix",
+    "skirting": ""
+   },
+   "flooring_corridor-lift-lobby": {
+    "size": "1170mm X 1225mm",
+    "type": "Imported marble with brass inlay.",
+    "finish": "Gloss polished",
+    "thickness": "18mm +- 1mm",
+    "flooringTreatment": "",
+    "skirting": ""
+   },
+   "flooring_staircase": {
+    "size": "1250mm X 310mm for treads & 1250mm X 640 for risers, landing & skirting.",
+    "type": "Restile",
+    "finish": "NA",
+    "thickness": "12 mm",
+    "flooringTreatment": "",
+    "skirting": "Same as tread."
+   },
+   "flooring_terrace": {
+    "size": "As per Green building norms.",
+    "type": "As per Green building norms.",
+    "finish": "As per Green building norms.",
+    "thickness": "As per Green building norms.",
+    "flooringTreatment": "",
+    "skirting": "NA"
+   },
+   "wall_entrance-lobby": {
+    "enteranceDesign": "As per design",
+    "typeOfPaint": "",
+    "typeOfPlaster": "",
+    "size": "",
+    "type": "",
+    "finish": ""
+   },
+   "wall_basement-podium": {
+    "enteranceDesign": "",
+    "typeOfPaint": "OBD (oil bound distemper)",
+    "typeOfPlaster": "Plaster",
+    "size": "",
+    "type": "",
+    "finish": ""
+   },
+   "wall_corridor-lift-lobby": {
+    "enteranceDesign": "",
+    "typeOfPaint": "Acrylic emulsion",
+    "typeOfPlaster": "Gypsum plaster",
+    "size": "1200mm X 2400mm",
+    "type": "Vitrified tiles on some surfaces & Wooden laminated paneling.",
+    "finish": "Glazed"
+   },
+   "wall_staircase": {
+    "enteranceDesign": "",
+    "typeOfPaint": "Enamel upto 1200mm & OBD for the remaining height.",
+    "typeOfPlaster": "Gypsum plaster",
+    "size": "",
+    "type": "",
+    "finish": ""
+   },
+   "wall_terrace": {
+    "enteranceDesign": "",
+    "typeOfPaint": "Weathersheild",
+    "typeOfPlaster": "Plaster",
+    "size": "",
+    "type": "",
+    "finish": ""
+   },
+   "ceiling_entrance-lobby": {
+    "typeOfPaint": "OBD (oil bound distemper)",
+    "typeOfFalseCeiling": "Decorative False ceiling with ceiling lights"
+   },
+   "ceiling_basement-podium": {
+    "typeOfPaint": "Whitewash with putty",
+    "typeOfFalseCeiling": ""
+   },
+   "ceiling_corridor-lift-lobby": {
+    "typeOfPaint": "OBD (oil bound distemper)",
+    "typeOfFalseCeiling": "Decorative False ceiling with ceiling lights"
+   },
+   "doors-other_entrance-lobby-ground": {
+    "type": "Toughened glass door in aluminum frame.",
+    "aircurtain": "Not considered.",
+    "additional": "",
+    "doorcoating": "",
+    "doorshutterfinish": ""
+   },
+   "doors-other_entrance-lobby-basement": {
+    "type": "Toughened glass door in aluminum frame.",
+    "aircurtain": "Not considered.",
+    "additional": "",
+    "doorcoating": "",
+    "doorshutterfinish": ""
+   },
+   "doors-other_entrance-lobby-air": {
+    "type": "",
+    "aircurtain": "",
+    "additional": "Not clear",
+    "doorcoating": "",
+    "doorshutterfinish": ""
+   },
+   "doors-other_shaft-staircase-doors": {
+    "type": "",
+    "aircurtain": "",
+    "additional": "",
+    "doorcoating": "Wooden laminated finished fire doors for lift lobby areas & Metal fire doors for the rest.",
+    "doorshutterfinish": "Paint finish on metal fire doors & laminate finish on remaining."
+   },
+   "doors-other_staircase-door-size": {
+    "type": "",
+    "aircurtain": "",
+    "additional": "Not clear",
+    "doorcoating": "",
+    "doorshutterfinish": ""
+   }
+  },
+  "unitLevelDesignData": [
+   {
+    "id": 1,
+    "name": "Type A",
+    "isOpen": false,
+    "type": "3BHK+STUDY+UTILTY",
+    "noOfUnits": "218",
+    "saleableArea": "2945",
+    "coveredArea": "1711",
+    "unitFar": "1711",
+    "carpetArea": "1607",
+    "balconyAreaFar": "51",
+    "balconyAreaNonFar": "438",
+    "circulationFar": "129",
+    "wallArea": "104",
+    "acArea": "217",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-1.jpg",
+    "plan": "image:unit-3bhk.jpg"
+   },
+   {
+    "id": 2,
+    "name": "Type C",
+    "isOpen": false,
+    "type": "2BHK+STUDY+UTILITY",
+    "noOfUnits": "18",
+    "saleableArea": "2440",
+    "coveredArea": "1419",
+    "unitFar": "1419",
+    "carpetArea": "1317",
+    "balconyAreaFar": "18",
+    "balconyAreaNonFar": "368",
+    "circulationFar": "129",
+    "wallArea": "102",
+    "acArea": "173",
+    "unitsPerCore": "",
+    "keyPlan": "image:key-plan-2.jpg",
+    "plan": "image:unit-2bhk.jpg"
+   },
+   {
+    "id": 3,
+    "name": "Type E",
+    "isOpen": false,
+    "type": "4BHK+STUDY+2UTILTY",
+    "noOfUnits": "6",
+    "saleableArea": "8020",
+    "coveredArea": "3995",
+    "unitFar": "3995",
+    "carpetArea": "3744",
+    "balconyAreaFar": "113",
+    "balconyAreaNonFar": "970",
+    "circulationFar": "258",
+    "wallArea": "251",
+    "acArea": "667",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-3.jpg",
+    "plan": "image:unit-4bhk.jpg"
+   },
+   {
+    "id": 4,
+    "name": "Type F",
+    "isOpen": false,
+    "type": "4BHK+STUDY+2UTILTIY",
+    "noOfUnits": "4",
+    "saleableArea": "8055",
+    "coveredArea": "3988",
+    "unitFar": "3988",
+    "carpetArea": "3744",
+    "balconyAreaFar": "113",
+    "balconyAreaNonFar": "1010",
+    "circulationFar": "258",
+    "wallArea": "245",
+    "acArea": "667",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-1.jpg",
+    "plan": "image:unit-4bhk.jpg"
+   },
+   {
+    "id": 5,
+    "name": "Type G",
+    "isOpen": false,
+    "type": "4BHK+STUDY+UTILITY",
+    "noOfUnits": "2",
+    "saleableArea": "7485",
+    "coveredArea": "3685",
+    "unitFar": "3685",
+    "carpetArea": "3467",
+    "balconyAreaFar": "113",
+    "balconyAreaNonFar": "823",
+    "circulationFar": "258",
+    "wallArea": "218",
+    "acArea": "667",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-2.jpg",
+    "plan": "image:unit-4bhk.jpg"
+   },
+   {
+    "id": 6,
+    "name": "Type A1",
+    "isOpen": false,
+    "type": "3BHK+STUDY+UTILITY",
+    "noOfUnits": "314",
+    "saleableArea": "3075",
+    "coveredArea": "1755",
+    "unitFar": "",
+    "carpetArea": "1646",
+    "balconyAreaFar": "51",
+    "balconyAreaNonFar": "476",
+    "circulationFar": "129",
+    "wallArea": "109",
+    "acArea": "217",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-3.jpg",
+    "plan": "image:unit-3bhk.jpg"
+   },
+   {
+    "id": 7,
+    "name": "Type B",
+    "isOpen": false,
+    "type": "4BHK+STUDY+UTILTIY",
+    "noOfUnits": "218",
+    "saleableArea": "3598",
+    "coveredArea": "2005",
+    "unitFar": "2005",
+    "carpetArea": "1880",
+    "balconyAreaFar": "51",
+    "balconyAreaNonFar": "631",
+    "circulationFar": "129",
+    "wallArea": "125",
+    "acArea": "263",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-1.jpg",
+    "plan": "image:unit-4bhk.jpg"
+   },
+   {
+    "id": 8,
+    "name": "Type B1",
+    "isOpen": false,
+    "type": "4BHK+STUDY+UTILITY",
+    "noOfUnits": "158",
+    "saleableArea": "3755",
+    "coveredArea": "2048",
+    "unitFar": "2048",
+    "carpetArea": "1919",
+    "balconyAreaFar": "51",
+    "balconyAreaNonFar": "670",
+    "circulationFar": "129",
+    "wallArea": "129",
+    "acArea": "263",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-2.jpg",
+    "plan": "image:unit-4bhk.jpg"
+   },
+   {
+    "id": 9,
+    "name": "Type D",
+    "isOpen": false,
+    "type": "3BHK+STUDY+UTILITY",
+    "noOfUnits": "18",
+    "saleableArea": "3084",
+    "coveredArea": "1712",
+    "unitFar": "1712",
+    "carpetArea": "1590",
+    "balconyAreaFar": "19",
+    "balconyAreaNonFar": "561",
+    "circulationFar": "129",
+    "wallArea": "122",
+    "acArea": "",
+    "unitsPerCore": "1",
+    "keyPlan": "image:key-plan-3.jpg",
+    "plan": "image:unit-3bhk.jpg"
+   }
+  ]
+ },
+ "structure": {
+  "customFields": {
+   "towerAreaNonTypical": "Conventional",
+   "towerAreaTypical": "Monolithic Aluminium",
+   "nfa": "Conventional",
+   "commercial": "Conventional",
+   "earthquakeResistance": "Seismic Zone IV",
+   "structuralSystem": "Shear Wall System",
+   "typeOfStructure": "Type 1",
+   "typeOfConstruction": "Aluminium Formwork",
+   "expansionJoints": "No (Benchmark)",
+   "designExecution": "BIM + Tekla",
+   "maxGradeOfConcrete": "M70",
+   "builtUpArea": "3913106",
+   "steelConsumptionCoefficient": "8.82",
+   "totalSteelConsumption": "34513594.92",
+   "concreteConsumptionCoefficient": "0.06",
+   "totalConcreteConsumption": "223047.04",
+   "dynamicInputs": []
+  },
+  "preferredStructuralSystem": "RCC shear wall with flat slab",
+  "groundwaterTableLevel": "8.5 m below NGL",
+  "recommendedPlinthLevelAboveRoad": "+600 mm above crown of road",
+  "soilBearingCapacity": "20 T/sqm at 3.0 m depth",
+  "foundationLevelSoil": "-3.0 m below NGL",
+  "typeOfFoundationSoil": "Raft foundation",
+  "floodAnalysisReport": "No flooding risk recorded in last 25 years",
+  "foundationLevelFlood": "-14.5 m (below lowest basement)",
+  "typeOfFoundationFlood": "Raft with waterproofing",
+  "status": "Submitted"
+ },
+ "mep": {
+  "passengerLiftsNo": "2",
+  "passengerLiftsStops": "45",
+  "passengerLiftsSpeed": "4",
+  "passengerAverageWait": "35",
+  "passengerLiftSizeLength": "2.3",
+  "passengerLiftSizeWidth": "2.7",
+  "serviceLiftsNo": "1",
+  "serviceLiftsStops": "45",
+  "serviceLiftsSpeed": "4",
+  "serviceAverageWait": "35",
+  "serviceLiftSizeLength": "2.01",
+  "serviceLiftSizeWidth": "2.5",
+  "acProvisionUnits": "VRV/VRF",
+  "acAreaApartment": "135.97",
+  "tonnageApartment": "9.02",
+  "costPerTonneApartment": "45000",
+  "acAreaClub": "3735",
+  "tonnageClub": "238",
+  "efficiencyApartment": "162.15",
+  "efficiencyClub": "168",
+  "customFields": {},
+  "oduLocationsAndSizes": "Terrace level, 1.2 m x 0.9 m per unit, grouped on service ledges",
+  "floodAnalysisReport": "No flooding risk for basement services; sump pumps at B2",
+  "status": "Submitted"
+ },
+ "departments": {
+  "liaison": {
+   "zoningClassificationAndLandUse": "Residential (Group Housing) as per master plan 2031",
+   "aaiHeightClearanceStatus": "NOC received up to 160 m AMSL",
+   "phasingStrategyInput": "Two phases: Towers 1-3, then Towers 4-6 with club",
+   "adjoiningRoadsStatus": "24 m sector road on north side is built and operational",
+   "revenueRastaTreatment": "Revenue rasta realigned along the east boundary",
+   "status": "Submitted"
+  },
+  "business-development": {
+   "licenseApplication": "License granted for 10.70 acres",
+   "far": "2.5 base + TOD 1.62",
+   "tdrUtilization": "1.5 TDR purchased",
+   "productMix": "3BHK and 4BHK with study and utility, penthouses on top floors",
+   "phasingStrategy": "Launch Phase 1 (3 towers) first",
+   "status": "Submitted"
+  },
+  "land": {
+   "certifiedLandBoundaryForTestFitPlanning": "Received and verified",
+   "finalLandBoundary": "10.70 acres, demarcated on site",
+   "finalPlotBoundary": "Matches licensed boundary",
+   "htLinesOnSite": "None",
+   "proximityStudyOfBuildingStructure": "No structures within 30 m",
+   "anyMismatchInSiteBoundaries": "No mismatch",
+   "topographicalSurvey": "Completed, site level difference 1.2 m",
+   "otherConstraints": "Revenue rasta on east side",
+   "status": "Submitted"
+  }
+ },
+ "keyRatio": {
+  "building_height": 95,
+  "carpet_area": 52000,
+  "saleable_area": 80000,
+  "balcony_area": 6500,
+  "built_up_area": 104000,
+  "far": 60000,
+  "permissible_far": 62000,
+  "total_external_wall_area": 3600,
+  "window_to_area_ratio": 22,
+  "service_shaft_area": 1500,
+  "sales_price": 14500,
+  "construction_cost_on_bua": 4800,
+  "floor_to_floor_height_apt": 3.2,
+  "no_of_units": 640,
+  "average_wall_area_interior_exterior_per_unit": 380,
+  "lobby_corridor_width": 2,
+  "driveway_width_basement": 6,
+  "floor_to_floor_height_ground_lobby": 4.5,
+  "floor_to_floor_height_basement_b1_b2": 3.6,
+  "clear_height": 2.6,
+  "average_wall_area_interior_exterior_per_basement": 2400,
+  "no_of_basements": 2,
+  "car_length": 5.4,
+  "car_width": 2.5,
+  "total_basement_area": 42000,
+  "circulation_area": 7800,
+  "total_parking_area": 33000,
+  "total_number_of_cars": 1150,
+  "total_steel_reinforcement": 7700000,
+  "total_concrete_consumption": 46000,
+  "air_conditioned_area_for_appartment": 95,
+  "tonnage_per_appartment": 4,
+  "cost_per_tonne_apartment": 85000,
+  "no_of_apartments": 640,
+  "air_conditioned_area_for_club": 2500,
+  "tonnage_of_club_house": 130,
+  "cost_per_tonne_club": 85000,
+  "no_of_clubs": 1,
+  "passenger_lift_speed": 3.5,
+  "no_of_passanger_lift": 16,
+  "service_lift_speed": 2.5,
+  "no_of_service_lift": 8,
+  "avg_waiting_time": 45,
+  "cost_of_apartment_wall_construction": 1800,
+  "cost_of_basement_wall_construction": 2200,
+  "revenue_per_extra_car_slot": 500000,
+  "cost_of_passenger_lift_3ms": 0.9,
+  "cost_of_passenger_lift_3_5ms": 1.2,
+  "cost_of_passenger_lift_4ms": 1.4,
+  "cost_of_service_lift_2_5ms": 0.66,
+  "cost_of_service_lift_3ms": 0.7,
+  "price_per_steel": 55,
+  "price_per_concrete": 5000
+ }
+}

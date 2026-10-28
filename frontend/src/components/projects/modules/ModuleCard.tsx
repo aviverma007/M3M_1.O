@@ -147,7 +147,10 @@ export default function ModuleCard({
     })
   }, [department, company])
 
+  const isSuperAdmin = ['super_admin', 'superadmin'].includes((user?.role || '').toLowerCase()) || department === 'super_admin'
   const access: Access = (() => {
+    // Super admin has full rights on every module (the original app locked modules 1-3 for everyone).
+    if (isSuperAdmin) return 'edit'
     if (moduleNo <= 3) return 'none'
     if (rolePerms !== null && moduleName in rolePerms) return rolePerms[moduleName] as Access
     if (moduleNo === 4 || !department || department === 'super_admin') return 'edit'

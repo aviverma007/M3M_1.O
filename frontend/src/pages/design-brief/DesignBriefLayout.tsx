@@ -107,7 +107,7 @@ export default function DesignBriefLayout() {
     role === 'general_contributor' ||
     (['general_admin', 'general admin'].includes(role) && Array.isArray(activeList) && activeList.some((r) => r.assignedTo === activeUser?.id))
   const primary = primaryRecord(activeList)
-  const canApprove = !isSuper && !!primary && ['general_admin', 'general admin', 'design_admin', 'design admin'].includes(role) && primary.assignedTo !== activeUser?.id
+  const canApprove = !!primary && (isSuper || (['general_admin', 'general admin', 'design_admin', 'design admin'].includes(role) && primary.assignedTo !== activeUser?.id))
 
   const refreshData = useCallback(async () => {
     try {

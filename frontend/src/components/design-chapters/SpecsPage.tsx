@@ -14,56 +14,10 @@ import { cn } from '@/lib/utils'
 import { errorMessage, getModuleChapters, getProject, getSummary, saveSummary } from '@/api/chapters-a'
 import type { ModuleChapter, SectionField, SpecData, SpecEntry, SpecValue } from '@/types/chapters-a'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui'
+import type { Item, SpecsConfig } from './specsTypes'
+import { categoryKey, matchesBenchmark, norm } from './specsBenchmark'
 
-export type Item = { id: string; name: string }
-
-export type SpecsConfig = {
-  title: string
-  moduleId: number
-  dataKey: 'idSpecificationsData' | 'commonAreaData'
-  chapters: Item[]
-  /** chapter id -> catalogue chapter number */
-  chapterNumber: Record<string, number>
-  /** chapter number -> room id -> catalogue section title */
-  sectionTitles: Record<number, Record<string, string>>
-  rooms: (chapterId: string) => Item[]
-  initialChapter: string
-  initialRoom: string
-  initialData: SpecData
-  /** normalised field name -> state key (compared with key.toLowerCase(), like the original) */
-  aliases: Record<string, string>
-  emptyEntry: SpecEntry
-  /** state keys tried, in order, when mapping a catalogue field to a state key */
-  fieldKeys: string[]
-  defaultOptions: Record<string, string[]>
-  /** Common Area: keep ceiling sections for "ceiling" and the rest for "wall" */
-  splitWallCeiling?: boolean
-  /** ID Specifications: rooms can be hidden/restored, fixed-height scrolling lists, "other toilets" fallback */
-  idLayout?: boolean
-  saveSuccess: string
-  saveError: string
-  loadErrorLabel: string
-}
-
-const norm = (s?: string | null) => (s ? s.toLowerCase().replace(/[\r\n]+/g, ' ').replace(/[^a-z0-9]/g, '') : '')
-
-const categoryKey = (c?: string | null) => {
-  const v = (c || '').toLowerCase()
-  if (v === 'premium') return 'premiumAns'
-  if (v === 'affluent') return 'affluentAns'
-  if (v === 'hi_street') return 'hiStreetAns'
-  if (v === 'enclosed_mall') return 'enclosedMallAns'
-  return 'midEndAns'
-}
-
-/** true / false / null(no benchmark) — same rules as the original */
-function matchesBenchmark(value: SpecValue | undefined, bench: string[]) {
-  if (!value || !Array.isArray(bench) || bench.length === 0) return null
-  const b = bench.map((o) => String(o).trim().toLowerCase())
-  if (Array.isArray(value)) return value.length === 0 ? null : value.every((o) => b.includes(String(o).trim().toLowerCase()))
-  if (typeof value === 'string') return value.trim() ? b.includes(value.trim().toLowerCase()) : null
-  return false
-}
+export type { Item, SpecsConfig }
 
 const CHECK_LIST_CLS = 'grid grid-cols-2 gap-2 mt-1 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-40 overflow-y-auto'
 const NOTE = 'text-[10px] text-gray-400 font-bold italic'

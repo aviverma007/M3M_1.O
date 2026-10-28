@@ -22,7 +22,8 @@ import { query, type Params } from '../db/pool.js'
 import { created, fail, file, ok, paginate, route } from '../http/router.js'
 import { audit } from '../http/helpers.js'
 import { MODULE_ROUTE } from '@/mock/catalogue'
-import { makePdf } from './projects/pdf.js'
+import { buildDprPdf } from '../dpr/index.js'
+import { loadDprInput, loadUploadedImage } from '../dpr/load.js'
 
 type Project = Row
 
@@ -275,6 +276,8 @@ route('POST', '/project/:id/import', async () => ok(null, 'Imported successfully
 route('POST', '/project/:id/export-dpr-pdf', async ({ params, body }) => {
   const p = await findProject(params.id)
   if (!p) return fail(404, 'Project not found')
-  const mods = Array.isArray(body?.selectedModules) ? body.selectedModules.map(String).join(', ') : ''
-  return file(makePdf(`${p.name} - ${mods}`), 'application/pdf')
+  const selected = Array.isArray(body?.selectedModules) ? (body.selectedModules as unknown[]).map(String) : []
+  if (!selected.length) return fail(400, 'Please select at least one module to export.')
+  const pdf = await buildDprPdf(await loadDprInput(p), selected, loadUploadedImage)
+  return file(pdf, 'application/pdf')
 })

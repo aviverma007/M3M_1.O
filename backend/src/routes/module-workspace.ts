@@ -192,6 +192,12 @@ async function chapterWithSections(chapterId: number, projectId: number) {
   }))
 }
 
+/** every chapter of a module with its sections, fields and this project's saved values (used by the DPR export) */
+export async function moduleChaptersWithSections(moduleId: number, projectId: number) {
+  const chapters = await moduleChapters(moduleId)
+  return Promise.all(chapters.map(async (c) => ({ id: c.id, moduleId: c.moduleId, chapterNumber: c.chapterNumber, title: c.title, chapterSections: await chapterWithSections(c.id, projectId) })))
+}
+
 async function chapterDto(ch: ChapterRow, projectId: number, statuses: Map<number, string>, lastId: number | undefined, withSections: boolean) {
   return {
     id: ch.id,

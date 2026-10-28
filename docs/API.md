@@ -32,7 +32,7 @@ Envelope: `{ "success": true, "message": "...", "data": ... }`; errors: `{ "succ
 | PUT | /project/:id/save-project-module | |
 | GET | /project/:id/export, /project/:id/exportCommercial | `format, allParams, flags, deviations, benchmark` |
 | POST | /project/:id/import | multipart |
-| POST | /project/:id/export-dpr-pdf | `{selectedModules[]}` → PDF |
+| POST | /project/:id/export-dpr-pdf | `{selectedModules[]}` → Detailed Project Report PDF (cover, index, one section per module, thank-you page); built in `backend/src/dpr/` from the design-chapter data, Structure/MEP inputs and uploaded images (PNG/JPEG) |
 | GET | /project/contributor/tasks | contributor "My Tasks" (by user department) |
 
 ## Chapters (Modules 2–3, commercial design) — `module-workspace.ts`

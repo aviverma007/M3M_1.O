@@ -1,20 +1,29 @@
 # M3M_1.O
 
 In-house rebuild of the M3M project governance application (the "BCG - M3M" admin app).
-The frontend reproduces every screen and workflow of the original. Until the SQL Server backend
-exists, it runs against an **in-browser mock API** that uses the **same endpoint paths and response
-format as the original API**, so the backend can be plugged in without changing pages.
 
-## Quick start
+| Folder | What |
+|---|---|
+| `frontend/` | React app reproducing every screen and workflow of the original |
+| `backend/` | Node.js + Express API on **SQL Server** (same endpoints and response format as the original API) |
+| `database/` | SQL scripts to run in SSMS: database + login, tables, reference data, first admin, sample data, backup |
+| `docs/` | **[BACKEND_SETUP.md](docs/BACKEND_SETUP.md)** (step-by-step install on the server) · [API.md](docs/API.md) (endpoint contract) |
+
+**To install on the server, follow [docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md).**
+
+The frontend can also run without any backend against an in-browser **mock API** (development / demos).
+
+## Quick start (frontend only, mock data)
 
 ```bash
 cd frontend
 npm install
-npm run dev          # http://localhost:5173  (also reachable on the LAN)
-npm run build        # production build -> frontend/dist
+npm run dev          # http://localhost:5173  (mock mode: no database needed)
 ```
 
-### Demo logins (mock mode)
+Production (`npm run build`) uses the real API (`frontend/.env.production`), served by `backend/`.
+
+### Demo logins (mock mode, and the optional SQL sample data)
 All passwords: `Password@123`
 
 | Email | Role | Notes |
@@ -29,7 +38,7 @@ All passwords: `Password@123`
 
 ## API mode
 
-`frontend/.env.development` / `.env.production`:
+`frontend/.env.development` (mock by default) / `.env.production` (http):
 
 ```
 VITE_API_MODE=mock        # mock = in-browser data, http = real backend

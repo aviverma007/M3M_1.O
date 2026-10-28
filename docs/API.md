@@ -1,8 +1,7 @@
 # API contract (for the SQL Server backend)
 
-The frontend calls these endpoints exactly as the original app did. The mock implementation of each
-endpoint is in `frontend/src/mock/handlers/<file>.ts` — read it for the exact request/response shape,
-validation messages and side effects (audit log entries, notifications, progress recalculation).
+The frontend calls these endpoints exactly as the original app did. They are implemented in
+`backend/src/routes/<area>.ts` (SQL Server) and mirrored by the in-browser mock in `frontend/src/mock/handlers/<file>.ts`.
 
 Base URL: `VITE_API_BASE_URL` (default `/api/v1`). Auth: `Authorization: Bearer <accessToken>`.
 Envelope: `{ "success": true, "message": "...", "data": ... }`; errors: `{ "success": false, "message", "errorCode", "statusCode" }`.
@@ -75,10 +74,10 @@ Envelope: `{ "success": true, "message": "...", "data": ... }`; errors: `{ "succ
 | GET | /metadata/dropdown-options/:fieldKey | user-added dropdown options |
 | POST / DELETE | /metadata/dropdown-options[/:id] | `{fieldKey, optionValue}` |
 
-## Mock tables (suggested SQL Server tables)
-`users, accessRoles, notifications, auditLogs, projects, modules, projectModules, chapters, chapterSections,
-sectionFields, chapterFieldValues, projectChapters, keyRatios, keyRatioCalFields, comKeyRatios, comKeyRatioInputs,
-comKeyRatioOutputs, briefLiaison, briefBusinessDevelopment, briefLand, briefStructure, briefMep, briefAnarock,
-designBriefSummaries, designBriefComments, uploads, contributorTasks, dropdownOptions, benchmarks`
+## SQL Server tables (database/02_schema.sql)
+`users, passwordResets, accessRoles, notifications, auditLogs, projects, modules, projectModules, chapters, chapterSections,
+sectionFields, projectChapters, chapterFieldValues, benchmarks, dropdownOptions, keyRatioCalFields, keyRatios,
+comKeyRatioInputs, comKeyRatioOutputs, comKeyRatios, designBriefInputs (all departments), designBriefSummaries,
+designBriefComments, contributorTasks, uploads`
 
-Column shapes = the objects inserted in `frontend/src/mock/seed/*.ts`. Keep this database separate from all other databases.
+Keep this database separate from all other databases.

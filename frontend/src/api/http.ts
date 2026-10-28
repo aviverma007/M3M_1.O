@@ -84,7 +84,8 @@ const httpTransport: Transport = async (method, url, opts) => {
     headers: {
       ...(isForm || opts.data === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...opts.headers,
+      // for FormData the browser must set Content-Type itself (it adds the multipart boundary)
+      ...(isForm ? Object.fromEntries(Object.entries(opts.headers ?? {}).filter(([k]) => k.toLowerCase() !== 'content-type')) : opts.headers),
     },
     body: opts.data === undefined ? undefined : isForm ? (opts.data as FormData) : JSON.stringify(opts.data),
   })

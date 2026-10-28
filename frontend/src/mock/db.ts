@@ -8,7 +8,7 @@
 
 const STORAGE_KEY = 'm3m.mockdb'
 /** bump to force everyone's browser to reseed after seed data changes */
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 
 type Row = { id: number; [k: string]: unknown }
 type Store = { version: number; tables: Record<string, Row[]>; seq: Record<string, number> }

@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // When VITE_API_MODE=http, API calls go to /api/v1/... and are proxied to the backend
-      '/api': { target: 'http://localhost:5000', changeOrigin: true },
+      '/api': { target: process.env.API_PROXY_TARGET ?? 'http://localhost:5000', changeOrigin: true },
     },
   },
 })

@@ -12,7 +12,7 @@ registerSeed((db) => {
     ['Aurora Heights', 'MEP', 'mep', 'Submitted', 10],
     ['Cedar Greens', 'Liaison', 'liaison', 'Assigned', 7],
     ['Cedar Greens', 'Structure', 'structure', 'In Progress', -2],
-    ['Palm Residences', 'Business Development', 'business_development', 'Assigned', 14],
+    ['Palm Residences', 'Business Development', 'bd', 'Assigned', 14],
     ['Palm Residences', 'Land', 'land', 'Pending', 5],
     ['Golf Vista', 'MEP', 'mep', 'Assigned', -1],
   ]

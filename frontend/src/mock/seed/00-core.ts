@@ -17,7 +17,7 @@ registerSeed((db) => {
     { name: 'General Admin', email: 'general.admin@m3m.com', role: 'general_admin', department: null },
     { name: 'Design Contributor', email: 'design.contributor@m3m.com', role: 'design_contributor', department: 'design' },
     { name: 'Liaison Team', email: 'liaison@m3m.com', role: 'general_contributor', department: 'liaison' },
-    { name: 'Business Development', email: 'bd@m3m.com', role: 'general_contributor', department: 'business_development' },
+    { name: 'Business Development', email: 'bd@m3m.com', role: 'general_contributor', department: 'bd' },
     { name: 'Land Team', email: 'land@m3m.com', role: 'general_contributor', department: 'land' },
     { name: 'Structure Team', email: 'structure@m3m.com', role: 'general_contributor', department: 'structure' },
     { name: 'MEP Team', email: 'mep@m3m.com', role: 'general_contributor', department: 'mep' },

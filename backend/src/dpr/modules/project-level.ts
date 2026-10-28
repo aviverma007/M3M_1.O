@@ -124,6 +124,14 @@ function center(doc: Doc, s: string, x0: number, x1: number, y: number, font: 'R
   const w = doc.widthOfString(s)
   txt(doc, s, x0 + (x1 - x0 - w) / 2, y, font, size, color)
 }
+/** pdfkit-wrapped text in a box (same line breaking / centring as the original) */
+function box(doc: Doc, s: string, x: number, y: number, width: number, font: 'R' | 'S' | 'B', size: number, color: string, align: 'left' | 'center' = 'left') {
+  doc.font(font).fontSize(size).fillColor(color).text(s, x, y, { width, align })
+}
+function boxH(doc: Doc, s: string, width: number, font: 'R' | 'S' | 'B', size: number) {
+  doc.font(font).fontSize(size)
+  return doc.heightOfString(s, { width })
+}
 /** value + grey unit, horizontally centred as one string (key ratio table) */
 function centerWithUnit(doc: Doc, v: string, unit: string, x0: number, x1: number, y: number, color: string) {
   doc.font('S').fontSize(9)
@@ -134,35 +142,6 @@ function centerWithUnit(doc: Doc, v: string, unit: string, x0: number, x1: numbe
   txt(doc, v, x, y, 'S', 9, color)
   if (unit) txt(doc, ` ${unit}`, x + wv, y + 1.01, 'R', 8, '#999999')
 }
-function wrapLines(doc: Doc, s: string, width: number, font: 'R' | 'S' | 'B', size: number) {
-  doc.font(font).fontSize(size)
-  const words = s.split(/\s+/)
-  const out: string[] = []
-  let cur = ''
-  for (const w of words) {
-    const t = cur ? `${cur} ${w}` : w
-    if (cur && doc.widthOfString(t) > width) {
-      out.push(cur)
-      cur = w
-    } else cur = t
-  }
-  if (cur) out.push(cur)
-  // a single word longer than the width is split by characters (as pdfkit does)
-  return out.flatMap((l) => {
-    if (doc.widthOfString(l) <= width) return [l]
-    const parts: string[] = []
-    let p = ''
-    for (const ch of l) {
-      if (p && doc.widthOfString(p + ch) > width) {
-        parts.push(p)
-        p = ch
-      } else p += ch
-    }
-    if (p) parts.push(p)
-    return parts
-  })
-}
-
 /* ------------------------------------------------------------------ 1. Development Area Statement */
 const inr = (o: number) => (o ? Number(o.toFixed(2)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-')
 const fx = (o: number) => (o ? o.toFixed(2) : '-')
@@ -424,11 +403,11 @@ function keyRatioPages(ctx: Ctx, groups: { name: string; rows: KRow[] }[], bench
     contentPage(ctx, 'Design Considerations — Key Ratio')
     y = 80
     doc.rect(L, y, R - L, 20).fill(NAVY)
-    txt(doc, 'Element', 39, y + 5.92, 'B', 8, '#FFFFFF')
-    line(doc, C1, y + 3, C1, y + 17, BORDER, 0.4)
-    txt(doc, 'Parameters', 129, y + 5.92, 'B', 8, '#FFFFFF')
-    line(doc, C2, y + 3, C2, y + 17, BORDER, 0.4)
-    center(doc, 'Value', C2, R, y + 5.92, 'B', 8, '#FFFFFF')
+    txt(doc, 'Element', 39, y + 6, 'B', 8, '#FFFFFF')
+    doc.lineWidth(0.4).moveTo(C1, y + 3).lineTo(C1, y + 17).stroke()
+    txt(doc, 'Parameters', 129, y + 6, 'B', 8, '#FFFFFF')
+    doc.lineWidth(0.4).moveTo(C2, y + 3).lineTo(C2, y + 17).stroke()
+    center(doc, 'Value', C2, R, y + 6, 'B', 8, '#FFFFFF')
     y += 20
   }
   header()
@@ -444,9 +423,8 @@ function keyRatioPages(ctx: Ctx, groups: { name: string; rows: KRow[] }[], bench
     if (y + total > LIMIT && y > 100) header()
     doc.rect(L, y, C1 - L, total).fill('#DCE8F5')
     doc.lineWidth(0.4).rect(L, y, C1 - L, total).stroke(BORDER)
-    const lines = wrapLines(doc, g.name.toUpperCase(), C1 - L - 8, 'B', 8)
-    const ty = y + total / 2 - (lines.length * 10.8) / 2
-    lines.forEach((t, i) => center(doc, t, L, C1, ty + i * 10.8, 'B', 8, NAVY))
+    const gh = boxH(doc, g.name.toUpperCase(), C1 - L - 8, 'B', 8)
+    box(doc, g.name.toUpperCase(), L + 4, y + total / 2 - gh / 2, C1 - L - 8, 'B', 8, NAVY, 'center')
     rows.forEach((r, i) => {
       doc.rect(C1, y, R - C1, r.h).fill(i % 2 ? '#F0F4F8' : '#FFFFFF')
       doc.lineWidth(0.3).rect(C1, y, R - C1, r.h).stroke(BORDER)
@@ -509,6 +487,7 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
           : []),
         { label: 'Parking bay size', value: str(o.totalParkingBaySize), unit: 'sq ft', bench: ['Total Parking Bay size', 'Parking bay size'] },
         ...(has('avgWallAreaBasement') ? [{ label: 'Average Wall Area (Interior + Exterior) Per Basement', value: v('avgWallAreaBasement'), unit: 'sq ft' }] : []),
+        { label: 'No. of Basements', value: v('noOfBasements'), unit: '', bench: ['No. of Basements', 'Number of Basements'] },
       ],
     },
   ]
@@ -544,20 +523,20 @@ function clusterPages(ctx: Ctx, clusters: ClusterConfig[]) {
     const total = 20 + 18 + rows.length * 24
     if (ci > 0 && y + total > LIMIT) page()
     doc.rect(L, y, R - L, 20).fill(NAVY)
-    txt(doc, `CLUSTER LEVEL DESIGN — ${c.name || `Cluster ${ci + 1}`}`, 39, y + 5.91, 'B', 9, '#FFFFFF')
+    txt(doc, `CLUSTER LEVEL DESIGN — ${c.name || `Cluster ${ci + 1}`}`, 39, y + 6, 'B', 9, '#FFFFFF')
     y += 20
     doc.rect(L, y, R - L, 18).fill('#DCE8F5')
     doc.lineWidth(0.3).rect(L, y, R - L, 18).stroke(BORDER)
-    txt(doc, 'Parameter', 39, y + 4.92, 'B', 8, NAVY)
+    txt(doc, 'Parameter', 39, y + 5, 'B', 8, NAVY)
     line(doc, SPLIT, y, SPLIT, y + 18, BORDER, 0.3)
-    center(doc, 'Value', SPLIT, R, y + 4.92, 'B', 8, NAVY)
+    center(doc, 'Value', SPLIT, R, y + 5, 'B', 8, NAVY)
     y += 18
     rows.forEach(([label, val], i) => {
       doc.rect(L, y, R - L, 24).fill(i % 2 ? '#F0F4F8' : '#FFFFFF')
       doc.lineWidth(0.3).rect(L, y, R - L, 24).stroke(BORDER)
-      txt(doc, label, 39, y + 3.92, 'S', 8, TEXT)
+      txt(doc, label, 39, y + 4, 'S', 8, TEXT)
       line(doc, SPLIT, y, SPLIT, y + 24, BORDER, 0.3)
-      center(doc, val, SPLIT, R, y + 3.91, 'S', 9, TEXT)
+      center(doc, val, SPLIT, R, y + 4, 'S', 9, TEXT)
       y += 24
     })
     y += 8
@@ -641,48 +620,38 @@ function comparisonPage(ctx: Ctx, input: DprInput, d: ProjectLevelDesignData) {
   const X = [L, 125, 295, 367]
   const cw = (R - 367) / cols.length
   cols.forEach((_, i) => X.push(367 + cw * (i + 1)))
-  const LH = lh(8.5)
   const HEAD = '#1A3566'
-  // header
   const headCells = [
-    { lines: ['Category'], x0: X[0], x1: X[1], align: 'left' },
-    { lines: ['Parameter'], x0: X[1], x1: X[2], align: 'left' },
-    { lines: wrapLines(doc, 'Standard Target', X[3] - X[2] - 14, 'B', 8.5), x0: X[2], x1: X[3], align: 'left' },
-    ...cols.map((c, i) => ({
-      lines: [...wrapLines(doc, c.name, cw - 14, 'B', 8.5), ...(c.location ? wrapLines(doc, c.location, cw - 14, 'B', 8.5) : [])],
-      x0: X[3 + i],
-      x1: X[4 + i],
-      align: 'center',
-    })),
+    { t: 'Category', x0: X[0], x1: X[1], align: 'left' as const },
+    { t: 'Parameter', x0: X[1], x1: X[2], align: 'left' as const },
+    { t: 'Standard Target', x0: X[2], x1: X[3], align: 'left' as const },
+    ...cols.map((c, i) => ({ t: [c.name, c.location].filter(Boolean).join(' '), x0: X[3 + i], x1: X[4 + i], align: 'center' as const })),
   ]
-  const hh = Math.max(...headCells.map((c) => c.lines.length)) * LH + 14
+  const hh = Math.max(...headCells.map((c) => boxH(doc, c.t, c.x1 - c.x0 - 14, 'B', 8.5))) + 14
   let y = 75
   doc.rect(L, y, R - L, hh).fill('#DCE8F5')
   doc.lineWidth(0.3).rect(L, y, R - L, hh).stroke(BORDER)
   headCells.forEach((c, i) => {
     if (i > 0) line(doc, c.x0, y, c.x0, y + hh, BORDER, 0.3)
-    c.lines.forEach((t, j) => {
-      if (c.align === 'left') txt(doc, t, c.x0 + 7, y + 7 + j * LH, 'B', 8.5, HEAD)
-      else center(doc, t, c.x0, c.x1, y + 7 + j * LH, 'B', 8.5, HEAD)
-    })
+    box(doc, c.t, c.x0 + 7, y + 7, c.x1 - c.x0 - 14, 'B', 8.5, HEAD, c.align)
   })
   y += hh
-  const rows = COMPARE_ROWS.map(([k, label]) => {
-    const pl = wrapLines(doc, label, X[2] - X[1] - 14, 'S', 8.5)
-    const sl = wrapLines(doc, STANDARDS[k], X[3] - X[2] - 14, 'S', 8.5)
-    return { k, pl, sl, h: Math.max(pl.length, sl.length) * LH + 14 }
-  })
+  const rows = COMPARE_ROWS.map(([k, label]) => ({
+    k,
+    label,
+    h: Math.max(boxH(doc, label, X[2] - X[1] - 14, 'S', 8.5), boxH(doc, STANDARDS[k], X[3] - X[2] - 14, 'S', 8.5)) + 14,
+  }))
   const total = rows.reduce((s, r) => s + r.h, 0)
   doc.rect(L, y, X[1] - L, total).fill(HEAD)
   doc.lineWidth(0.3).rect(L, y, X[1] - L, total).stroke(BORDER)
-  const cl = wrapLines(doc, 'Design Parameters', X[1] - L - 14, 'B', 8.5)
-  cl.forEach((t, j) => center(doc, t, L, X[1], y + total / 2 - (cl.length * LH) / 2 + j * LH, 'B', 8.5, '#FFFFFF'))
+  const ch = boxH(doc, 'Design Parameters', X[1] - L - 14, 'B', 8.5)
+  box(doc, 'Design Parameters', L + 7, y + total / 2 - ch / 2, X[1] - L - 14, 'B', 8.5, '#FFFFFF', 'center')
   rows.forEach((r) => {
     doc.rect(X[1], y, R - X[1], r.h).fill('#F9FBFF')
     doc.lineWidth(0.3).rect(X[1], y, R - X[1], r.h).stroke(BORDER)
-    r.pl.forEach((t, j) => txt(doc, t, X[1] + 7, y + 7 + j * LH, 'S', 8.5, TEXT))
+    box(doc, r.label, X[1] + 7, y + 7, X[2] - X[1] - 14, 'S', 8.5, TEXT)
     line(doc, X[2], y, X[2], y + r.h, BORDER, 0.3)
-    r.sl.forEach((t, j) => center(doc, t, X[2], X[3], y + 7 + j * LH, 'S', 8.5, '#555555'))
+    box(doc, STANDARDS[r.k], X[2] + 7, y + 7, X[3] - X[2] - 14, 'S', 8.5, '#555555', 'center')
     cols.forEach((c, i) => {
       line(doc, X[3 + i], y, X[3 + i], y + r.h, BORDER, 0.3)
       const val = c.values[r.k] ?? '—'

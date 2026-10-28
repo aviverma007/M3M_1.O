@@ -233,10 +233,13 @@ function kitchenGoods(ctx: Ctx, cols: Column[]) {
       contentPage(ctx, title)
       y = head(START_Y)
     }
-    doc.rect(MARGIN, y, TABLE_W, 22).fill('#DCE6F0')
-    doc.lineWidth(0.4).rect(MARGIN, y, TABLE_W, 22).stroke(LINE)
-    txt(doc, c.name, MARGIN + 10, y + 6, 'B', 9, COL.headText)
-    y += 22
+    const group = (name: string) => {
+      doc.rect(MARGIN, y, TABLE_W, 22).fill('#DCE6F0')
+      doc.lineWidth(0.4).rect(MARGIN, y, TABLE_W, 22).stroke(LINE)
+      txt(doc, name, MARGIN + 10, y + 6, 'B', 9, COL.headText)
+      y += 22
+    }
+    group(c.name)
     keys.forEach((k, i) => {
       const label = labelOf(k)
       const val = show(c.entry[k])
@@ -244,6 +247,7 @@ function kitchenGoods(ctx: Ctx, cols: Column[]) {
       if (y + h > LIMIT) {
         contentPage(ctx, title)
         y = head(START_Y)
+        group(`${c.name} (cont.)`)
       }
       doc.rect(MARGIN, y, TABLE_W, h).fill(i % 2 ? '#F5F7FA' : '#FFFFFF')
       doc.lineWidth(0.3).rect(MARGIN, y, TABLE_W, h).stroke(LINE)

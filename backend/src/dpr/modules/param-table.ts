@@ -27,7 +27,8 @@ export type ParamSection = { title: string; rows: ParamRow[] }
 
 const lh = (doc: Doc, s: string, w: number, font: string, size: number) => {
   doc.font(font).fontSize(size)
-  return doc.heightOfString(s || ' ', { width: w })
+  const one = doc.currentLineHeight(true)
+  return Math.max(1, Math.round(doc.heightOfString(s || ' ', { width: w }) / one)) * 12.15 * (size / 9)
 }
 
 export function renderParamTable(ctx: Ctx, title: string, headers: [string, string], sections: ParamSection[]) {

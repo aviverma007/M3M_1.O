@@ -225,7 +225,7 @@ function amenitiesSidebar(doc: Doc, groups: { head: string; items: string[] }[])
       const ih = textHeight(doc, it, ITEM_W, 'R', 7)
       if (y + ih > LIMIT && !nextCol()) return
       const tx = colsX[col] + 13
-      doc.circle(tx - 5, y + ih / 2 - 0.05, 1.5).fill(PD.amenity)
+      doc.circle(tx - 5, y + ih / 2 + 0.05, 1.5).fill(PD.amenity)
       wrap(doc, it, tx, y, ITEM_W, 'R', 7, PD.text)
       y += ih + 4
     }

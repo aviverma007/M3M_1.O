@@ -2,7 +2,7 @@
 import { SERVICE_DESIGN } from '@/components/design-chapters-b/serviceCatalogue'
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
-import { inRange, isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
+import { isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
 
 const TITLE = 'Service Design Considerations'
 const yes = (v: unknown) => show(v) === 'Yes'
@@ -57,4 +57,3 @@ const serviceDesign: ModuleRenderer = (ctx, input) => {
 }
 export default serviceDesign
 
-export { inRange }

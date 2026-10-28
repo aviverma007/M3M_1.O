@@ -53,7 +53,7 @@ export function renderParamTable(ctx: Ctx, title: string, headers: [string, stri
     if (y + 22 > LIMIT) page()
     doc.rect(X, y, TW, 22).fill(BAND)
     doc.lineWidth(0.5).rect(X, y, TW, 22).stroke(BORDER)
-    doc.font('B').fontSize(10).fillColor(C.white).text(sec.title, X + 10, y + 5.95, { lineBreak: false })
+    doc.font('B').fontSize(10).fillColor(C.white).text(sec.title, X + 10, y + 6, { lineBreak: false })
     y += 22
     idx = 0
     for (const r of sec.rows) {
@@ -66,17 +66,17 @@ export function renderParamTable(ctx: Ctx, title: string, headers: [string, stri
       }
       const color = r.ok === true ? C.green : r.ok === false ? C.red : C.text
       doc.rect(X, y, TW, h).fill(idx % 2 ? ALT : C.white)
-      doc.font('S').fontSize(9).fillColor(C.text).text(r.label, X + 8, y + 4.96, { width: SPLIT - X - 16 })
+      doc.font('S').fontSize(9).fillColor(C.text).text(r.label, X + 8, y + 5, { width: SPLIT - X - 16 })
       const vw = X + TW - SPLIT - 16
       if (r.unit && valueH <= 12.2) {
-        doc.font('S').fontSize(9).fillColor(color).text(r.value, SPLIT + 8, y + 4.96, { lineBreak: false })
+        doc.font('S').fontSize(9).fillColor(color).text(r.value, SPLIT + 8, y + 5, { lineBreak: false })
         const w = doc.widthOfString(r.value)
-        doc.font('R').fontSize(9).fillColor(color).text(` ${r.unit}`, SPLIT + 8 + w, y + 4.96, { lineBreak: false })
+        doc.font('R').fontSize(9).fillColor(color).text(` ${r.unit}`, SPLIT + 8 + w, y + 5, { lineBreak: false })
       } else {
-        doc.font('S').fontSize(9).fillColor(color).text(valueText, SPLIT + 8, y + 4.96, { width: vw })
+        doc.font('S').fontSize(9).fillColor(color).text(valueText, SPLIT + 8, y + 5, { width: vw })
       }
       if (r.req !== undefined) {
-        doc.font('R').fontSize(7).fillColor(r.ok === false ? C.red : GREY).text(`Req: ${r.req}`, SPLIT + 8, y + 4.96 + valueH + 2.03, { width: vw })
+        doc.font('R').fontSize(7).fillColor(r.ok === false ? C.red : GREY).text(`Req: ${r.req}`, SPLIT + 8, y + 5 + valueH + 2, { width: vw })
       }
       doc.lineWidth(0.5)
       doc.moveTo(SPLIT, y).lineTo(SPLIT, y + h).stroke(BORDER)

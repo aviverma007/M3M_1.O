@@ -68,8 +68,8 @@ export function detailsGrid(doc: Doc, items: { label: string; value: string }[],
     items.slice(r * 4, r * 4 + 4).forEach((it, c) => {
       const cx = X0 + c * cw
       if (r % 2 === 0) doc.rect(cx, ry, cw, rh).fill(PD.cellBg)
-      txt(doc, it.label, cx + 6, ry + 4, 'S', 8, PD.label, { width: cw - 12, ellipsis: true })
-      txt(doc, it.value, cx + 6, ry + 14, 'B', 10, PD.value, { width: cw - 12, ellipsis: true })
+      txt(doc, it.label, cx + 6, ry + 4, 'S', 8, PD.label, { width: cw - 12, height: 12, ellipsis: true })
+      txt(doc, it.value, cx + 6, ry + 14, 'B', 10, PD.value, { width: cw - 12, height: 12, ellipsis: true })
     })
   }
   doc.lineWidth(0.4).rect(X0, y, w, rows * rh).stroke(PD.grid)
@@ -165,7 +165,7 @@ function unitTable(ctx: Ctx, rows: TypeRow[], y: number, newPage: () => number) 
           doc.lineWidth(0.4).moveTo(130, y).lineTo(130, y + gh).stroke(PD.grid)
         }
         const ty = ry + ROW_H / 2 - 4.5
-        txt(doc, dash(u.type), 236, ty, 'S', 9, PD.text, { width: cols[2].w - 6, ellipsis: true })
+        txt(doc, dash(u.type), 236, ty, 'S', 9, PD.text, { width: cols[2].w - 6, height: 12, ellipsis: true })
         doc.lineWidth(0.4).moveTo(233, ry).lineTo(233, ry + ROW_H).stroke(PD.grid)
         txt(doc, dash(u.count), cols[3].x, ty, 'S', 9, PD.text, { width: cols[3].w, align: 'center' })
         doc.lineWidth(0.4).moveTo(397, ry).lineTo(397, ry + ROW_H).stroke(PD.grid)

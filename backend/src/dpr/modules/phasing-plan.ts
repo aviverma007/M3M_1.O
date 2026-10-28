@@ -24,7 +24,7 @@ const FIELDS: { key: string; label: string }[] = [
 
 const COLS: Col[] = (() => {
   const labels = ['Phase', 'Site Area (Acres)', 'No. of Towers', 'No. of Units', 'FAR (Permissible)', 'FAR (Utilised)', 'SA / Unit (Sqft)', 'FAR / Unit']
-  const widths = [131.89, 80, 75, 75, 80, 80, 80, 69]
+  const widths = [171.89, 85, 85, 85, 90, 90, 90, 75]
   let x = 35
   return labels.map((label, i) => {
     const c = { label, x, w: widths[i] }
@@ -32,7 +32,7 @@ const COLS: Col[] = (() => {
     return c
   })
 })()
-const RIGHT = 35 + 671.89
+const RIGHT = W - 35
 const ROW_H = 24.131774
 
 const phasingPlan: ModuleRenderer = async (ctx, input, loadImage) => {
@@ -78,7 +78,7 @@ const phasingPlan: ModuleRenderer = async (ctx, input, loadImage) => {
     r.forEach((v, i) => {
       const c = COLS[i]
       const ty = y + ROW_H / 2 - 4.5
-      if (i === 0) txt(doc, v, c.x + 3, ty, 'B', 9, PD.text, { width: c.w - 6, ellipsis: true })
+      if (i === 0) txt(doc, v, c.x + 3, ty, 'B', 9, PD.text, { width: c.w - 6, height: 12, ellipsis: true })
       else txt(doc, v, c.x, ty, 'S', 9, PD.text, { width: c.w, align: 'center' })
       if (i > 0) doc.lineWidth(0.4).moveTo(c.x, y).lineTo(c.x, y + ROW_H).stroke(PD.grid)
     })

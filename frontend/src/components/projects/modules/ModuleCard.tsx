@@ -192,9 +192,12 @@ export default function ModuleCard({
     if (moduleName === 'MEP') return navigate(`${base}/design-chapters/mep`)
     const chapter = `${base}/modules/${moduleId}/chapter/${firstChapterId}`
     let to: string
-    if (moduleId === 1 || moduleId === 4) to = `${base}/modules/${moduleId}/keyratio`
+    // decided by module name: our database numbers modules 1..20, unlike the original (where id 4 was the commercial key ratio)
+    if (/key ratio/i.test(moduleName)) to = `${base}/modules/${moduleId}/keyratio`
     else if (moduleName === 'Export Configuration') to = `${base}/design-chapters/export-configuration`
-    else if (dpr) to = isDesignBrief ? `${base}/design-brief` : CHAPTER_SLUG[moduleName] ? `${base}/design-chapters/${CHAPTER_SLUG[moduleName]}` : chapter
+    else if (isDesignBrief) to = `${base}/design-brief`
+    else if (CHAPTER_SLUG[moduleName]) to = `${base}/design-chapters/${CHAPTER_SLUG[moduleName]}`
+    else if (dpr) to = chapter
     else to = isPreConcept ? `${base}/concept` : chapter
     navigate(to)
   }

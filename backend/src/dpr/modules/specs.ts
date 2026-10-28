@@ -108,6 +108,7 @@ function buildRows(
       const v = c.entry[key]
       if (!hasValue(v)) return { text: '-', color: COL.empty }
       const text = show(v)
+      if (text.toUpperCase() === 'NA') return { text, color: COL.empty }
       if (!bench) return { text, color: COL.text }
       const f = findSpecField(cfg, bench.chapters, chapter, c.id, key)
       const active = ((f as unknown as Record<string, unknown> | null)?.[categoryKey(bench.category)] as string[] | undefined) ?? []

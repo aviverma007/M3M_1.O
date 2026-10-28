@@ -3,8 +3,18 @@ import { cn } from '@/lib/utils'
 import { rolePermissionStatus } from './constants'
 
 /** Permissions summary card for a role/department pair (original "Oe"). */
-export function RolePermissionsCard({ role, department }: { role: string; department: string }) {
-  const permissions = rolePermissionStatus(role, department)
+export function RolePermissionsCard({
+  role,
+  department,
+  title,
+  permissions: stored,
+}: {
+  role: string
+  department: string
+  title?: string
+  permissions?: { name: string; status: boolean }[]
+}) {
+  const permissions = stored && stored.length ? stored : rolePermissionStatus(role, department)
   const enabled = permissions.filter((p) => p.status).length
 
   return (
@@ -15,7 +25,7 @@ export function RolePermissionsCard({ role, department }: { role: string; depart
         </div>
         <div className="flex flex-col">
           <h3 className="text-[16px] font-black text-[#1a1a1a] uppercase tracking-tight">
-            {department ? `${department.charAt(0).toUpperCase() + department.slice(1).replace('_', ' ')} Access` : 'System Access'}
+            {title ?? (department ? `${department.charAt(0).toUpperCase() + department.slice(1).replace('_', ' ')} Access` : 'System Access')}
           </h3>
           <p className="text-[13px] text-gray-500 font-bold uppercase tracking-widest opacity-60">{role.replace('_', ' ')}</p>
         </div>

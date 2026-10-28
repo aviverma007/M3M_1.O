@@ -15,6 +15,15 @@ import type { AccessRole, AdminUser, RoleFormValues, UserFormValues } from '@/ty
 
 type Tab = 'permissions' | 'modules' | 'users'
 
+/** Login role -> role card name in accessRoles */
+const ROLE_TO_NAME: Record<string, string> = {
+  super_admin: 'Super Admin',
+  general_admin: 'HOD Admin',
+  design_admin: 'Design Admin',
+  design_contributor: 'Design User',
+  general_contributor: 'General Contributor',
+}
+
 /** Roles visible to the current admin (module-access rows are hidden; same filters as original). */
 function visibleRoles(all: AccessRole[], role: string, isSuperAdmin: boolean) {
   const roles = all.filter((r) => !ACCESS_ROLE_RE.test(r.roleName))
@@ -39,7 +48,11 @@ export default function RolesAccessPage() {
   const usersQuery = useQuery({ queryKey: adminKeys.users, queryFn: fetchUsers })
 
   const roles = visibleRoles(rolesQuery.data ?? [], role, isSuperAdmin)
-  const selectedRole = roles[0] ?? null
+  // Show the logged-in user's own role first; super admin can switch between all roles.
+  const ownRoleName = ROLE_TO_NAME[role] ?? ''
+  const [pickedRoleId, setPickedRoleId] = useState<number | null>(null)
+  const selectedRole =
+    roles.find((r) => r.id === pickedRoleId) ?? roles.find((r) => r.roleName === ownRoleName) ?? roles[0] ?? null
   const users = [...(usersQuery.data ?? [])].sort((a, b) =>
     a.id === user?.id ? -1 : b.id === user?.id ? 1 : new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
   )
@@ -91,8 +104,11 @@ export default function RolesAccessPage() {
 
   // The permissions card describes the selected role as a role/department pair (as in original)
   const roleName = selectedRole?.roleName?.toLowerCase() ?? ''
-  const cardRole = roleName.includes('admin') ? 'general_admin' : 'general_contributor'
-  const cardDept = roleName.includes('design') ? 'design' : 'pmo'
+  const cardRole = roleName.includes('super') ? 'super_admin' : roleName.includes('admin') ? 'general_admin' : 'general_contributor'
+  const cardDept = roleName.includes('super') ? '' : roleName.includes('design') ? 'design' : 'pmo'
+  const storedPerms = (selectedRole?.permissions ?? [])
+    .filter((p) => p?.name && !p.name.startsWith('module:'))
+    .map((p) => ({ name: p.name, status: !!p.status }))
 
   const tabCls = (t: Tab) =>
     `pb-3 text-sm font-bold transition-colors ${
@@ -147,7 +163,29 @@ export default function RolesAccessPage() {
             {tab === 'modules' ? (
               <ModuleAccessPanel isSuperAdmin={isSuperAdmin} onSaved={reloadRoles} />
             ) : tab === 'permissions' ? (
-              <RolePermissionsCard role={cardRole} department={cardDept} />
+              <div className="flex flex-col gap-4">
+                {roles.length > 1 && (
+                  <div className="flex flex-wrap gap-2">
+                    {roles.map((r) => (
+                      <button
+                        key={r.id}
+                        onClick={() => setPickedRoleId(r.id)}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                          r.id === selectedRole?.id ? 'bg-[#00509d] text-white border-[#00509d]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        {r.roleName}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <RolePermissionsCard
+                  role={cardRole}
+                  department={cardDept}
+                  title={selectedRole ? `${selectedRole.roleName} Access` : undefined}
+                  permissions={storedPerms}
+                />
+              </div>
             ) : (
               <UsersPanel
                 users={users}

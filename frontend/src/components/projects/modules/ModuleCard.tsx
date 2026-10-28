@@ -159,7 +159,7 @@ export default function ModuleCard({
   })()
   const canOpen = access !== 'none'
   const isView = access === 'view'
-  const dpr = isDPR || moduleId === 7
+  const dpr = isDPR
   const isDesignBrief = moduleName === 'Design Brief'
   const briefMissing = isDesignBrief && !moApprovedDocUrl
   const isPreConcept = moduleName === 'Pre Concept Design & Checklist'

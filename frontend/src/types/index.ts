@@ -73,7 +73,7 @@ export type ProjectModule = {
   projectModule: ProjectModuleProgress | null
   moduleChapters: { id: number; title: string; chapterNumber: number }[]
   firstChapterId: number | null
-  originalModuleId: number
+  originalModuleId: number | null
 }
 
 export type Notification = {

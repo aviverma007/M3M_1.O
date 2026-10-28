@@ -106,7 +106,8 @@ route('GET', '/project/:id/module', ({ params, query }) => {
         : null,
       moduleChapters: chapters.map((c) => ({ id: c.id, title: c.title, chapterNumber: c.chapterNumber })),
       firstChapterId: chapters[0]?.id ?? null,
-      originalModuleId: m.id,
+      // only the design-chapter (DPR) modules carry originalModuleId, as in the original API (drives the card's tick + DPR behaviour)
+      originalModuleId: MODULE_ROUTE[m.name as string] ? m.id : null,
     }
   })
   return ok(paginate(rows, 1, 100))

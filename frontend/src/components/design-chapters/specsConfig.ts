@@ -1,5 +1,5 @@
 /* Static configuration for the ID Specifications and Common Area pages (copied from the original). */
-import type { SpecsConfig, Item } from './SpecsPage'
+import type { SpecsConfig, Item } from './specsTypes'
 
 /* ======================= ID Specifications (Apartment Design, module 2) ======================= */
 const ID_ROOMS_DEFAULT: Item[] = [

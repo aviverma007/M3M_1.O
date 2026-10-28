@@ -32,19 +32,32 @@ const envPort = (() => {
 })()
 const BASE = (args.url || `http://127.0.0.1:${envPort || 5000}/api/v1`).replace(/\/$/, '')
 const email = args.email || 'admin@m3m.com'
-/* accept the folder itself, the folder one level above it (zip extracted into a same-named folder), or the .zip path minus .zip */
-const dataDir = (() => {
-  if (!args.data) return null
+/* --data may be one project folder (data.json + images/) or a folder holding several of them (any depth up to 2),
+   e.g. an unzipped export with one folder per project — then every project is imported in one run */
+const dataDirs = (() => {
+  if (!args.data) return []
   const base = path.resolve(String(args.data).replace(/\.zip$/i, ''))
-  if (fs.existsSync(path.join(base, 'data.json'))) return base
-  if (fs.existsSync(base) && fs.statSync(base).isDirectory()) {
-    for (const d of fs.readdirSync(base)) if (fs.existsSync(path.join(base, d, 'data.json'))) return path.join(base, d)
+  if (fs.existsSync(path.join(base, 'data.json'))) return [base]
+  const found = []
+  const walk = (dir, depth) => {
+    if (depth > 2 || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return
+    for (const d of fs.readdirSync(dir).sort()) {
+      const full = path.join(dir, d)
+      if (!fs.statSync(full).isDirectory()) continue
+      if (fs.existsSync(path.join(full, 'data.json'))) found.push(full)
+      else walk(full, depth + 1)
+    }
   }
-  return null
+  walk(base, 1)
+  return found
 })()
-if (!dataDir) {
-  console.error(args.data ? `No data.json found in "${args.data}" (or one folder below it). Unzip the import file first and point --data at the folder that contains data.json and images.` : '')
-  console.error('Usage: node scripts/import-project.mjs --data <folder with data.json> [--email admin@m3m.com] [--project <id>] [--overwrite true]')
+if (!dataDirs.length) {
+  console.error(args.data ? `No data.json found in "${args.data}". Unzip the import file first and point --data at the unzipped folder.` : '')
+  console.error('Usage: node scripts/import-project.mjs --data <folder> [--email admin@m3m.com] [--project <id>] [--overwrite true]')
+  process.exit(1)
+}
+if (args.project && dataDirs.length > 1) {
+  console.error('--project can only be used with a single project folder.')
   process.exit(1)
 }
 
@@ -87,10 +100,28 @@ async function findProjectsByName(name) {
 }
 
 async function main() {
-  const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'data.json'), 'utf8'))
   const password = args.password || process.env.M3M_PASSWORD || (await ask(`Password for ${email}: `))
   token = (await api('POST', '/auth/login', { email, password }))?.accessToken
   if (!token) throw new Error('Login failed')
+  const failed = []
+  for (const dir of dataDirs) {
+    console.log(`\n=== ${path.basename(dir)}`)
+    try {
+      await importOne(dir)
+    } catch (e) {
+      console.error(`  Failed: ${e.message}`)
+      failed.push(`${path.basename(dir)}: ${e.message}`)
+    }
+  }
+  console.log(`\nImported ${dataDirs.length - failed.length} of ${dataDirs.length} project(s).`)
+  if (failed.length) {
+    console.log('Not imported:\n  ' + failed.join('\n  '))
+    process.exitCode = 1
+  }
+}
+
+async function importOne(dataDir) {
+  const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'data.json'), 'utf8'))
 
   /* ---------- project */
   let project

@@ -32,8 +32,18 @@ const envPort = (() => {
 })()
 const BASE = (args.url || `http://127.0.0.1:${envPort || 5000}/api/v1`).replace(/\/$/, '')
 const email = args.email || 'admin@m3m.com'
-const dataDir = args.data
-if (!dataDir || !fs.existsSync(path.join(dataDir, 'data.json'))) {
+/* accept the folder itself, the folder one level above it (zip extracted into a same-named folder), or the .zip path minus .zip */
+const dataDir = (() => {
+  if (!args.data) return null
+  const base = path.resolve(String(args.data).replace(/\.zip$/i, ''))
+  if (fs.existsSync(path.join(base, 'data.json'))) return base
+  if (fs.existsSync(base) && fs.statSync(base).isDirectory()) {
+    for (const d of fs.readdirSync(base)) if (fs.existsSync(path.join(base, d, 'data.json'))) return path.join(base, d)
+  }
+  return null
+})()
+if (!dataDir) {
+  console.error(args.data ? `No data.json found in "${args.data}" (or one folder below it). Unzip the import file first and point --data at the folder that contains data.json and images.` : '')
   console.error('Usage: node scripts/import-project.mjs --data <folder with data.json> [--email admin@m3m.com] [--project <id>] [--overwrite true]')
   process.exit(1)
 }

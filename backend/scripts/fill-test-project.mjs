@@ -7,7 +7,7 @@
  *   node scripts/fill-test-project.mjs --project 1 --email admin@m3m.com
  *   (asks for the password; or pass --password / set M3M_PASSWORD)
  *
- * Options: --url http://localhost:5000/api/v1 (default, from PORT in .env if set)
+ * Options: --url http://127.0.0.1:5000/api/v1 (default, from PORT in .env if set)
  *
  * Fills: Key Ratio, Apartment Design and Common Design (every field answered with the benchmark answer for the
  * project's category), Design Brief department inputs (Liaison, Business Development, Land, Structure, MEP),
@@ -30,7 +30,7 @@ const envPort = (() => {
     return undefined
   }
 })()
-const BASE = (args.url || `http://localhost:${envPort || 5000}/api/v1`).replace(/\/$/, '')
+const BASE = (args.url || `http://127.0.0.1:${envPort || 5000}/api/v1`).replace(/\/$/, '')
 const projectId = Number(args.project)
 const email = args.email || 'admin@m3m.com'
 if (!Number.isInteger(projectId) || projectId <= 0) {
@@ -53,7 +53,12 @@ async function api(method, p, body, { form } = {}) {
     headers['Content-Type'] = 'application/json'
     payload = JSON.stringify(body)
   }
-  const res = await fetch(BASE + p, { method, headers, body: payload })
+  let res
+  try {
+    res = await fetch(BASE + p, { method, headers, body: payload })
+  } catch (e) {
+    throw new Error(`Cannot reach the app at ${BASE} (${e.cause?.code ?? e.message}). Is the backend running (npm start)? Use --url to point elsewhere.`)
+  }
   const text = await res.text()
   let json
   try {

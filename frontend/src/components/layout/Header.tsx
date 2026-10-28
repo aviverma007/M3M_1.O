@@ -227,7 +227,11 @@ export default function Header() {
   return (
     <div className="w-full bg-white border-b border-gray-100 flex flex-col sticky top-0 z-50">
       <div className="flex justify-between items-center px-6 py-2 border-b border-gray-50">
-        <Link to="/dashboard" className="flex items-center">
+        {/* Logo goes back to the company (portfolio) selector for users who pick a company; others stay on their dashboard */}
+        <Link
+          to={['super_admin', 'design_admin', 'general_admin', 'design_contributor'].includes(role) ? '/select-location' : '/dashboard'}
+          className="flex items-center"
+        >
           <img src={logo} alt="M3M Logo" className="h-10 w-auto object-contain" />
         </Link>
         <div className="flex items-center gap-6">

@@ -50,15 +50,19 @@ export function renderParamTable(ctx: Ctx, title: string, headers: [string, stri
   page()
   for (const sec of sections) {
     if (!sec.rows.length) continue
-    if (y + 22 > LIMIT) page()
-    doc.rect(X, y, TW, 22).fill(BAND)
-    doc.lineWidth(0.5).rect(X, y, TW, 22).stroke(BORDER)
-    doc.font('B').fontSize(10).fillColor(C.white).text(sec.title, X + 10, y + 6, { lineBreak: false })
-    y += 22
+    // sections without a title (custom parameters) are printed without a band
+    if (sec.title) {
+      if (y + 22 > LIMIT) page()
+      doc.rect(X, y, TW, 22).fill(BAND)
+      doc.lineWidth(0.5).rect(X, y, TW, 22).stroke(BORDER)
+      doc.font('B').fontSize(10).fillColor(C.white).text(sec.title, X + 10, y + 6, { lineBreak: false })
+      y += 22
+    }
     idx = 0
     for (const r of sec.rows) {
       const labelH = lh(doc, r.label, SPLIT - X - 16, 'S', 9)
-      const valueText = r.value + (r.unit ? ` ${r.unit}` : '')
+      const unit = r.unit && /^-?[0-9.]+$/.test(r.value) ? r.unit : undefined
+      const valueText = r.value + (unit ? ` ${unit}` : '')
       const valueH = lh(doc, valueText, X + TW - SPLIT - 16, 'S', 9)
       const h = Math.max(labelH, valueH + (r.req !== undefined ? 12.45 : 0)) + 12
       if (y + h > LIMIT) {
@@ -68,10 +72,10 @@ export function renderParamTable(ctx: Ctx, title: string, headers: [string, stri
       doc.rect(X, y, TW, h).fill(idx % 2 ? ALT : C.white)
       doc.font('S').fontSize(9).fillColor(C.text).text(r.label, X + 8, y + 5, { width: SPLIT - X - 16 })
       const vw = X + TW - SPLIT - 16
-      if (r.unit && valueH <= 12.2) {
+      if (unit && valueH <= 12.2) {
         doc.font('S').fontSize(9).fillColor(color).text(r.value, SPLIT + 8, y + 5, { lineBreak: false })
         const w = doc.widthOfString(r.value)
-        doc.font('R').fontSize(9).fillColor(color).text(` ${r.unit}`, SPLIT + 8 + w, y + 5, { lineBreak: false })
+        doc.font('R').fontSize(9).fillColor(color).text(` ${unit}`, SPLIT + 8 + w, y + 5, { lineBreak: false })
       } else {
         doc.font('S').fontSize(9).fillColor(color).text(valueText, SPLIT + 8, y + 5, { width: vw })
       }
@@ -131,3 +135,6 @@ export function checkBenchmark(value: unknown, bench: string): boolean | undefin
   }
   return oneOf(value, b)
 }
+
+/** label of a custom parameter as the original prints it: all-caps keys as they are, others with a space before each capital */
+export const customLabel = (key: string) => (/^[A-Z0-9_]+$/.test(key) ? key : key.replace(/([A-Z])/g, ' $1'))

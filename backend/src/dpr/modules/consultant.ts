@@ -16,8 +16,11 @@ const COLS: Col[] = [
 const consultant: ModuleRenderer = (ctx, input) => {
   const page = pager(ctx, 'Design Considerations — Consultants Strategy')
   const rows = (Array.isArray(input.summary?.consultantStrategyData) ? input.summary!.consultantStrategyData : []) as ConsultantRow[]
+  if (!rows.length) {
+    pager(ctx, 'Consultant Strategy')()
+    return emptyMessage(ctx, 'No consultants details configured.')
+  }
   page()
-  if (!rows.length) return emptyMessage(ctx, 'No consultants configured.')
   drawTable(
     ctx,
     COLS,

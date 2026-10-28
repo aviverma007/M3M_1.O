@@ -6,22 +6,28 @@ import { isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamS
 
 const TITLE = 'Service Design Considerations'
 const yes = (v: unknown) => show(v) === 'Yes'
+/** the value appears in the benchmark text (e.g. "Residents" within "Residents & Visitors") or vice versa */
+const within = (v: unknown, req: string) => {
+  const s = show(v).toLowerCase()
+  const r = req.toLowerCase()
+  return !!s && (r.includes(s) || s.includes(r))
+}
 
 /** report label, Req text and pass rule per parameter (as printed by the original report) */
 const RULES: Record<string, { label?: string; req?: string; ok?: (v: unknown) => boolean | undefined }> = {
   mainEntryType: { req: 'Residential (internal driveway 6m wide)', ok: (v) => oneOf(v, 'Residential') && !oneOf(v, 'Mixed') },
   internalDrivewayWidth: { req: '6 m (with 7.5m fire tender path)', ok: (v) => num(v) >= 6 },
   drivewayServing: {},
-  noOfRamps: { req: 'Min 4', ok: (v) => num(v) >= 4 },
-  carsPerRamp: { req: 'Min 2', ok: (v) => num(v) >= 2 },
+  noOfRamps: {},
+  carsPerRamp: {},
   inwardRamp: { req: 'Yes', ok: yes },
   outwardRamp: { req: 'Yes', ok: yes },
-  rampServing: { req: 'Residential Towers', ok: (v) => oneOf(v, 'Residential Towers') },
+  rampServing: {},
   rampSlopeCompliant: { req: 'Not explicitly stated', ok: yes },
   primaryDropOff: { req: 'Yes', ok: yes },
-  usersAllowedAtDropOff: { req: 'Residents & Visitors', ok: (v) => oneOf(v, 'Both') },
-  vehicleTypesAllowed: { req: '2W / 4W (both)', ok: (v) => oneOf(v, 'Both') },
-  dropOffLevelOptions: { req: 'Grade + Basement', ok: (v) => oneOf(v, 'Both') },
+  usersAllowedAtDropOff: { req: 'Residents & Visitors', ok: (v) => oneOf(v, 'Both') || within(v, 'Residents & Visitors') },
+  vehicleTypesAllowed: { req: '2W / 4W (both)', ok: (v) => oneOf(v, 'Both') || within(v, '2W / 4W (both)') },
+  dropOffLevelOptions: { req: 'Grade + Basement', ok: (v) => oneOf(v, 'Both') || within(v, 'Grade + Basement') },
   basementAccessControl: { req: 'Yes (Boom Barrier)', ok: yes },
   typeOfAccessControl: { req: 'Boom Barrier', ok: (v) => oneOf(v, 'Boom Barrier') },
   visitorRestriction: { req: 'Yes', ok: yes },
@@ -31,7 +37,7 @@ const RULES: Record<string, { label?: string; req?: string; ok?: (v: unknown) =>
   fireLiftAsService: { req: 'Yes', ok: yes },
   driversRooms: { req: 'Yes (B1 level)', ok: yes },
   serviceToilets: { req: 'Yes (B1 level)', ok: yes },
-  serviceFacilitiesLocation: { req: 'Basement B1', ok: (v) => oneOf(v, 'Basement B1') },
+  serviceFacilitiesLocation: {},
 }
 
 const serviceDesign: ModuleRenderer = (ctx, input) => {
@@ -50,7 +56,7 @@ const serviceDesign: ModuleRenderer = (ctx, input) => {
   }))
   if (!sections.some((s) => s.rows.length)) {
     contentPage(ctx, TITLE)
-    emptyMessage(ctx, 'No service design data configured.')
+    emptyMessage(ctx, 'No service design specifications configured.')
     return
   }
   renderParamTable(ctx, TITLE, ['Parameter', 'Details'], sections)

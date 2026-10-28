@@ -53,18 +53,18 @@ const LABELS: Record<string, string> = {
   doorshutterfinish: 'Door Shutter Finish', asperfirenorms: 'As Per Fire Norms', typeofac: 'Type Of AC', facilities: 'Facilities',
   services: 'Services',
 }
-const labelOf = (k: string) =>
+export const labelOf = (k: string) =>
   LABELS[k] ??
   k
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/[_-]+/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase())
 
-const ID_SECTION: Record<string, string> = {
+export const ID_SECTION: Record<string, string> = {
   flooring: 'Flooring', wall: 'Wall', ceiling: 'Ceiling', doors: 'Doors', 'kitchen-goods': 'Kitchen Goods', electricals: 'Electricals',
   'bathroom-accessories': 'Bathroom Accessories',
 }
-const CA_SECTION: Record<string, string> = { flooring: 'Flooring', wall: 'Wall', ceiling: 'Ceiling', 'doors-other': 'Doors & Other Facilities' }
+export const CA_SECTION: Record<string, string> = { flooring: 'Flooring', wall: 'Wall', ceiling: 'Ceiling', 'doors-other': 'Doors & Other Facilities' }
 
 /* ------------------------------------------------------------------ data model */
 type Entry = Record<string, SpecValue | undefined>
@@ -73,7 +73,8 @@ const show = (v: unknown) => (Array.isArray(v) ? v.filter((x) => String(x ?? '')
 
 type Column = { id: string; name: string; entry: Entry }
 type Cell = { text: string; color: string; req?: { text: string; color: string } }
-type TableRow = { label: string; cells: Cell[] }
+/** idx = position in the full (unfiltered) key list — the original stripes rows by it, counting rows it doesn't print */
+type TableRow = { label: string; cells: Cell[]; idx: number }
 
 function columnsOf(cfg: SpecsConfig, data: Record<string, unknown>, chapter: string, hidden: Set<string>): Column[] {
   const rooms = cfg.rooms(chapter)
@@ -89,11 +90,11 @@ function columnsOf(cfg: SpecsConfig, data: Record<string, unknown>, chapter: str
   return cols
 }
 
-/** union of field keys (first-appearance order) that have a value in at least one column */
+/** union of field keys (first-appearance order) that have a value in at least one column, with their position in the full list */
 function rowKeys(cols: Column[]) {
   const keys: string[] = []
   cols.forEach((c) => Object.keys(c.entry).forEach((k) => keys.includes(k) || keys.push(k)))
-  return keys.filter((k) => cols.some((c) => hasValue(c.entry[k])))
+  return keys.map((key, idx) => ({ key, idx })).filter(({ key }) => cols.some((c) => hasValue(c.entry[key])))
 }
 
 function buildRows(
@@ -102,7 +103,8 @@ function buildRows(
   cols: Column[],
   bench?: { chapters: ModuleChapter[]; category: string },
 ): TableRow[] {
-  return rowKeys(cols).map((key) => ({
+  return rowKeys(cols).map(({ key, idx }) => ({
+    idx,
     label: labelOf(key),
     cells: cols.map((c): Cell => {
       const v = c.entry[key]
@@ -182,28 +184,37 @@ function row(doc: Doc, r: TableRow, lay: Layout, y: number, h: number, stripe: b
 
 type Section = { title: string; cols: Column[]; rows: TableRow[] }
 
+/** label column: fits the widest row label (or the "Specification" heading) across the whole module, +16, rounded up */
+function labelWidth(doc: Doc, sections: Section[]) {
+  doc.font('B').fontSize(7.5)
+  let w = doc.widthOfString('Specification')
+  doc.font('S').fontSize(7.5)
+  for (const s of sections) for (const r of s.rows) w = Math.max(w, doc.widthOfString(r.label))
+  return Math.min(Math.ceil(w + 16), 200)
+}
+
 /** room-column tables, flowing over as many pages as needed ("(cont.)" + repeated header) */
-function drawSections(ctx: Ctx, pageTitle: string, labelW: number, sections: Section[]) {
+function drawSections(ctx: Ctx, pageTitle: string, sections: Section[]) {
   const { doc } = ctx
+  const labelW = labelWidth(doc, sections)
   contentPage(ctx, pageTitle)
   let y = START_Y
   sections.forEach((s, si) => {
     const lay = layoutOf(labelW, s.cols.length)
     const headH = headerHeight(doc, s.cols, lay) + 14
-    const first = rowHeight(doc, s.rows[0], lay)
     if (si > 0) y += 8
-    if (y + 22 + headH + first > LIMIT) {
+    if (y + 22 + headH > LIMIT) {
       contentPage(ctx, pageTitle)
       y = START_Y
     }
     y = header(doc, s.cols, lay, sectionBar(doc, s.title, y))
-    s.rows.forEach((r, i) => {
+    s.rows.forEach((r) => {
       const h = rowHeight(doc, r, lay)
       if (y + h > LIMIT) {
         contentPage(ctx, pageTitle)
         y = header(doc, s.cols, lay, sectionBar(doc, `${s.title} (cont.)`, START_Y))
       }
-      row(doc, r, lay, y, h, i % 2 === 1)
+      row(doc, r, lay, y, h, r.idx % 2 === 1)
       y += h
     })
     doc.lineWidth(0.6).moveTo(MARGIN, y).lineTo(RIGHT, y).stroke(LINE)
@@ -217,11 +228,18 @@ function kitchenGoods(ctx: Ctx, cols: Column[]) {
   const VX = 325
   const VW = RIGHT - 10 - VX
   const LW = 315 - 10 - (MARGIN + 10)
+  /** item names are shown with every word capitalised ("Exhaust Fan") */
+  const caps = (n: string) => n.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const head = (y: number) => {
     doc.rect(MARGIN, y, TABLE_W, 26).fill(COL.bar)
     txt(doc, 'Specification', MARGIN + 10, y + 7, 'S', 9, '#FFFFFF')
     txt(doc, 'Details', VX, y + 7, 'S', 9, '#FFFFFF')
     return y + 26
+  }
+  /** follow-on pages: "(cont.)" title, no column header */
+  const nextPage = () => {
+    contentPage(ctx, `${title} (cont.)`)
+    return START_Y
   }
   contentPage(ctx, title)
   let y = head(START_Y)
@@ -229,25 +247,22 @@ function kitchenGoods(ctx: Ctx, cols: Column[]) {
     const keys = Object.keys(c.entry).filter((k) => hasValue(c.entry[k]))
     if (!keys.length) continue
     const firstH = Math.max(textHeight(doc, labelOf(keys[0]), LW, 'S', 8.5), textHeight(doc, show(c.entry[keys[0]]), VW, 'R', 8.5)) + 12
-    if (y + 22 + firstH > LIMIT) {
-      contentPage(ctx, title)
-      y = head(START_Y)
-    }
+    if (y + 22 + firstH > LIMIT) y = nextPage()
     const group = (name: string) => {
       doc.rect(MARGIN, y, TABLE_W, 22).fill('#DCE6F0')
       doc.lineWidth(0.4).rect(MARGIN, y, TABLE_W, 22).stroke(LINE)
       txt(doc, name, MARGIN + 10, y + 6, 'B', 9, COL.headText)
       y += 22
     }
-    group(c.name)
+    const name = caps(c.name)
+    group(name)
     keys.forEach((k, i) => {
       const label = labelOf(k)
       const val = show(c.entry[k])
       const h = Math.max(textHeight(doc, label, LW, 'S', 8.5), textHeight(doc, val, VW, 'R', 8.5)) + 12
       if (y + h > LIMIT) {
-        contentPage(ctx, title)
-        y = head(START_Y)
-        group(`${c.name} (cont.)`)
+        y = nextPage()
+        group(`${name} (cont.)`)
       }
       doc.rect(MARGIN, y, TABLE_W, h).fill(i % 2 ? '#F5F7FA' : '#FFFFFF')
       doc.lineWidth(0.3).rect(MARGIN, y, TABLE_W, h).stroke(LINE)
@@ -278,11 +293,11 @@ export const idSpecifications: ModuleRenderer = (ctx, input) => {
   }
   const kitchen = columnsOf(cfg, data, 'kitchen-goods', hidden)
   if (!sections.length && !kitchen.length) {
-    contentPage(ctx, 'Product Mix — ID Specifications Details')
+    contentPage(ctx, 'Product Mix — ID Specifications')
     emptyMessage(ctx, 'No ID specifications configured.')
     return
   }
-  if (sections.length) drawSections(ctx, 'Product Mix — ID Specifications Details', 98, sections)
+  if (sections.length) drawSections(ctx, 'Product Mix — ID Specifications Details', sections)
   if (kitchen.length) kitchenGoods(ctx, kitchen)
 }
 
@@ -298,9 +313,9 @@ export const commonArea: ModuleRenderer = (ctx, input) => {
     if (cols.length && rows.length) sections.push({ title: CA_SECTION[ch.id] ?? ch.name, cols, rows })
   }
   if (!sections.length) {
-    contentPage(ctx, 'Product Mix — Common Area Specifications')
-    emptyMessage(ctx, 'No common area specifications configured.')
+    contentPage(ctx, 'Product Mix — Common Area Specs')
+    emptyMessage(ctx, 'No Common Area specifications configured.')
     return
   }
-  drawSections(ctx, 'Product Mix — Common Area Specifications', 92, sections)
+  drawSections(ctx, 'Product Mix — Common Area Specifications', sections)
 }

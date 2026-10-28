@@ -150,13 +150,22 @@ function wordLines(doc: Doc, s: string, width: number, font: 'R' | 'S' | 'B', si
   return out
 }
 /** centred multi-line label: the original's renderer places every line but the last ~0.37em further left */
-function centerLines(doc: Doc, s: string, x0: number, x1: number, y: number, pad: number, font: 'R' | 'S' | 'B', size: number, color: string, vCenterH?: number) {
+/** advance-width sum without kerning (how the original measured the key-ratio group labels) */
+function unkernedWidth(doc: Doc, s: string, size: number) {
+  const f = (doc as unknown as { _font: { font: { glyphForCodePoint(c: number): { advanceWidth: number }; unitsPerEm: number } } })._font.font
+  let w = 0
+  for (const ch of s) w += f.glyphForCodePoint(ch.codePointAt(0)!).advanceWidth
+  return (w / f.unitsPerEm) * size
+}
+
+function centerLines(doc: Doc, s: string, x0: number, x1: number, y: number, pad: number, font: 'R' | 'S' | 'B', size: number, color: string, vCenterH?: number, unkerned = false) {
   const lines = wordLines(doc, s, x1 - x0 - pad * 2, font, size)
   const h = lines.length * lh(size)
-  const top = vCenterH === undefined ? y : y + vCenterH / 2 - h / 2
+  const top = vCenterH === undefined ? y : y + Math.max(4, vCenterH / 2 - h / 2)
   lines.forEach((t, i) => {
     doc.font(font).fontSize(size)
-    const w = doc.widthOfString(t) + (i < lines.length - 1 ? size * 0.74 : 0)
+    const last = i === lines.length - 1
+    const w = last ? doc.widthOfString(t) : (unkerned ? unkernedWidth(doc, t, size) : doc.widthOfString(t)) + size * 0.744
     txt(doc, t, x0 + (x1 - x0 - w) / 2, top + i * lh(size), font, size, color)
   })
   return h
@@ -198,7 +207,7 @@ function areaStatementPage(ctx: Ctx, p: AreaStatementInputs) {
           ],
         },
       ],
-      check: { acre: fx(a.checkAcre), sqm: inr(a.checkSqm), reqAcre: fx(a.licensedAreaAcre), reqSqm: inr(a.licensedSqm), over: Math.abs(a.checkSqm - a.licensedSqm) > 0.5 },
+      check: { acre: fx(a.checkAcre), sqm: inr(a.checkSqm), reqAcre: fx(a.licensedAreaAcre), reqSqm: inr(a.licensedSqm), over: a.checkSqm - a.licensedSqm > 0.5 },
     },
     {
       head: ['', 'FACTOR', 'FAR in Sq.M.'],
@@ -263,9 +272,10 @@ function areaStatementPage(ctx: Ctx, p: AreaStatementInputs) {
         line(doc, X[1], y, X[1], y + 18, '#E5E7EB', 0.3)
         line(doc, X[2], y, X[2], y + 18, '#E5E7EB', 0.3)
         const c = r.bold ? BLUE : TEXT
+        const vc = (v: string) => (r.bold ? BLUE : v === '-' ? '#64748B' : TEXT)
         txt(doc, r.label, 43, y + 5.53, r.bold ? 'B' : 'R', 7, c)
-        center(doc, r.mid, X[1], X[2], y + 5.53, r.bold ? 'B' : 'S', 7, c)
-        center(doc, r.sqm, X[2], X[3], y + 5.53, r.bold ? 'B' : 'S', 7, c)
+        center(doc, r.mid, X[1], X[2], y + 5.53, r.bold ? 'B' : 'S', 7, vc(r.mid))
+        center(doc, r.sqm, X[2], X[3], y + 5.53, r.bold ? 'B' : 'S', 7, vc(r.sqm))
         y += 18
       })
     })
@@ -295,6 +305,11 @@ type PRow =
 
 function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefined) {
   const { doc } = ctx
+  if (!rows.length) {
+    contentPage(ctx, 'Design Considerations — Project Level Parameters')
+    emptyMessage(ctx, 'No project level design details configured.')
+    return
+  }
   const L = 35
   const R = 765
   const SPLIT = 335
@@ -318,7 +333,7 @@ function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefine
       if (y + 22 > LIMIT) header()
       doc.rect(L, y, R - L, 22).fill('#1E3A5F')
       doc.lineWidth(0.5).rect(L, y, R - L, 22).stroke(BORDER)
-      txt(doc, r.label, 45, y + 5.9, 'B', 10, '#FFFFFF')
+      txt(doc, r.label, 45, y + 5.97, 'B', 10, '#FFFFFF')
       y += 22
       stripe = 0
       continue
@@ -350,7 +365,7 @@ function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefine
   }
 }
 
-const KR_PARAMS: { label: string; key: string; unit: string; legacy?: boolean; bench?: string }[] = [
+const KR_PARAMS: { label: string; key: string; unit: string; bench?: string }[] = [
   { label: 'Building Height', key: 'buildingHeight', unit: 'm' },
   { label: 'Carpet Area', key: 'carpetArea', unit: 'sq ft' },
   { label: 'Saleable Area', key: 'saleableArea', unit: 'sq ft' },
@@ -360,6 +375,7 @@ const KR_PARAMS: { label: string; key: string; unit: string; legacy?: boolean; b
   { label: 'Total External Wall Area', key: 'totalExternalWallArea', unit: 'sq ft' },
   { label: 'Service Shaft Area', key: 'serviceShaftArea', unit: 'sq ft' },
   { label: 'Window to Area Ratio', key: 'windowToAreaRatio', unit: '' },
+  { label: 'Construction Cost On B U A', key: 'constructionCostOnBUA', unit: 'Rs.' },
   { label: 'Permissible F A R', key: 'permissibleFAR', unit: 'sq ft', bench: 'Permissible FAR' },
   { label: 'No. of EWS Unit', key: 'noOfEWSUnit', unit: '' },
   { label: 'EWS FAR', key: 'ewsFAR', unit: 'sq ft', bench: 'EWS FAR (Sqft)' },
@@ -373,14 +389,20 @@ const KR_PARAMS: { label: string; key: string; unit: string; legacy?: boolean; b
   { label: 'Lobby Corridor Width', key: 'lobbyCorridorWidth', unit: 'm' },
   { label: 'Driveway Width Basement', key: 'drivewayWidthBasement', unit: 'm' },
   { label: 'Floor to Floor Height Ground Lobby', key: 'floorToFloorHeightGroundLobby', unit: 'm' },
-  { label: 'Floor to Floor Height Basement B1 B2', key: 'floorToFloorHeightBasementB1B2', unit: 'm', legacy: true },
+  { label: 'Floor to Floor Height Basement B1 B2', key: 'floorToFloorHeightBasementB1B2', unit: 'm' },
   { label: 'Floor to Floor Height (B1 - GF) Tower Area', key: 'floorToFloorHeightB1GFTower', unit: 'm' },
   { label: 'Floor to Floor Height (B1 - GF) Non Tower Area', key: 'floorToFloorHeightB1GFNonTower', unit: 'm' },
   { label: 'Floor to Floor Height (B2 - B1)', key: 'floorToFloorHeightB2B1', unit: 'm' },
   { label: 'Floor to Floor Height (B3 - B2)', key: 'floorToFloorHeightB3B2', unit: 'm' },
-  { label: 'Average Wall Area (Interior + Exterior) Per Basement', key: 'avgWallAreaBasement', unit: 'sq ft', legacy: true },
+  { label: 'Car Length', key: 'carLength', unit: 'm' },
+  { label: 'Car Width', key: 'carWidth', unit: 'm' },
+  { label: 'Car Height', key: 'carHeight', unit: 'm' },
+  { label: 'Average Wall Area (Interior + Exterior) Per Basement', key: 'avgWallAreaBasement', unit: 'sq ft' },
   { label: 'Number of Basements', key: 'noOfBasements', unit: '', bench: 'No. of Basements' },
+  { label: 'Sales Price', key: 'salesPrice', unit: '' },
 ]
+/** label for a stored key the original has no label for: "constructionCostOnBUA" -> "Construction Cost On B U A" */
+const autoLabel = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).trim()
 
 const OTHER_PARAMS: { label: string; key: string; unit: string; legacy?: boolean; bench?: string }[] = [
   { label: 'Ground Floor Entrance Lobby Type', key: 'groundFloorEntranceLobby', unit: '' },
@@ -398,24 +420,65 @@ const OTHER_PARAMS: { label: string; key: string; unit: string; legacy?: boolean
   { label: 'Unit Parking Size', key: 'unitParkingSize', unit: '', legacy: true },
 ]
 
+const filled = (v: unknown) => v !== undefined && v !== null && String(v).trim() !== ''
+
 function parameterRows(l: KeyRatioInputs, extra: AdditionalElements2 | undefined): PRow[] {
   const rows: PRow[] = []
-  const has = (o: Record<string, unknown>, k: string) => o[k] !== undefined && o[k] !== null && String(o[k]).trim() !== ''
+  const known = new Set(KR_PARAMS.map((f) => f.key))
   for (const f of KR_PARAMS) {
-    if (f.legacy && !has(l, f.key)) continue
+    if (!filled(l[f.key])) continue
     rows.push({ kind: 'row', label: f.label, value: str(l[f.key]), unit: f.unit, benchLabels: [f.label, ...(f.bench ? [f.bench] : [])] })
   }
-  rows.push({ kind: 'section', label: 'Additional Elements' })
+  for (const [k, v] of Object.entries(l)) if (!known.has(k) && filled(v)) rows.push({ kind: 'row', label: autoLabel(k), value: str(v), unit: '' })
   const o = (extra?.other ?? {}) as Record<string, unknown>
-  for (const f of OTHER_PARAMS) {
-    if (f.legacy && !has(o, f.key)) continue
-    rows.push({ kind: 'row', label: f.label, value: str(o[f.key]), unit: f.unit })
-  }
-  const reqs = ((o.extraParkingReqs as ParkingReq[] | undefined) ?? []).filter((r) => r && (r.label || r.value))
-  if (reqs.length) rows.push({ kind: 'row', label: 'Extra Parking Reqs', value: '', unit: '', lines: reqs.flatMap((r) => [`Label: ${r.label ?? ''}`, `Value: ${r.value ?? ''}`]) })
-  rows.push({ kind: 'row', label: 'Openings To Ground Floor Lobby', value: str(o.openingsToGroundFloorLobby), unit: '' })
-  reqs.forEach((r) => rows.push({ kind: 'row', label: str(r.label), value: str(r.value), unit: 'Nos.' }))
+  const more: PRow[] = []
+  for (const f of OTHER_PARAMS) if (filled(o[f.key])) more.push({ kind: 'row', label: f.label, value: str(o[f.key]), unit: f.unit })
+  const reqs = ((o.extraParkingReqs as ParkingReq[] | undefined) ?? []).filter((r) => r && filled(r.value))
+  if (reqs.length) more.push({ kind: 'row', label: 'Extra Parking Reqs', value: '', unit: '', lines: reqs.flatMap((r) => [`Label: ${r.label ?? ''}`, `Value: ${r.value ?? ''}`]) })
+  if (filled(o.openingsToGroundFloorLobby)) more.push({ kind: 'row', label: 'Openings To Ground Floor Lobby', value: str(o.openingsToGroundFloorLobby), unit: '' })
+  reqs.forEach((r) => more.push({ kind: 'row', label: str(r.label), value: str(r.value), unit: 'Nos.' }))
+  if (more.length) rows.push({ kind: 'section', label: 'Additional Elements' }, ...more)
   return rows
+}
+
+/** "Area Statement Breakdown": the BUA / SA / CA table of Additional Elements, rows that have a value */
+function breakdownPage(ctx: Ctx, extra: AdditionalElements2 | undefined) {
+  const rows = (extra?.rows ?? []).filter((r) => r && (filled(r.bua) || filled(r.sa) || filled(r.ca)))
+  if (!rows.length) return
+  const { doc } = ctx
+  const L = 35
+  const R = 765
+  const X = [285, 445, 605]
+  let y = 0
+  let stripe = 0
+  const header = () => {
+    contentPage(ctx, 'Design Considerations — Area Statement Breakdown')
+    y = 80
+    doc.rect(L, y, R - L, 32.15).fill(NAVY)
+    doc.lineWidth(0.5).rect(L, y, R - L, 32.15).stroke(BORDER)
+    txt(doc, 'Category / Built Up Component', 43, y + 7, 'S', 9, '#FFFFFF')
+    ;['BUA (Sqft)', 'SA (Sqft)', 'CA (Sqft)'].forEach((t, i) => {
+      txt(doc, t, X[i] + 8, y + 7, 'S', 9, '#FFFFFF')
+      line(doc, X[i], y + 3, X[i], y + 29.15, BORDER, 0.5)
+    })
+    y += 32.15
+    stripe = 0
+  }
+  header()
+  for (const r of rows) {
+    const h = 24.15
+    if (y + h > LIMIT) header()
+    doc.rect(L, y, R - L, h).fill(stripe++ % 2 ? '#F0F4F8' : '#FFFFFF')
+    txt(doc, str(r.category), 43, y + 5, 'S', 9, TEXT)
+    ;[r.bua, r.sa, r.ca].forEach((v, i) => {
+      txt(doc, str(v), X[i] + 8, y + 5, 'S', 9, TEXT)
+      line(doc, X[i], y, X[i], y + h, BORDER, 0.5)
+    })
+    line(doc, L, y + h, R, y + h, BORDER, 0.5)
+    line(doc, L, y, L, y + h, BORDER, 0.5)
+    line(doc, R, y, R, y + h, BORDER, 0.5)
+    y += h
+  }
 }
 
 /* ------------------------------------------------------------------ 3. Key Ratio */
@@ -441,6 +504,7 @@ function keyRatioPages(ctx: Ctx, groups: { name: string; rows: KRow[] }[], bench
   }
   header()
   for (const g of groups) {
+    if (!g.rows.length) continue
     const rows = g.rows.map((r) => {
       const b = r.value === '-' ? null : bench(r.bench ?? [r.label], r.value, benchmarks)
       doc.font('S').fontSize(8)
@@ -449,10 +513,11 @@ function keyRatioPages(ctx: Ctx, groups: { name: string; rows: KRow[] }[], bench
       return { ...r, b, h }
     })
     const total = rows.reduce((s, r) => s + r.h, 0)
-    if (y + total > LIMIT && y > 100) header()
+    // key ratio groups move to a new page only when they would run past ~550 (original keeps a group up to 539.75)
+    if (y + total > 550 && y > 100) header()
     doc.rect(L, y, C1 - L, total).fill('#DCE8F5')
     doc.lineWidth(0.4).rect(L, y, C1 - L, total).stroke(BORDER)
-    centerLines(doc, g.name.toUpperCase(), L, C1, y, 4, 'B', 8, NAVY, total)
+    centerLines(doc, g.name.toUpperCase(), L, C1, y, 4, 'B', 8, NAVY, total, true)
     rows.forEach((r, i) => {
       doc.rect(C1, y, R - C1, r.h).fill(i % 2 ? '#F0F4F8' : '#FFFFFF')
       doc.lineWidth(0.3).rect(C1, y, R - C1, r.h).stroke(BORDER)
@@ -468,22 +533,31 @@ function keyRatioPages(ctx: Ctx, groups: { name: string; rows: KRow[] }[], bench
 
 const ratio = (a: number, b: number) => (a && b ? (a / b).toFixed(2) : '-')
 
-function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefined) {
+/** display value: ratios lose trailing zeros like the original ("1.00" -> "1") */
+const clean = (s: string) => (s && s !== '-' && /^-?\d+\.\d+$/.test(s) ? String(Number(s)) : s || '-')
+
+/** FAR utilisation: FAR / permissible FAR (FAR itself when no permissible FAR is stored, as the original) */
+function farUtilization(l: KeyRatioInputs) {
+  const far = num(l.far)
+  if (!far) return '-'
+  const p = num(l.permissibleFAR) || far
+  return `${Number(((far / p) * 100).toFixed(2))}%`
+}
+
+function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, display: Record<string, string>) {
   const o = (extra?.other ?? {}) as Record<string, unknown>
-  const farUtil = keyRatioFormula(27, l)
   const cars = num(l.totalNumberOfCars)
-  const has = (k: string) => l[k] !== undefined && l[k] !== null && String(l[k]).trim() !== ''
   const v = (k: string) => str(l[k])
   const groups: { name: string; rows: KRow[] }[] = [
     {
       name: 'Efficiency',
       rows: [
-        { label: 'Carpet Area/Saleable', value: ratio(num(l.carpetArea), num(l.saleableArea)), unit: '' },
-        { label: 'BUA/Saleable', value: str(keyRatioFormula(4, l)), unit: '' },
-        { label: 'BUA/FAR', value: ratio(num(l.builtUpArea), num(l.far)), unit: '' },
-        { label: 'Saleable/FAR', value: str(keyRatioFormula(5, l)), unit: '' },
-        { label: 'FAR Utilization', value: farUtil && num(l.permissibleFAR) ? `${Number(Number(farUtil).toFixed(0))}%` : '-', unit: '' },
-        { label: 'FAR per EWS', value: ratio(num(l.ewsFAR), num(l.noOfEWSUnit)), unit: 'sqft', bench: ['FAR per EWS (sqft)'] },
+        { label: 'Carpet Area/Saleable', value: clean(ratio(num(l.carpetArea), num(l.saleableArea))), unit: '' },
+        { label: 'BUA/Saleable', value: clean(str(keyRatioFormula(4, l))), unit: '' },
+        { label: 'BUA/FAR', value: clean(ratio(num(l.builtUpArea), num(l.far))), unit: '' },
+        { label: 'Saleable/FAR', value: clean(str(keyRatioFormula(5, l))), unit: '' },
+        { label: 'FAR Utilization', value: farUtilization(l), unit: '' },
+        { label: 'FAR per EWS', value: clean(ratio(num(l.ewsFAR), num(l.noOfEWSUnit))), unit: 'sqft', bench: ['FAR per EWS (sqft)'] },
       ],
     },
     {
@@ -510,16 +584,15 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
         { label: 'Lobby Corridor Width', value: v('lobbyCorridorWidth'), unit: 'm' },
         { label: 'Driveway Width Basement', value: v('drivewayWidthBasement'), unit: 'm' },
         { label: 'Floor to Floor Height Ground Lobby', value: v('floorToFloorHeightGroundLobby'), unit: 'm' },
-        ...(has('floorToFloorHeightBasementB1B2')
-          ? [{ label: 'Floor to Floor Height Basement B1/B2', value: v('floorToFloorHeightBasementB1B2'), unit: 'm', bench: ['Floor to Floor Height Basement B1 B2'] }]
-          : []),
+        { label: 'Floor to Floor Height Basement B1/B2', value: v('floorToFloorHeightBasementB1B2'), unit: 'm', bench: ['Floor to Floor Height Basement B1 B2'] },
         { label: 'Parking bay size', value: str(o.totalParkingBaySize), unit: 'sq ft', bench: ['Total Parking Bay size', 'Parking bay size'] },
-        ...(has('avgWallAreaBasement') ? [{ label: 'Average Wall Area (Interior + Exterior) Per Basement', value: v('avgWallAreaBasement'), unit: 'sq ft' }] : []),
+        { label: 'Average Wall Area (Interior + Exterior) Per Basement', value: v('avgWallAreaBasement'), unit: 'sq ft' },
         { label: 'No. of Basements', value: v('noOfBasements'), unit: '', bench: ['No. of Basements', 'Number of Basements'] },
       ],
     },
   ]
-  return groups
+  // values the original printed from its separate Key Ratio record (kept on import), rows only when filled
+  return groups.map((g) => ({ ...g, rows: g.rows.map((r) => (display[r.label] !== undefined ? { ...r, value: display[r.label] } : r)).filter((r) => r.value !== '-') }))
 }
 
 /* ------------------------------------------------------------------ 4. Additional Elements 2/2 (clusters) */
@@ -591,22 +664,26 @@ const COMPARE_ROWS: [string, string][] = [
   ['parking', 'Basement Parking Efficiency (sqm/car)'],
 ]
 
-function currentRatios(d: ProjectLevelDesignData) {
+function currentRatios(d: ProjectLevelDesignData, display: Record<string, string>) {
   const l = d.keyRatioInputs || {}
   const rows = d.additionalElements2?.rows || []
   const cell = (cat: string) => num(rows.find((r) => r.category === cat)?.bua)
   const farUtil = keyRatioFormula(27, l)
   const cars = num(l.totalNumberOfCars)
-  const dash = (s: string) => (!s || s === '-' ? '—' : s)
-  return {
+  void farUtil
+  const dash = (s: string) => (!s || s === '-' ? '—' : clean(s))
+  const out = {
     carpet: dash(ratio(num(l.carpetArea), num(l.saleableArea))),
     buaSa: dash(keyRatioFormula(4, l)),
     buaFar: dash(ratio(num(l.builtUpArea), num(l.far))),
     saFar: dash(keyRatioFormula(5, l)),
-    farUtil: farUtil && num(l.permissibleFAR) ? `${Number(Number(farUtil).toFixed(0))}%` : '—',
+    farUtil: dash(farUtilization(l)),
     circ: cell('Circulation Area') && cell('Total') ? `${((cell('Circulation Area') / cell('Total')) * 100).toFixed(2)}%` : '—',
-    parking: cars > 0 ? ((num(l.totalBasementArea) - num(l.circulationArea)) / cars / 10.7639).toFixed(2) : '—',
+    parking: cars > 0 ? dash(((num(l.totalBasementArea) - num(l.circulationArea)) / cars / 10.7639).toFixed(2)) : '—',
   } as Record<string, string>
+  // the original's circulation efficiency comes from data not kept in this record; imported reports keep the printed value
+  if (display['Circulation Efficiency'] !== undefined) out.circ = display['Circulation Efficiency']
+  return out
 }
 
 function otherRatios(d: ProjectLevelDesignData) {
@@ -634,13 +711,14 @@ function verdictColor(std: string, val: string) {
   return n < parseFloat(range[1]) || n > parseFloat(range[2]) ? RED : GREEN
 }
 
-function comparisonPage(ctx: Ctx, input: DprInput, d: ProjectLevelDesignData) {
+function comparisonPage(ctx: Ctx, input: DprInput, d: ProjectLevelDesignData, display: Record<string, string>) {
   const { doc, project } = ctx
-  contentPage(ctx, 'Project Brief – Area Ratios Comparison')
   const ids = (d.compareProjectIds ?? []).map(String)
-  const others = (input.compareProjects ?? []).filter((c) => !ids.length || ids.includes(String(c.id)))
+  const others = (input.compareProjects ?? []).filter((c) => ids.includes(String(c.id)))
+  if (!others.length) return
+  contentPage(ctx, 'Project Brief – Area Ratios Comparison')
   const cols = [
-    { name: project.name, location: project.location, values: currentRatios(d) },
+    { name: project.name, location: project.location, values: currentRatios(d, display) },
     ...others.map((c) => ({ name: c.name, location: c.location, values: otherRatios(((c.summary ?? {}) as Record<string, unknown>).projectLevelDesignData as ProjectLevelDesignData ?? {}) })),
   ]
   const L = 35
@@ -693,26 +771,20 @@ function comparisonPage(ctx: Ctx, input: DprInput, d: ProjectLevelDesignData) {
 /* ------------------------------------------------------------------ module */
 const projectLevel: ModuleRenderer = (ctx, input) => {
   const s = (input.summary ?? {}) as Record<string, unknown>
-  const d = s.projectLevelDesignData as ProjectLevelDesignData | undefined
-  if (!d || typeof d !== 'object') {
-    contentPage(ctx, 'Design Considerations — Project Level Parameters')
-    emptyMessage(ctx, 'No project level design data configured.')
-    return
-  }
-  // same fall-backs as the Project Level Design page
-  const pdl = (s.projectDetailsLayoutData ?? {}) as Record<string, unknown>
+  const d = ((s.projectLevelDesignData && typeof s.projectLevelDesignData === 'object' ? s.projectLevelDesignData : {}) as ProjectLevelDesignData & {
+    dprDisplay?: Record<string, string>
+  })
   const l: KeyRatioInputs = { ...(d.keyRatioInputs ?? {}) }
-  if (!l.buildingHeight && pdl.towerHeight) l.buildingHeight = String(pdl.towerHeight)
-  if (!l.saleableArea && pdl.grandTotalSaleable) l.saleableArea = String(pdl.grandTotalSaleable)
-  const farPerm = num(input.project.far_permissible)
-  if (farPerm) l.permissibleFAR = String(Math.round(farPerm * 10.7639))
-  const data: ProjectLevelDesignData = { ...d, keyRatioInputs: l }
+  const display = d.dprDisplay ?? {}
   const benchmarks = input.benchmarks
 
   areaStatementPage(ctx, d.areaStatementInputs ?? {})
   paramsPages(ctx, parameterRows(l, d.additionalElements2), benchmarks)
-  keyRatioPages(ctx, keyRatioGroups(l, d.additionalElements2), benchmarks)
+  breakdownPage(ctx, d.additionalElements2)
+  keyRatioPages(ctx, keyRatioGroups(l, d.additionalElements2, display), benchmarks)
+  // "Additional Elements 2/2": cluster tables, or the empty page the original leaves when there are none
   if (d.clusterConfigs?.length) clusterPages(ctx, d.clusterConfigs)
-  comparisonPage(ctx, input, data)
+  else ctx.doc.addPage()
+  comparisonPage(ctx, input, { ...d, keyRatioInputs: l }, display)
 }
 export default projectLevel

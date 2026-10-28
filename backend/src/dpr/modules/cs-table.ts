@@ -14,8 +14,8 @@ export const TABLE_TOP = 80
 /** rows that would end below this go to a new page */
 export const TABLE_LIMIT = 540
 
-export type Col = { label: string; width: number }
-export type RowStyle = { fill?: string; font?: 'R' | 'S' | 'B'; color?: string; indent?: number[] }
+export type Col = { label: string; width: number; align?: 'left' | 'center' }
+export type RowStyle = { fill?: string; stroke?: string; font?: 'R' | 'S' | 'B'; color?: string; indent?: number[] }
 
 const PAD = 8
 
@@ -32,7 +32,7 @@ export function drawHeader(ctx: Ctx, cols: Col[], y: number) {
   doc.lineWidth(0.5).rect(TABLE_X, y, total, h).stroke(RULE)
   let x = TABLE_X
   cols.forEach((c, i) => {
-    doc.font('S').fontSize(9).fillColor('#FFFFFF').text(c.label, x + PAD, y + 7, { width: c.width - PAD * 2 })
+    doc.font('S').fontSize(9).fillColor('#FFFFFF').text(c.label, x + PAD, y + 7, { width: c.width - PAD * 2, align: c.align ?? 'left' })
     if (i > 0) doc.lineWidth(0.5).moveTo(x, y + 3).lineTo(x, y + h - 3).stroke(RULE)
     x += c.width
   })
@@ -54,7 +54,7 @@ export function drawTable(
   const { doc } = ctx
   const total = cols.reduce((a, c) => a + c.width, 0)
   y = drawHeader(ctx, cols, y)
-  let k = 0 // zebra index restarts on each page
+  let k = 0 // zebra index (every row counts, styled rows included) restarts on each page
   rows.forEach((r, i) => {
     const st = style(i)
     const font = st.font ?? 'S'
@@ -64,10 +64,12 @@ export function drawTable(
       y = drawHeader(ctx, cols, newPage())
       k = 0
     }
-    doc.rect(TABLE_X, y, total, h).fill(st.fill ?? (k++ % 2 === 0 ? '#FFFFFF' : ZEBRA))
+    const zebra = k++ % 2 === 0 ? '#FFFFFF' : ZEBRA
+    doc.rect(TABLE_X, y, total, h).fill(st.fill ?? zebra)
+    if (st.stroke) doc.lineWidth(0.5).rect(TABLE_X, y, total, h).stroke(st.stroke)
     let x = TABLE_X
     cols.forEach((c, ci) => {
-      doc.font(font).fontSize(9).fillColor(st.color ?? INK).text(r[ci] ?? '-', x + PAD + indent(ci), y + 5, { width: c.width - PAD * 2 - indent(ci) })
+      doc.font(font).fontSize(9).fillColor(st.color ?? INK).text(r[ci] ?? '-', x + PAD + indent(ci), y + 5, { width: c.width - PAD * 2 - indent(ci), align: c.align ?? 'left' })
       if (ci > 0) doc.lineWidth(0.5).moveTo(x, y).lineTo(x, y + h).stroke(RULE)
       x += c.width
     })
@@ -93,10 +95,11 @@ export function pager(ctx: Ctx, title: string) {
   }
 }
 
+/** value as entered ('-' when empty) */
 export const val = (v: unknown) => {
   if (v === undefined || v === null) return '-'
-  const s = String(v).trim()
-  return s === '' ? '-' : s
+  const s = String(v)
+  return s.trim() === '' ? '-' : s
 }
 
 export const filled = (...v: unknown[]) => v.some((x) => x !== undefined && x !== null && String(x).trim() !== '')

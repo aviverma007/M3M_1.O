@@ -20,7 +20,7 @@ function display(p: Param, v: unknown) {
   if (v === false || v === 'false') return 'No'
   const s = Array.isArray(v) ? v.map(String).join('/') : String(v).trim()
   const unit = p.unit && !/^(free\s*)?text$/i.test(p.unit) ? p.unit : ''
-  return unit && /^-?[0-9.]+$/.test(s) ? `${s} ${unit}` : s
+  return unit && s ? `${s} ${unit}` : s
 }
 
 const lines = (doc: Doc, s: string, w: number) => {
@@ -142,12 +142,14 @@ function amenityPages(ctx: Ctx, groups: { head: string; items: string[] }[]) {
       if (first) h = Math.max(h, catMin)
       if (y + h > LIMIT) {
         if (y > top) catBlock(label, top, y)
+        else doc.lineWidth(0.5).moveTo(X, y).lineTo(X + TW, y).stroke(BORDER) // the original closes the table line again
         page()
         label = `${g.head} (cont.)`
         doc.font('B').fontSize(9)
         catMin = lines(doc, label, CW - 16) * 12.15 + 10
         top = y
-        h = Math.max(lines(doc, item, AW - 16) * 12.15 + 12, y > top ? 0 : catMin)
+        // continuation rows are not stretched to the "(cont.)" label (as the original)
+        h = lines(doc, item, AW - 16) * 12.15 + 12
       }
       doc.rect(AX, y, AW, h).fill(i % 2 ? '#F0F4F8' : C.white)
       doc.font('S').fontSize(9).fillColor(C.text).text(item, AX + 8, y + 5, { width: AW - 16 })
@@ -190,8 +192,8 @@ const landscape: ModuleRenderer = (ctx, input) => {
     .filter((g) => g.items.length)
 
   if (!cards.length && !groups.length) {
-    contentPage(ctx, 'Landscape & Amenities Parameters')
-    emptyMessage(ctx, 'No landscape & amenities data configured.')
+    contentPage(ctx, 'Landscape & Amenities Specs')
+    emptyMessage(ctx, 'No landscape parameters configured.')
     return
   }
   if (cards.length) parameterPages(ctx, cards)

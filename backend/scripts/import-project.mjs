@@ -32,19 +32,32 @@ const envPort = (() => {
 })()
 const BASE = (args.url || `http://127.0.0.1:${envPort || 5000}/api/v1`).replace(/\/$/, '')
 const email = args.email || 'admin@m3m.com'
-/* accept the folder itself, the folder one level above it (zip extracted into a same-named folder), or the .zip path minus .zip */
-const dataDir = (() => {
-  if (!args.data) return null
+/* --data may be one project folder (data.json + images/) or a folder holding several of them (any depth up to 2),
+   e.g. an unzipped export with one folder per project — then every project is imported in one run */
+const dataDirs = (() => {
+  if (!args.data) return []
   const base = path.resolve(String(args.data).replace(/\.zip$/i, ''))
-  if (fs.existsSync(path.join(base, 'data.json'))) return base
-  if (fs.existsSync(base) && fs.statSync(base).isDirectory()) {
-    for (const d of fs.readdirSync(base)) if (fs.existsSync(path.join(base, d, 'data.json'))) return path.join(base, d)
+  if (fs.existsSync(path.join(base, 'data.json'))) return [base]
+  const found = []
+  const walk = (dir, depth) => {
+    if (depth > 2 || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return
+    for (const d of fs.readdirSync(dir).sort()) {
+      const full = path.join(dir, d)
+      if (!fs.statSync(full).isDirectory()) continue
+      if (fs.existsSync(path.join(full, 'data.json'))) found.push(full)
+      else walk(full, depth + 1)
+    }
   }
-  return null
+  walk(base, 1)
+  return found
 })()
-if (!dataDir) {
-  console.error(args.data ? `No data.json found in "${args.data}" (or one folder below it). Unzip the import file first and point --data at the folder that contains data.json and images.` : '')
-  console.error('Usage: node scripts/import-project.mjs --data <folder with data.json> [--email admin@m3m.com] [--project <id>] [--overwrite true]')
+if (!dataDirs.length) {
+  console.error(args.data ? `No data.json found in "${args.data}". Unzip the import file first and point --data at the unzipped folder.` : '')
+  console.error('Usage: node scripts/import-project.mjs --data <folder> [--email admin@m3m.com] [--project <id>] [--overwrite true]')
+  process.exit(1)
+}
+if (args.project && dataDirs.length > 1) {
+  console.error('--project can only be used with a single project folder.')
   process.exit(1)
 }
 
@@ -87,10 +100,68 @@ async function findProjectsByName(name) {
 }
 
 async function main() {
-  const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'data.json'), 'utf8'))
   const password = args.password || process.env.M3M_PASSWORD || (await ask(`Password for ${email}: `))
   token = (await api('POST', '/auth/login', { email, password }))?.accessToken
   if (!token) throw new Error('Login failed')
+  /* benchmarks read from the original reports (Req: lines) -> our benchmark table, once for the whole batch */
+  const entries = {}
+  for (const dir of dataDirs) {
+    const inf = JSON.parse(fs.readFileSync(path.join(dir, 'data.json'), 'utf8')).inferred ?? {}
+    for (const [k, v] of Object.entries(inf.benchmarks ?? {})) {
+      if (!entries[k] || (!(entries[k].validOptions ?? []).length && (v.validOptions ?? []).length)) entries[k] = v
+    }
+    for (const [mid, chapters] of Object.entries(inf.moduleChapters ?? {})) {
+      for (const ch of chapters ?? []) {
+        for (const sec of ch.chapterSections ?? []) {
+          for (const f of sec.sectionFields ?? []) {
+            for (const cat of ['midEndAns', 'premiumAns', 'affluentAns', 'hiStreetAns', 'enclosedMallAns']) {
+              if (Array.isArray(f[cat]) && f[cat].length) entries[`spec|${mid}|${ch.chapterNumber}|${sec.title}|${f.fieldName}|${cat}`] = { benchmarkValue: '', validOptions: f[cat] }
+            }
+          }
+        }
+      }
+    }
+  }
+  if (Object.keys(entries).length) {
+    // placeholder benchmarks seeded with the app that the original application doesn't have (they would add Req: lines it never shows)
+    const remove = ['building height', 'far utilization', 'balcony area far %']
+    const r = await api('PUT', '/benchmark', { entries, remove })
+    step(`Benchmarks from the original reports saved (${r?.updated ?? 0})`)
+  }
+
+  const failed = []
+  const done = []
+  for (const dir of dataDirs) {
+    console.log(`\n=== ${path.basename(dir)}`)
+    try {
+      done.push({ dir, ...(await importOne(dir)) })
+    } catch (e) {
+      console.error(`  Failed: ${e.message}`)
+      failed.push(`${path.basename(dir)}: ${e.message}`)
+    }
+  }
+  /* second pass: link comparison projects that were imported later in this batch */
+  for (const d of done.filter((x) => x.missingCompare?.length && x.summary?.projectLevelDesignData)) {
+    const ids = [...(d.summary.projectLevelDesignData.compareProjectIds ?? [])]
+    const still = []
+    for (const n of d.missingCompare) {
+      const found = (await findProjectsByName(n)).filter((p) => p.id !== d.projectId)
+      if (found[0]) ids.push(String(found[0].id))
+      else still.push(n)
+    }
+    if (ids.length !== (d.summary.projectLevelDesignData.compareProjectIds ?? []).length)
+      await api('POST', `/project/${d.projectId}/design-brief-summary`, { projectLevelDesignData: { ...d.summary.projectLevelDesignData, compareProjectIds: ids } })
+    if (still.length) console.log(`Note: "${d.name}" compares with projects not in the app yet: ${still.join(', ')} (re-run with --overwrite true after importing them)`)
+  }
+  console.log(`\nImported ${dataDirs.length - failed.length} of ${dataDirs.length} project(s).`)
+  if (failed.length) {
+    console.log('Not imported:\n  ' + failed.join('\n  '))
+    process.exitCode = 1
+  }
+}
+
+async function importOne(dataDir) {
+  const data = JSON.parse(fs.readFileSync(path.join(dataDir, 'data.json'), 'utf8'))
 
   /* ---------- project */
   let project
@@ -138,9 +209,10 @@ async function main() {
   /* ---------- design chapters */
   const summary = await resolveImages(data.summary ?? {})
   const missingCompare = []
-  if (Array.isArray(data.compareProjectNames) && summary.projectLevelDesignData) {
+  const compareNames = data.compareProjectNames ?? data.inferred?.compareProjectNames
+  if (summary.projectLevelDesignData) {
     const ids = []
-    for (const n of data.compareProjectNames) {
+    for (const n of Array.isArray(compareNames) ? compareNames : []) {
       const found = (await findProjectsByName(n)).filter((p) => p.id !== projectId)
       if (found[0]) ids.push(String(found[0].id))
       else missingCompare.push(n)
@@ -163,9 +235,9 @@ async function main() {
     step('Key Ratio saved')
   }
 
-  console.log(`\nDone: project ${projectId} "${project.name}".`)
-  if (missingCompare.length)
-    console.log(`Note: comparison projects not found (import them, then re-run with --overwrite true to link them): ${missingCompare.join(', ')}`)
+  console.log(`  Done: project ${projectId} "${project.name}".`)
+  return { projectId, name: project.name, missingCompare, summary }
+
 }
 
 main().catch((e) => {

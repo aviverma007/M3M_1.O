@@ -28,10 +28,55 @@ export async function loadDprInput(project: Row): Promise<DprInput> {
     ),
   ])
   const benchmarks: DprInput['benchmarks'] = {}
-  for (const b of benchRows) benchmarks[String(b.key)] = { benchmarkValue: (b.benchmarkValue as string) ?? '', validOptions: (b.validOptions as string[]) ?? [] }
+  /* spec|<moduleNumber>|<chapterNumber>|<section>|<field>|<categoryAns> rows: specification benchmark answers from the original app */
+  const spec = new Map<string, { moduleNumber: number; chapterNumber: number; section: string; field: string; answers: Record<string, string[]> }>()
+  for (const b of benchRows) {
+    const key = String(b.key)
+    if (key.startsWith('spec|')) {
+      const [, mn, cn, section, field, ans] = key.split('|')
+      const id = [mn, cn, section, field].join('|')
+      const e = spec.get(id) ?? { moduleNumber: Number(mn), chapterNumber: Number(cn), section, field, answers: {} }
+      e.answers[ans] = (b.validOptions as string[]) ?? []
+      spec.set(id, e)
+      continue
+    }
+    benchmarks[key] = { benchmarkValue: (b.benchmarkValue as string) ?? '', validOptions: (b.validOptions as string[]) ?? [] }
+  }
 
   const moduleChapters: Record<number, unknown[]> = {}
-  for (const m of modules) moduleChapters[m.id] = await moduleChaptersWithSections(m.id, projectId)
+  for (const m of modules) {
+    const chapters = await moduleChaptersWithSections(m.id, projectId)
+    // imported specification answers take precedence: put them first as their own chapters (the lookup uses the first chapter with that number)
+    const byChapter = new Map<number, { title: string; sectionFields: unknown[] }[]>()
+    let fid = 1
+    for (const e of spec.values()) {
+      if (e.moduleNumber !== m.moduleNumber) continue
+      const secs = byChapter.get(e.chapterNumber) ?? []
+      let sec = secs.find((x) => x.title === e.section)
+      if (!sec) secs.push((sec = { title: e.section, sectionFields: [] }))
+      sec.sectionFields.push({
+        id: -fid++,
+        fieldName: e.field,
+        fieldType: 'select',
+        midEndAns: e.answers.midEndAns ?? [],
+        premiumAns: e.answers.premiumAns ?? [],
+        affluentAns: e.answers.affluentAns ?? [],
+        hiStreetAns: e.answers.hiStreetAns ?? [],
+        enclosedMallAns: e.answers.enclosedMallAns ?? [],
+        sectionFieldOptions: [],
+      })
+      byChapter.set(e.chapterNumber, secs)
+    }
+    const overlay = [...byChapter.entries()].map(([chapterNumber, secs], i) => ({
+      id: -(i + 1),
+      moduleId: m.id,
+      chapterNumber,
+      title: `Imported benchmarks ${chapterNumber}`,
+      chapterSections: secs.map((x, j) => ({ id: -(1000 * (i + 1) + j), title: x.title, sectionFields: x.sectionFields })),
+    }))
+    // once answers from the original application are loaded they are the only source (our seeded catalogue answers are placeholders)
+    moduleChapters[m.id] = overlay.length ? overlay : chapters
+  }
 
   // projects picked for the "Area Ratios Comparison" table on Project Level Design
   const pld = (summary?.projectLevelDesignData ?? {}) as { compareProjectIds?: unknown[] }

@@ -1,7 +1,7 @@
 /* Design Considerations — Structural Parameters (Structure department record, customFields). */
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
-import { checkBenchmark, inRange, isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
+import { checkBenchmark, customLabel, inRange, isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
 
 const TITLE = 'Design Considerations — Structural Parameters'
 
@@ -63,18 +63,18 @@ const structure: ModuleRenderer = (ctx, input) => {
   const dyn = (Array.isArray(cf.dynamicInputs) ? (cf.dynamicInputs as DynamicInput[]) : []).filter((d) => d.name && !isEmpty(d.value))
   const groups = new Map<string, ParamRow[]>()
   for (const d of dyn) {
-    const g = String(d.group || 'Additional Inputs')
+    const g = String(d.group || '')
     const bench = String(d.benchmark ?? '').trim()
-    const rowFor: ParamRow = { label: String(d.name), value: show(d.value), req: bench || undefined, ok: bench ? checkBenchmark(d.value, bench) : undefined }
-    const existing = sections.find((s) => s.title.toLowerCase() === g.toLowerCase())
+    const rowFor: ParamRow = { label: customLabel(String(d.name)), value: show(d.value), req: bench || undefined, ok: bench ? checkBenchmark(d.value, bench) : undefined }
+    const existing = g ? sections.find((s) => s.title.toLowerCase() === g.toLowerCase()) : undefined
     if (existing) existing.rows.push(rowFor)
     else groups.set(g, [...(groups.get(g) ?? []), rowFor])
   }
   groups.forEach((rows, title) => sections.push({ title, rows }))
 
   if (!sections.some((s) => s.rows.length)) {
-    contentPage(ctx, TITLE)
-    emptyMessage(ctx, 'No structural data configured.')
+    contentPage(ctx, 'Design Considerations — Structural')
+    emptyMessage(ctx, 'No structural parameters submitted yet.')
     return
   }
   renderParamTable(ctx, TITLE, ['Elements', 'Proposed Specifications'], sections)

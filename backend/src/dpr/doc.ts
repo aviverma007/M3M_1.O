@@ -112,7 +112,7 @@ export function coverPage(ctx: Ctx, date: Date) {
   doc.rect(0, 0, W, H - 0.01).fill(grad)
   doc.lineWidth(1.2).rect(80, 128, W - 160, 355).stroke(C.frame)
   doc.rect(W / 2 - 125, 96, 250, 64).fill(C.white)
-  doc.image(brand.logo, W / 2 - 125 + 8, 104, { fit: [234, 48], align: 'center', valign: 'center' })
+  doc.image(brand.logo, W / 2 - 125, 104, { fit: [250, 48], align: 'center' })
   txt(doc, 'Detailed Project Report', 0, 190, 'B', 38, C.white, { width: W, align: 'center' })
   txt(doc, project.name, 0, 260, 'B', 26, C.white, { width: W, align: 'center' })
   txt(doc, project.location, 0, 313, 'S', 17, C.sub, { width: W, align: 'center' })
@@ -138,11 +138,10 @@ export function contentPage(ctx: Ctx, title: string) {
   txt(doc, title, MARGIN, 13, 'S', 15, C.white)
   txt(doc, ctx.subtitle, MARGIN, 33, 'S', 7.5, C.white)
   doc.moveTo(W - 210, 0).lineTo(W - 195, 62).lineTo(W, 62).lineTo(W, 0).fill(C.white)
-  if (brand.name === 'Smartworld') doc.image(brand.logo, W - 115, 22.453, { width: 80 })
-  else doc.image(brand.logo, W - 115, 14, { fit: [80, 34], align: 'center', valign: 'center' })
+  doc.image(brand.logo, W - 115, 12, { fit: [80, 38], align: 'center', valign: 'center' })
   doc.rect(0, H - 25.01, W, 25).fill(C.navy)
-  txt(doc, brand.footer, MARGIN, H - 16.98, 'S', 8, C.white)
-  txt(doc, ctx.project.name.toUpperCase(), MARGIN, H - 16.98, 'S', 8, C.white, { width: CONTENT_W, align: 'right' })
+  txt(doc, brand.footer, MARGIN, H - 17.01, 'S', 8, C.white)
+  txt(doc, ctx.project.name.toUpperCase(), MARGIN, H - 17.01, 'S', 8, C.white, { width: CONTENT_W, align: 'right' })
 }
 
 /** "No … configured." message on an otherwise empty content page */
@@ -197,11 +196,11 @@ export function indexPage(ctx: Ctx) {
     groups.forEach((g) => {
       bullet(doc, x + 6, y + 7.5, 3.5, C.navy)
       txt(doc, g.head, x + 18, y, 'B', 13, C.text)
-      y += 24.6
+      y += 24.55
       g.items.forEach((it) => {
-        bullet(doc, x + 22, y + 6.45, 2.8, C.navy)
-        const h = wrap(doc, it.t, x + 34, y, textW, 'S', 11, C.text, { lineGap: -0.1 })
-        y += Math.round(h / doc.currentLineHeight(true)) * 14.75 + 4.1
+        bullet(doc, x + 22, y + 6.5, 2.8, C.navy)
+        const h = wrap(doc, it.t, x + 34, y, textW, 'S', 11, C.text)
+        y += h - 0.1 + 4.1
         ;(it.sub ?? []).forEach((s) => {
           bullet(doc, x + 44, y + 5.5, 2, C.bulletSub)
           txt(doc, s, x + 55, y, 'R', 9.5, C.textSub)

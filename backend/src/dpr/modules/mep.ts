@@ -1,7 +1,7 @@
 /* Design Considerations — MEP Parameters (MEP department record). */
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
-import { inRange, isEmpty, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
+import { customLabel, inRange, isEmpty, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
 
 const TITLE = 'Design Considerations — MEP Parameters'
 
@@ -57,12 +57,12 @@ const mep: ModuleRenderer = (ctx, input) => {
   const known = new Set(SECTIONS.flatMap((s) => s.fields.map((f) => f.name)))
   const extra = Object.entries(custom)
     .filter(([k, v]) => !k.endsWith('Note') && !known.has(k) && !isEmpty(v))
-    .map(([k, v]): ParamRow => ({ label: k, value: show(v) }))
-  if (extra.length) sections.push({ title: 'Additional Parameters', rows: extra })
+    .map(([k, v]): ParamRow => ({ label: customLabel(k), value: show(v) }))
+  if (extra.length) sections.push({ title: '', rows: extra })
 
   if (!sections.some((s) => s.rows.length)) {
-    contentPage(ctx, TITLE)
-    emptyMessage(ctx, 'No MEP data configured.')
+    contentPage(ctx, 'Design Considerations — MEP')
+    emptyMessage(ctx, 'No MEP parameters submitted yet.')
     return
   }
   renderParamTable(ctx, TITLE, ['Per Parameter', 'Specification'], sections)

@@ -1,0 +1,1247 @@
+{
+ "idSpecificationsData": {
+  "fieldKeys": [
+   "type",
+   "finish",
+   "size",
+   "thickness",
+   "skirting",
+   "wearResistance",
+   "typeOfPaint",
+   "thicknessOfPlaster",
+   "typeOfPlaster",
+   "verticalDistanceTile",
+   "plasterFalseCeiling",
+   "colorOfPaint",
+   "dooropening",
+   "typeofrebate",
+   "shuttertype",
+   "fireratingfinish",
+   "framefinish",
+   "architrave",
+   "accessories",
+   "typeofwardrobe",
+   "frametype",
+   "windowheight",
+   "glasstype",
+   "railingtype",
+   "glasswidth",
+   "parapettype",
+   "washingmachinearea",
+   "typeofhob",
+   "sizeofhob",
+   "typeofchimney",
+   "sizeofchimney",
+   "typeofcabinetry",
+   "typeofsink",
+   "materialofsink",
+   "faucettype",
+   "provisionofmicrowave",
+   "provisionofoven",
+   "provisionofdishwasher",
+   "instantgeyser",
+   "provisionofro",
+   "exhaustfansize",
+   "provisionofwashingmachine",
+   "provisionofrefrigerator",
+   "typeofswitch",
+   "switches",
+   "otherprovisions",
+   "motionsensor",
+   "provisionforhvac",
+   "systemavailability",
+   "counterledge",
+   "fixtures",
+   "accessorieslist",
+   "exhaustfan",
+   "geyser",
+   "showerpartition",
+   "additional"
+  ],
+  "labels": {
+   "type": "Type",
+   "finish": "Finish",
+   "size": "Size",
+   "thickness": "Thickness",
+   "skirting": "Skirting",
+   "wearResistance": "Wear Resistance",
+   "typeOfPaint": "Type Of Paint",
+   "thicknessOfPlaster": "Plaster Thickness",
+   "typeOfPlaster": "Type Of Plaster",
+   "verticalDistanceTile": "Vertical Tile Height",
+   "plasterFalseCeiling": "Plaster (False Ceiling)",
+   "colorOfPaint": "Color Of Paint",
+   "dooropening": "Door Opening",
+   "typeofrebate": "Type Of Rebate",
+   "shuttertype": "Shutter Type",
+   "fireratingfinish": "Fire Rating Finish",
+   "framefinish": "Frame Finish",
+   "architrave": "Architrave",
+   "accessories": "Accessories",
+   "typeofwardrobe": "Type Of Wardrobe",
+   "frametype": "Frame Type",
+   "windowheight": "Window Height",
+   "glasstype": "Glass Type",
+   "railingtype": "Railing Type",
+   "glasswidth": "Glass Width",
+   "parapettype": "Parapet Type",
+   "washingmachinearea": "Washing Machine Area",
+   "typeofhob": "Type Of Hob",
+   "sizeofhob": "Size Of Hob",
+   "typeofchimney": "Type Of Chimney",
+   "sizeofchimney": "Size Of Chimney",
+   "typeofcabinetry": "Type Of Cabinetry",
+   "typeofsink": "Type Of Sink",
+   "materialofsink": "Material Of Sink",
+   "faucettype": "Faucet Type",
+   "provisionofmicrowave": "Provision Of Microwave",
+   "provisionofoven": "Provision Of Oven",
+   "provisionofdishwasher": "Provision Of Dishwasher",
+   "instantgeyser": "Instant Geyser",
+   "provisionofro": "Provision Of RO",
+   "exhaustfansize": "Exhaust Fan Size",
+   "provisionofwashingmachine": "Provision Of Washing Machine",
+   "provisionofrefrigerator": "Provision Of Refrigerator",
+   "typeofswitch": "Type Of Switch",
+   "switches": "Switches",
+   "otherprovisions": "Other Provisions",
+   "motionsensor": "Motion Sensor",
+   "provisionforhvac": "Provision For HVAC",
+   "systemavailability": "System Availability",
+   "counterledge": "Counter / Ledge",
+   "fixtures": "Fixtures",
+   "accessorieslist": "Accessories",
+   "exhaustfan": "Exhaust Fan",
+   "geyser": "Geyser",
+   "showerpartition": "Shower Partition",
+   "additional": "Additional"
+  },
+  "arrayKeys": [
+   "accessories",
+   "faucettype",
+   "switches",
+   "otherprovisions",
+   "provisionforhvac",
+   "fixtures",
+   "accessorieslist"
+  ],
+  "chapters": [
+   {
+    "id": "flooring",
+    "name": "Chapter 1: Flooring"
+   },
+   {
+    "id": "wall",
+    "name": "Chapter 2: Wall"
+   },
+   {
+    "id": "ceiling",
+    "name": "Chapter 3: Ceiling"
+   },
+   {
+    "id": "doors",
+    "name": "Chapter 4: Doors, Frame, Lock"
+   },
+   {
+    "id": "kitchen-goods",
+    "name": "Chapter 5: Kitchen Goods"
+   },
+   {
+    "id": "electricals",
+    "name": "Chapter 6: Electricals"
+   },
+   {
+    "id": "bathroom-accessories",
+    "name": "Chapter 7: Bathroom Accessories"
+   }
+  ],
+  "chapterNumber": {
+   "flooring": 1,
+   "wall": 2,
+   "ceiling": 3,
+   "doors": 4,
+   "kitchen-goods": 5,
+   "electricals": 6,
+   "bathroom-accessories": 7
+  },
+  "sectionTitles": {
+   "1": {
+    "living-dining": "Living & dining",
+    "master-bedroom": "Master bedroom",
+    "master-toilet": "Master toilet",
+    "other-bedrooms": "Other Bedrooms",
+    "other-toilets": "Other toilets",
+    "kitchen": "Kitchen",
+    "servant-room": "Servant room",
+    "utility-balcony": "Utility Balcony",
+    "other-balconies": "Other balconies",
+    "powder-room": "Powder room",
+    "puja-study-room": "Puja room & Study room",
+    "foyer": "Foyer"
+   },
+   "2": {
+    "living-dining": "Living & Dining",
+    "master-bedroom": "Master Bedroom",
+    "master-toilet": "Master Toilet",
+    "other-bedrooms": "Other Bedroom",
+    "other-toilets": "Other Toilet",
+    "kitchen": "Kitchen",
+    "servant-room": "Servant Room",
+    "utility-balcony": "Balconies",
+    "other-balconies": "Balconies",
+    "powder-room": "Powder room",
+    "puja-study-room": "Puja room & Study room",
+    "foyer": "Foyer"
+   },
+   "3": {
+    "living-dining": "Living & Dining",
+    "master-bedroom": "Master Bedroom",
+    "master-toilet": "Master Toilet",
+    "other-bedrooms": "Other Bedroom",
+    "other-toilets": "Other Toilet",
+    "kitchen": "Kitchen",
+    "servant-room": "Servant Room",
+    "utility-balcony": "Balconies",
+    "other-balconies": "Balconies",
+    "powder-room": "Powder room",
+    "puja-study-room": "Puja room & Study room",
+    "foyer": "Foyer"
+   },
+   "4": {
+    "main-entrance": "Main Entrance",
+    "master-bedroom-door": "Master Bedroom",
+    "master-toilet-door": "Master Toilet",
+    "other-bedroom-door": "Other Bedroom",
+    "other-toilet-door": "Other Toilets",
+    "wardrobe": "Wardrobe",
+    "servant-room-door": "Servant Room",
+    "balcony-kitchen-door": "Balcony - Kitchen",
+    "threshold": "Threshold",
+    "powder-room-door": "Powder room",
+    "pooja-study-door": "Pooja/Study room",
+    "balcony-doors-frame": "Balcony Doors Frame",
+    "railings-handrail": "Railings & Handrail",
+    "utility-balcony-specs": "Utility"
+   },
+   "5": {
+    "hob": "Hob",
+    "chimney": "Chimney",
+    "counter-back-splash": "Counter & back splash",
+    "cabinets": "Cabinets",
+    "sink-drainboard": "Sink/Drainboard",
+    "microwave": "Microwave",
+    "oven": "Oven",
+    "dishwasher": "Dishwasher",
+    "geyser": "Geyser",
+    "water-purifier": "Water purifier",
+    "exhaust-fan": "Exhaust fan",
+    "washing-machine": "Washing machine",
+    "refrigerator": "Refrigerator"
+   },
+   "6": {
+    "living-dining": "Living and Dining",
+    "master-bedroom": "Master Bedroom",
+    "master-toilet": "Master toilet",
+    "other-bedrooms": "Other Bedroom",
+    "other-toilets": "Other Toilets",
+    "kitchen": "Kitchen",
+    "servant-room": "Servant room",
+    "utility-balcony": "Balcony / Utility space",
+    "powder-room": "Powder room",
+    "puja-study-room": "Pooja/Study room",
+    "air-conditioning": "Air conditioning",
+    "fire-safety": "Fire safety"
+   },
+   "7": {
+    "master-toilet": "Master Bathroom",
+    "master-bathroom": "Master Bathroom",
+    "other-toilets": "Other Bathroom",
+    "other-bathroom": "Other Bathroom",
+    "powder-room": "Powder room",
+    "servant-room": "Servant Room",
+    "balcony-wet-utility": "Balcony (wet) - Utility"
+   }
+  },
+  "rooms": {
+   "flooring": [
+    {
+     "id": "living-dining",
+     "name": "Living & dining"
+    },
+    {
+     "id": "master-bedroom",
+     "name": "Master bedroom"
+    },
+    {
+     "id": "master-toilet",
+     "name": "Master toilet"
+    },
+    {
+     "id": "other-bedrooms",
+     "name": "Other Bedrooms"
+    },
+    {
+     "id": "other-toilets",
+     "name": "Other toilets"
+    },
+    {
+     "id": "kitchen",
+     "name": "Kitchen"
+    },
+    {
+     "id": "servant-room",
+     "name": "Servant room"
+    },
+    {
+     "id": "utility-balcony",
+     "name": "Utility Balcony"
+    },
+    {
+     "id": "other-balconies",
+     "name": "Other balconies"
+    },
+    {
+     "id": "powder-room",
+     "name": "Powder room"
+    },
+    {
+     "id": "puja-study-room",
+     "name": "Puja room & Study room"
+    },
+    {
+     "id": "foyer",
+     "name": "Foyer"
+    }
+   ],
+   "wall": [
+    {
+     "id": "living-dining",
+     "name": "Living & dining"
+    },
+    {
+     "id": "master-bedroom",
+     "name": "Master bedroom"
+    },
+    {
+     "id": "master-toilet",
+     "name": "Master toilet"
+    },
+    {
+     "id": "other-bedrooms",
+     "name": "Other Bedrooms"
+    },
+    {
+     "id": "other-toilets",
+     "name": "Other toilets"
+    },
+    {
+     "id": "kitchen",
+     "name": "Kitchen"
+    },
+    {
+     "id": "servant-room",
+     "name": "Servant room"
+    },
+    {
+     "id": "utility-balcony",
+     "name": "Utility Balcony"
+    },
+    {
+     "id": "other-balconies",
+     "name": "Other balconies"
+    },
+    {
+     "id": "powder-room",
+     "name": "Powder room"
+    },
+    {
+     "id": "puja-study-room",
+     "name": "Puja room & Study room"
+    },
+    {
+     "id": "foyer",
+     "name": "Foyer"
+    }
+   ],
+   "ceiling": [
+    {
+     "id": "living-dining",
+     "name": "Living & dining"
+    },
+    {
+     "id": "master-bedroom",
+     "name": "Master bedroom"
+    },
+    {
+     "id": "master-toilet",
+     "name": "Master toilet"
+    },
+    {
+     "id": "other-bedrooms",
+     "name": "Other Bedrooms"
+    },
+    {
+     "id": "other-toilets",
+     "name": "Other toilets"
+    },
+    {
+     "id": "kitchen",
+     "name": "Kitchen"
+    },
+    {
+     "id": "servant-room",
+     "name": "Servant room"
+    },
+    {
+     "id": "utility-balcony",
+     "name": "Utility Balcony"
+    },
+    {
+     "id": "other-balconies",
+     "name": "Other balconies"
+    },
+    {
+     "id": "powder-room",
+     "name": "Powder room"
+    },
+    {
+     "id": "puja-study-room",
+     "name": "Puja room & Study room"
+    },
+    {
+     "id": "foyer",
+     "name": "Foyer"
+    }
+   ],
+   "doors": [
+    {
+     "id": "main-entrance",
+     "name": "Main Entrance"
+    },
+    {
+     "id": "master-bedroom-door",
+     "name": "Master Bedroom Door"
+    },
+    {
+     "id": "master-toilet-door",
+     "name": "Master Toilet Door"
+    },
+    {
+     "id": "other-bedroom-door",
+     "name": "Other Bedroom Door"
+    },
+    {
+     "id": "other-toilet-door",
+     "name": "Other Toilet Door"
+    },
+    {
+     "id": "wardrobe",
+     "name": "Wardrobe"
+    },
+    {
+     "id": "servant-room-door",
+     "name": "Servant Room Door"
+    },
+    {
+     "id": "balcony-kitchen-door",
+     "name": "Balcony - Kitchen Door"
+    },
+    {
+     "id": "threshold",
+     "name": "Threshold"
+    },
+    {
+     "id": "powder-room-door",
+     "name": "Powder Room Door"
+    },
+    {
+     "id": "pooja-study-door",
+     "name": "Pooja/Study Room Door"
+    },
+    {
+     "id": "balcony-doors-frame",
+     "name": "Balcony Doors Frame"
+    },
+    {
+     "id": "railings-handrail",
+     "name": "Railings & Handrail"
+    },
+    {
+     "id": "utility-balcony-specs",
+     "name": "Utility"
+    }
+   ],
+   "kitchen-goods": [
+    {
+     "id": "hob",
+     "name": "Hob"
+    },
+    {
+     "id": "chimney",
+     "name": "Chimney"
+    },
+    {
+     "id": "counter-back-splash",
+     "name": "Counter & back splash"
+    },
+    {
+     "id": "cabinets",
+     "name": "Cabinets"
+    },
+    {
+     "id": "sink-drainboard",
+     "name": "Sink/Drainboard"
+    },
+    {
+     "id": "microwave",
+     "name": "Microwave"
+    },
+    {
+     "id": "oven",
+     "name": "Oven"
+    },
+    {
+     "id": "dishwasher",
+     "name": "Dishwasher"
+    },
+    {
+     "id": "geyser",
+     "name": "Geyser"
+    },
+    {
+     "id": "water-purifier",
+     "name": "Water purifier"
+    },
+    {
+     "id": "exhaust-fan",
+     "name": "Exhaust fan"
+    },
+    {
+     "id": "washing-machine",
+     "name": "Washing machine"
+    },
+    {
+     "id": "refrigerator",
+     "name": "Refrigerator"
+    }
+   ],
+   "electricals": [
+    {
+     "id": "living-dining",
+     "name": "Living & dining"
+    },
+    {
+     "id": "master-bedroom",
+     "name": "Master bedroom"
+    },
+    {
+     "id": "master-toilet",
+     "name": "Master toilet"
+    },
+    {
+     "id": "other-bedrooms",
+     "name": "Other Bedrooms"
+    },
+    {
+     "id": "other-toilets",
+     "name": "Other toilets"
+    },
+    {
+     "id": "kitchen",
+     "name": "Kitchen"
+    },
+    {
+     "id": "servant-room",
+     "name": "Servant room"
+    },
+    {
+     "id": "utility-balcony",
+     "name": "Utility Balcony"
+    },
+    {
+     "id": "powder-room",
+     "name": "Powder room"
+    },
+    {
+     "id": "puja-study-room",
+     "name": "Puja room & Study room"
+    },
+    {
+     "id": "air-conditioning",
+     "name": "Air conditioning"
+    },
+    {
+     "id": "fire-safety",
+     "name": "Fire safety"
+    }
+   ],
+   "bathroom-accessories": [
+    {
+     "id": "master-bathroom",
+     "name": "Master Bathroom"
+    },
+    {
+     "id": "other-bathroom",
+     "name": "Other Bathroom"
+    },
+    {
+     "id": "powder-room",
+     "name": "Powder room"
+    },
+    {
+     "id": "servant-room",
+     "name": "Servant Room"
+    },
+    {
+     "id": "balcony-wet-utility",
+     "name": "Balcony (wet) - Utility"
+    }
+   ]
+  },
+  "options": {
+   "type": [
+    "Vitrified Tiles",
+    "Marble",
+    "Granite",
+    "Imported Marble",
+    "Wooden Flooring (Pre finished)",
+    "International stone finish tiles",
+    "Vitrified Tile (stone finish)",
+    "Full body heat resistant tile",
+    "Wooden Flooring (engineered)",
+    "Vitrified Tile (stone finish)",
+    "Imported Marble",
+    "Vitrified Tiles",
+    "NA",
+    "UPVC",
+    "Aluminium",
+    "Full body tile",
+    "Modular cabinetry (HDHMR Board); handle less as much as possible",
+    "Modular cabinetry (HDHMR Board) with soft close trays; handle less as much as possible"
+   ],
+   "finish": [
+    "Matte",
+    "Glossy",
+    "Satin",
+    "Anti Skid",
+    "NA",
+    "Glazed",
+    "NA (if marble)",
+    "Pre-Polished",
+    "as required",
+    "Levelled cement",
+    "Pre-Polished",
+    "as required",
+    "Levelled cement",
+    "Polished",
+    "Glazed",
+    "Glossy"
+   ],
+   "size": [
+    "600x600 mm",
+    "800x800 mm",
+    "1200x600 mm",
+    "195 X 1200 mm",
+    "Plank tiles + Spacer",
+    "1200 X 600 mm (8% design was...)",
+    "NA",
+    "As per requirement",
+    "3.2 * 0.6 m (edge grinding)"
+   ],
+   "thickness": [
+    "10 mm",
+    "10-12 mm",
+    "16-18 mm",
+    "18-20 mm",
+    "NA",
+    "15mm",
+    "Granite - 16 to 18 mm",
+    "Quartz- 18 to 20 mm"
+   ],
+   "skirting": [
+    "75 - 100 mm",
+    "100 - 150 mm",
+    "NA"
+   ],
+   "wearResistance": [
+    "Ac3",
+    "Ac4",
+    "Ac5",
+    "NA"
+   ],
+   "typeOfPaint": [
+    "Acrylic emulsion",
+    "OBD",
+    "Exterior grade, weatherproof",
+    "Acrylic emulsion; washable paint",
+    "NA"
+   ],
+   "thicknessOfPlaster": [
+    "12 mm (average)",
+    "15 mm (average)",
+    "NA"
+   ],
+   "typeOfPlaster": [
+    "Gypsum plaster",
+    "Cement plaster",
+    "NA"
+   ],
+   "verticalDistanceTile": [
+    "Min. 50 mm above false ceiling",
+    "upto 2 feet above counter top",
+    "NA"
+   ],
+   "plasterFalseCeiling": [
+    "Gypsum plaster",
+    "Cement plaster",
+    "NA"
+   ],
+   "colorOfPaint": [
+    "Matching external",
+    "White",
+    "NA"
+   ],
+   "dooropening": [
+    "1200 min X 2450 mm (for FTF of 3.2m)",
+    "1200 max X 2750 mm (for FTF of 3.4m & above)",
+    "900 min. X 2450 mm",
+    "900 X 2250 mm",
+    "800 mm (in exception cases 750 mm) Min. X 2450 mm (2250 mm in case of Services and AC drain)",
+    "900 x 2450 mm",
+    "1000 min. X 2450 mm",
+    "750 X 2250 mm"
+   ],
+   "typeofrebate": [
+    "Single leaf",
+    "Provision of extra rebate (outer side)",
+    "Single",
+    "NA"
+   ],
+   "shuttertype": [
+    "Flush",
+    "NA"
+   ],
+   "fireratingfinish": [
+    "As per NBC",
+    "norms",
+    "NA"
+   ],
+   "framefinish": [
+    "Factory fitted (modular)",
+    "matching shutter",
+    "Aluminium",
+    "NA"
+   ],
+   "architrave": [
+    "Factory fitted (modular)",
+    "matching shutter",
+    "As per facade",
+    "NA"
+   ],
+   "accessories": [
+    "Eye piece",
+    "Manual door stopper",
+    "Digital Smart Lock/Biometric Lock",
+    "Handle with lock",
+    "Buffer",
+    "Handle with thumb turn from inside, coin operated from outside"
+   ],
+   "typeofwardrobe": [
+    "Modular Wardrobe-prelaminated shutter and carcass in master bedroom",
+    "Modular Wardrobe-prelaminated shutter and carcass in all bedrooms",
+    "NA"
+   ],
+   "frametype": [
+    "UPVC",
+    "Aluminium",
+    "NA"
+   ],
+   "windowheight": [
+    "Balcony - 2450 mm min.",
+    "2450 mm min",
+    "up to beam bottom level",
+    "NA"
+   ],
+   "glasstype": [
+    "Dependant on facade",
+    "NA"
+   ],
+   "railingtype": [
+    "Seamless laminated glass with aluminium top and bottom",
+    "NA"
+   ],
+   "glasswidth": [
+    "6 mm + 6 mm (laminate) - minimum",
+    "NA"
+   ],
+   "parapettype": [
+    "MS Railing",
+    "Seamless glass",
+    "NA"
+   ],
+   "washingmachinearea": [
+    "Plumbing & electrical provisions to be on the same side of utility area",
+    "NA"
+   ],
+   "typeofhob": [
+    "4 burner hob (Glass with Auto Ignition)",
+    "NA"
+   ],
+   "sizeofhob": [
+    "60 cm",
+    "90 cm",
+    "NA"
+   ],
+   "typeofchimney": [
+    "wall mounted",
+    "Wall mounted",
+    "NA"
+   ],
+   "sizeofchimney": [
+    "60 cm",
+    "90 cm",
+    "NA"
+   ],
+   "typeofcabinetry": [
+    "Modular cabinetry (HDHMR Board); handle less as much as possible",
+    "Modular cabinetry (HDHMR Board) with soft close trays; handle less as much as possible",
+    "NA"
+   ],
+   "typeofsink": [
+    "Single Bowl",
+    "Double bowl sink with drain board",
+    "NA"
+   ],
+   "materialofsink": [
+    "SS (Grade 304)",
+    "NA"
+   ],
+   "faucettype": [
+    "Counter mounted",
+    "Sink mixer & valves"
+   ],
+   "provisionofmicrowave": [
+    "Provision provided in modular kitchen",
+    "Built-in",
+    "Built in microwave",
+    "Provision provided for counter top microwave",
+    "NA"
+   ],
+   "provisionofoven": [
+    "Provision provided in modular kitchen",
+    "Built-in",
+    "Built in oven",
+    "Provision provided for counter top microwave",
+    "NA"
+   ],
+   "provisionofdishwasher": [
+    "Provision provided in modular kitchen",
+    "Dishwasher provided",
+    "NA"
+   ],
+   "instantgeyser": [
+    "3L",
+    "NA"
+   ],
+   "provisionofro": [
+    "Provision provided in modular kitchen",
+    "Counter RO provided",
+    "NA"
+   ],
+   "exhaustfansize": [
+    "8 X 8",
+    "200 x 200 mm",
+    "NA"
+   ],
+   "provisionofwashingmachine": [
+    "Provision provided",
+    "washing machine provided",
+    "Provision provided (with drying combination)",
+    "NA"
+   ],
+   "provisionofrefrigerator": [
+    "Provision provided",
+    "Refrigerator provided",
+    "Provision provided (larger space)",
+    "NA"
+   ],
+   "typeofswitch": [
+    "Modular Switch / socket",
+    "NA"
+   ],
+   "switches": [
+    "Power socket",
+    "AC switch (if split)",
+    "TV switch",
+    "Light switch",
+    "Fan regulator",
+    "Two way switches",
+    "Geyser switch",
+    "Fan Regulator",
+    "Refrigerator switch",
+    "Intercom point",
+    "optical fiber line",
+    "data point"
+   ],
+   "otherprovisions": [
+    "Automated mood lighting",
+    "Airpurifier system",
+    "NA"
+   ],
+   "motionsensor": [
+    "Installed (controller by PIR) with single bypass switch",
+    "NA"
+   ],
+   "provisionforhvac": [
+    "VRF Hi wall - All bedrooms",
+    "VRV",
+    "VRF 1 way cassette - All bedrooms, Living room",
+    "VRF Hi wall-Kitchen, servant room",
+    "NA"
+   ],
+   "systemavailability": [
+    "As per fire NOC",
+    "NBC",
+    "NA"
+   ],
+   "counterledge": [
+    "Full body tile; size as per bathroom dimensions",
+    "International tile",
+    "Quartz stone",
+    "imported Marble; size as per bathroom dimensions",
+    "NA"
+   ],
+   "fixtures": [
+    "Wall hung WC with concealed cistern",
+    "health faucet",
+    "Basin",
+    "Basin Mixer",
+    "Shower & spout",
+    "Bathtub",
+    "Handshower",
+    "WC",
+    "Spout"
+   ],
+   "accessorieslist": [
+    "Toilet paper holder",
+    "Towel ring",
+    "Towel rod",
+    "Towel rack",
+    "Robe hook",
+    "Medicine Cabinet with Mirror",
+    "Vanity Cabinet (Both with LED light)"
+   ],
+   "exhaustfan": [
+    "8 X 8",
+    "200 x 200 mm",
+    "In line exhaust",
+    "NA"
+   ],
+   "geyser": [
+    "25L",
+    "15L",
+    "3L",
+    "NA"
+   ],
+   "showerpartition": [
+    "Not provided",
+    "Glass partition (with door); toughened glass 8mm thick",
+    "Glass partition with door; toughened glass 8mm thick",
+    "NA"
+   ]
+  },
+  "sections": {
+   "flooring": "Flooring",
+   "wall": "Wall",
+   "ceiling": "Ceiling",
+   "doors": "Doors",
+   "kitchen-goods": "Kitchen Goods",
+   "electricals": "Electricals",
+   "bathroom-accessories": "Bathroom Accessories"
+  }
+ },
+ "commonAreaData": {
+  "fieldKeys": [
+   "type",
+   "finish",
+   "size",
+   "thickness",
+   "skirting",
+   "flooringTreatment",
+   "typeOfPaint",
+   "columnGuard",
+   "typeOfPlaster",
+   "enteranceDesign",
+   "typeOfFalseCeiling",
+   "doorcoating",
+   "aircurtain",
+   "doorshutterfinish",
+   "asperfirenorms",
+   "typeofac",
+   "facilities",
+   "services",
+   "additional"
+  ],
+  "labels": {
+   "type": "Type",
+   "finish": "Finish",
+   "size": "Size",
+   "thickness": "Thickness",
+   "skirting": "Skirting",
+   "flooringTreatment": "Flooring Treatment",
+   "typeOfPaint": "Type Of Paint",
+   "columnGuard": "Column Guard",
+   "typeOfPlaster": "Type Of Plaster",
+   "enteranceDesign": "Enterance Design",
+   "typeOfFalseCeiling": "Type Of False Ceiling",
+   "doorcoating": "Door Coating",
+   "aircurtain": "Air Curtain",
+   "doorshutterfinish": "Door Shutter Finish",
+   "asperfirenorms": "As Per Fire Norms",
+   "typeofac": "Type Of AC",
+   "facilities": "Facilities",
+   "services": "Services",
+   "additional": "Additional"
+  },
+  "arrayKeys": [
+   "facilities"
+  ],
+  "chapters": [
+   {
+    "id": "flooring",
+    "name": "Flooring"
+   },
+   {
+    "id": "wall",
+    "name": "Wall"
+   },
+   {
+    "id": "ceiling",
+    "name": "Ceiling"
+   },
+   {
+    "id": "doors-other",
+    "name": "Doors and Other Facilities"
+   }
+  ],
+  "chapterNumber": {
+   "flooring": 1,
+   "wall": 2,
+   "ceiling": 2,
+   "doors-other": 3
+  },
+  "sectionTitles": {
+   "1": {
+    "corridor-lift-lobby": "Corridor, lift lobby",
+    "staircase": "Staircase",
+    "entrance-lobby": "Entrance Lobby",
+    "terrace": "Terrace",
+    "basement-podium": "Basement/ podium"
+   },
+   "2": {
+    "corridor-lift-lobby": "Corridor, lift",
+    "staircase": "Staircase",
+    "entrance-lobby": "Entrance Lobby",
+    "terrace": "Terrace",
+    "basement-podium": "Basement/ podium"
+   },
+   "3": {
+    "entrance-lobby-ground": "Entrance Lobby (Ground floor drop off)",
+    "entrance-lobby-basement": "Entrance Lobby (Basement drop off)",
+    "shaft-staircase-doors": "Shaft/staircase doors",
+    "staircase-door-size": "Staircase Door size",
+    "entrance-lobby-air": "Entrance lobby) / Air",
+    "entrance-lobby-facilities": "Entrance lobby) / Facilities & services to be provided"
+   }
+  },
+  "rooms": {
+   "flooring": [
+    {
+     "id": "corridor-lift-lobby",
+     "name": "Corridor, lift lobby"
+    },
+    {
+     "id": "staircase",
+     "name": "Staircase"
+    },
+    {
+     "id": "entrance-lobby",
+     "name": "Entrance Lobby"
+    },
+    {
+     "id": "terrace",
+     "name": "Terrace"
+    },
+    {
+     "id": "basement-podium",
+     "name": "Basement/ podium (parking area)"
+    }
+   ],
+   "wall": [
+    {
+     "id": "corridor-lift-lobby",
+     "name": "Corridor, lift lobby"
+    },
+    {
+     "id": "staircase",
+     "name": "Staircase"
+    },
+    {
+     "id": "entrance-lobby",
+     "name": "Entrance Lobby"
+    },
+    {
+     "id": "terrace",
+     "name": "Terrace"
+    },
+    {
+     "id": "basement-podium",
+     "name": "Basement/ podium (parking area)"
+    }
+   ],
+   "ceiling": [
+    {
+     "id": "corridor-lift-lobby",
+     "name": "Corridor, lift lobby"
+    },
+    {
+     "id": "entrance-lobby",
+     "name": "Entrance Lobby"
+    },
+    {
+     "id": "basement-podium",
+     "name": "Basement/ podium (parking area)"
+    }
+   ],
+   "doors-other": [
+    {
+     "id": "entrance-lobby-ground",
+     "name": "Entrance Lobby (Ground floor drop off)"
+    },
+    {
+     "id": "entrance-lobby-basement",
+     "name": "Entrance Lobby (Basement drop off)"
+    },
+    {
+     "id": "shaft-staircase-doors",
+     "name": "Shaft/staircase doors"
+    },
+    {
+     "id": "staircase-door-size",
+     "name": "Staircase Door size"
+    },
+    {
+     "id": "entrance-lobby-air",
+     "name": "Entrance Lobby (Air)"
+    },
+    {
+     "id": "entrance-lobby-facilities",
+     "name": "Entrance lobby (Facilities & services)"
+    }
+   ]
+  },
+  "options": {
+   "type": [
+    "Vitrified Tiles",
+    "Marble",
+    "Granite",
+    "Kota Stone",
+    "Marble finish (combination of 2 colors)",
+    "Restile",
+    "vitrified tiles (as per Green rating)"
+   ],
+   "finish": [
+    "Matte",
+    "Glossy",
+    "Polished",
+    "Flamed",
+    "Pre-Polished",
+    "Anti Skid"
+   ],
+   "size": [
+    "600x600 mm",
+    "800x800 mm",
+    "1200x600 mm",
+    "Custom",
+    "NA",
+    "As per staircase size",
+    "300 X 300 mm"
+   ],
+   "thickness": [
+    "14-20 mm",
+    "10 mm (as per design)",
+    "10 mm"
+   ],
+   "skirting": [
+    "100 mm",
+    "100 mm (Joint of Floor & skirting)"
+   ],
+   "flooringTreatment": [
+    "Tremix"
+   ],
+   "typeOfPaint": [
+    "Acrylic emulsion",
+    "OBD (oil bound distemper)",
+    "Enamel + Acrylic paint",
+    "Acrylic emulsion paint",
+    "Weathersheild",
+    "NA"
+   ],
+   "columnGuard": [
+    "PVC + Reflective Tape"
+   ],
+   "typeOfPlaster": [
+    "Gypsum plaster",
+    "Plaster",
+    "Exposed concrete",
+    "NA"
+   ],
+   "enteranceDesign": [
+    "As per design"
+   ],
+   "typeOfFalseCeiling": [
+    "Decorative False ceiling with ceil"
+   ],
+   "doorcoating": [
+    "2 hr rating fire resistance, Metal Powder Coated",
+    "Wooden door; as per NBC 2016 Pt 4",
+    "Any Other"
+   ],
+   "doorshutterfinish": [
+    "Paint inside, matching the look of outside area",
+    "Any Other"
+   ],
+   "asperfirenorms": [
+    "As per fire norms",
+    "Staircase Door size",
+    "Any Other"
+   ],
+   "aircurtain": [
+    "Air curtain (preferably from outside and merged seamlessly into facade)",
+    "Any Other"
+   ],
+   "typeofac": [
+    "Ductable VRF",
+    "Any Other"
+   ],
+   "facilities": [
+    "Art (painting, sculpture)",
+    "Furniture (Sofa, Chair, round table, sidetables)",
+    "Any Other",
+    "Furniture (Chair, round table)",
+    "Provision of BGM",
+    "Entertaiment services like-Pool, TT table Etc"
+   ],
+   "services": [
+    "Reception desk Security Mail Room Storage area (for baggage trolley, similar) Toilets Wheelchair Cycle Parking Others as per fire norms",
+    "Any Other"
+   ]
+  },
+  "sections": {
+   "flooring": "Flooring",
+   "wall": "Wall",
+   "ceiling": "Ceiling",
+   "doors-other": "Doors & Other Facilities"
+  }
+ }
+}

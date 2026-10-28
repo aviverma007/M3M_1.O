@@ -1,5 +1,5 @@
 /* DPR — Unit Level Design: one page per typology (parameter table, key plan, typology plan) + FAR & Area summary. */
-import { contentPage, emptyMessage, txt, W, type Ctx, type Doc } from '../doc.js'
+import { contentPage, txt, W, type Ctx, type Doc } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { ImageLoader } from '../index.js'
 import type { Typology } from '@/types/chapters-a'
@@ -36,6 +36,7 @@ function typologyRows(t: Typology): Row[] {
     { label: 'Balcony FAR + Unit FAR', value: has(t.unitFar) || has(t.balconyAreaFar) ? String(num(t.unitFar) + bf) : '', unit: 'Sqft' },
     { label: 'Wall area (Unit external wall Area)', value: str(t.wallArea), unit: 'Sqft' },
     { label: 'AC Area', value: str(t.acArea), unit: 'Sqft' },
+    { label: 'Core Area (Non Saleable FAR)', value: str(t.coreArea), unit: 'Sqft' },
     { label: 'Units Per Core', value: str(t.unitsPerCore) },
     { label: 'CA / SA', value: e('CA/SA') },
     { label: 'Balcony / SA', value: e('Balcony/SA') },
@@ -65,13 +66,16 @@ async function image(doc: Doc, loadImage: ImageLoader, url: unknown, x: number, 
 }
 
 const TX = 35
-const TW = 370
-const SPLIT = 249
-const RH = 13.125
 
 async function typologyPage(ctx: Ctx, t: Typology, loadImage: ImageLoader) {
   const { doc } = ctx
   contentPage(ctx, `Unit Level Design — ${str(t.name) || 'Type'} Details`)
+  // without any plan image the table spans the page (taller rows), as in the original
+  const wide = !has(t.plan) && !has(t.keyPlan)
+  const TW = wide ? 770 : 370
+  const SPLIT = wide ? 420 : 249
+  const RH = wide ? 18.125 : 13.125
+  const ty = (RH - 10.125) / 2
   // header
   doc.rect(TX, 80, TW, 20).fill('#1A3566')
   doc.lineWidth(0.5).rect(TX, 80, TW, 20).stroke('#CBD5E0')
@@ -79,17 +83,18 @@ async function typologyPage(ctx: Ctx, t: Typology, loadImage: ImageLoader) {
   txt(doc, 'Specification', SPLIT + 6, 85, 'S', 8, '#FFFFFF')
   doc.lineWidth(0.5).moveTo(SPLIT, 83).lineTo(SPLIT, 97).stroke('#CBD5E0')
   let y = 100
-  typologyRows(t).forEach((r, i) => {
+  const rows = typologyRows(t)
+  rows.forEach((r, i) => {
     const fill = r.hi ? '#FEF3C7' : i % 2 === 1 ? '#F0F4F8' : '#FFFFFF'
     const color = r.hi ? '#92400E' : '#1A202C'
     doc.rect(TX, y, TW, RH).fill(fill)
-    txt(doc, r.label, TX + 6, y + 1.5, 'S', 7.5, color)
-    if (r.unit && r.hi) txt(doc, `${r.value} ${r.unit}`, SPLIT + 6, y + 1.5, 'S', 7.5, color)
+    txt(doc, r.label, TX + 6, y + ty, 'S', 7.5, color)
+    if (r.unit && r.hi) txt(doc, `${r.value} ${r.unit}`, SPLIT + 6, y + ty, 'S', 7.5, color)
     else {
-      txt(doc, r.value, SPLIT + 6, y + 1.5, 'S', 7.5, color)
+      txt(doc, r.value, SPLIT + 6, y + ty, 'S', 7.5, color)
       if (r.unit) {
         const w = doc.font('S').fontSize(7.5).widthOfString(r.value)
-        txt(doc, ` ${r.unit}`, SPLIT + 6 + w, y + 1.5, 'R', 7.5, color)
+        txt(doc, ` ${r.unit}`, SPLIT + 6 + w, y + ty, 'R', 7.5, color)
       }
     }
     const line = r.hi ? '#FCD34D' : '#CBD5E0'
@@ -101,14 +106,19 @@ async function typologyPage(ctx: Ctx, t: Typology, loadImage: ImageLoader) {
     y += RH
   })
   doc.lineWidth(0.5).moveTo(TX, y).lineTo(TX + TW, y).stroke('#CBD5E0')
+  if (wide) return
   // key plan under the table, typology plan on the right
-  txt(doc, 'Key Plan', TX, y + 4, 'R', 6.5, '#64748B', { width: TW, align: 'center' })
-  const kTop = y + 15
-  if (kTop < 520) await image(doc, loadImage, t.keyPlan, TX, kTop, TW, 538 - kTop)
-  const px = 417
-  const pw = W - 35 - px
-  txt(doc, 'Typology Plan', px, 80, 'R', 6.5, '#64748B', { width: pw, align: 'center' })
-  await image(doc, loadImage, t.plan, px, 92, pw, 444.9)
+  if (has(t.keyPlan)) {
+    txt(doc, 'Key Plan', TX, y + 4, 'R', 6.5, '#64748B', { width: TW, align: 'center' })
+    const kTop = y + 15
+    if (kTop < 520) await image(doc, loadImage, t.keyPlan, TX, kTop, TW, 538 - kTop)
+  }
+  if (has(t.plan)) {
+    const px = 417
+    const pw = W - 35 - px
+    txt(doc, 'Typology Plan', px, 80, 'R', 6.5, '#64748B', { width: pw, align: 'center' })
+    await image(doc, loadImage, t.plan, px, 92, pw, 444.9)
+  }
 }
 
 /* ------------------------------------------------------------ summary */
@@ -143,6 +153,8 @@ const GROUPS: { title: string; rows: { label: string; key: string; eff?: boolean
   },
 ]
 const PER_PAGE = 9
+/** rows whose empty value the original prints as a red dash (the others grey) */
+const RED_WHEN_EMPTY = new Set(['Balcony Area (FAR)', 'Unit Covered Area', 'Balcony Area (FAR + Non-FAR)', 'Total Unit Area (Covered + Balcony)', 'Balcony/SA'])
 
 function summaryPage(ctx: Ctx, types: Typology[]) {
   const { doc } = ctx
@@ -178,7 +190,8 @@ function summaryPage(ctx: Ctx, types: Typology[]) {
       types.forEach((t, i) => {
         const raw = r.eff ? effs[i][r.key] : calcValue(t, r.key)
         const empty = !raw || raw === '--'
-        txt(doc, empty ? '—' : raw, colX(i), y + 5.5, 'S', 7, empty ? '#64748B' : '#1A202C', { width: colW, align: 'center' })
+        const dashColor = RED_WHEN_EMPTY.has(r.key) ? '#DC2626' : '#64748B'
+        txt(doc, empty ? '—' : raw, colX(i), y + 5.5, 'S', 7, empty ? dashColor : '#1A202C', { width: colW, align: 'center' })
         if (i < types.length - 1) doc.lineWidth(0.3).moveTo(colX(i + 1), y).lineTo(colX(i + 1), y + 18).stroke('#E5E7EB')
       })
       y += 18
@@ -190,8 +203,8 @@ const unitLevel: ModuleRenderer = async (ctx, input, loadImage) => {
   const data = input.summary?.unitLevelDesignData
   const types = (Array.isArray(data) ? data : []) as Typology[]
   if (types.length === 0) {
-    contentPage(ctx, 'Unit Level Design')
-    emptyMessage(ctx, 'No unit level design data configured.')
+    contentPage(ctx, 'Design Considerations — Unit Level Design')
+    txt(ctx.doc, 'No unit level design parameters configured.', 50, 100, 'S', 12, '#1A202C')
     return
   }
   for (const t of types) await typologyPage(ctx, t, loadImage)

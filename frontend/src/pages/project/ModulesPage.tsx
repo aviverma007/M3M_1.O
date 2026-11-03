@@ -50,6 +50,17 @@ export default function ModulesPage() {
             moApprovedDocUrl={(m as typeof m & ModuleRowExtras).projectModule?.moApprovedDocUrl}
           />
         ))}
+        {rows.length > 0 && (
+          <ModuleCard
+            key="comparison"
+            moduleName="Comparison"
+            moduleNo={rows.length + 1}
+            moduleId={0}
+            isDPR={false}
+            projectId={projectId}
+            firstChapterId={null}
+          />
+        )}
       </div>
       <div className="flex justify-end gap-2 pr-4">
         <Button onClick={goBack} variant="outline" className="border-blue-900 border-1 cursor-pointer text-blue-900">

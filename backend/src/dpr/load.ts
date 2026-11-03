@@ -106,6 +106,13 @@ export async function loadDprInput(project: Row): Promise<DprInput> {
   }
 }
 
+/** one side of Module 21 "Comparison": project record, design summary and the structure / MEP records */
+export async function loadCompareInput(project: Row) {
+  const projectId = Number(project.id)
+  const [summary, structure, mep] = await Promise.all([summaryOf(projectId), deptRecord('structure', projectId), deptRecord('mep', projectId)])
+  return { project: project as Record<string, unknown>, summary, structure: structure ?? null, mep: mep ?? null }
+}
+
 /** PNG / JPEG only — the PDF library can't embed other formats */
 const isEmbeddable = (b: Buffer) =>
   b.length > 8 && ((b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) || (b[0] === 0xff && b[1] === 0xd8))

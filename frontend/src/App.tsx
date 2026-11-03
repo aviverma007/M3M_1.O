@@ -18,6 +18,7 @@ const P = {
   KeyRatio: lazy(() => import('@/pages/project/keyratio/KeyRatioPage')),
   Chapter: lazy(() => import('@/pages/project/chapter/ChapterPage')),
   Compare: lazy(() => import('@/pages/compare/ComparePage')),
+  Comparison: lazy(() => import('@/pages/comparison/ComparisonPage')),
   DesignBriefLanding: lazy(() => import('@/pages/design-brief/DesignBriefLandingPage')),
   DesignBriefLayout: lazy(() => import('@/pages/design-brief/DesignBriefLayout')),
   Liaison: lazy(() => import('@/pages/design-brief/LiaisonForm')),
@@ -127,6 +128,7 @@ export default function App() {
             <Route path="design-chapters/export-configuration" element={L(P.ExportConfiguration)} />
             <Route path="design-chapters/structure" element={L(P.StructureChapter)} />
             <Route path="design-chapters/mep" element={L(P.MEPChapter)} />
+            <Route path="comparison" element={L(P.Comparison)} />
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="compare" element={L(P.Compare)} />

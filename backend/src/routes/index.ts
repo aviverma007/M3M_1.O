@@ -11,6 +11,7 @@ const modules: Record<string, () => Promise<unknown>> = {
   'design-brief': () => import('./design-brief.js'),
   'module-workspace': () => import('./module-workspace.js'),
   'keyratio-compare': () => import('./keyratio-compare.js'),
+  comparison: () => import('./comparison.js'),
 }
 
 export async function loadRoutes() {

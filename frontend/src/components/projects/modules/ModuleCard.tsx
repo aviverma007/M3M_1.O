@@ -10,6 +10,7 @@ import { downloadBlob } from '@/lib/download'
 import { cn } from '@/lib/utils'
 import type { RoleDef } from '@/types'
 import { setModulePreview } from '@/components/module-workspace/preview'
+import { downloadComparisonPdf, lastCompared } from '@/api/comparison'
 
 /* /roles is fetched once per burst of cards (same de-dup as original) */
 let rolesPromise: Promise<RoleDef[]> | null = null
@@ -150,6 +151,8 @@ export default function ModuleCard({
   const access: Access = (() => {
     // modules 1-3 and Design Brief (module 4 for residential, 3 for commercial) are locked for everyone
     if (moduleNo <= 3 || moduleName === 'Design Brief') return 'none'
+    // Module 21 "Comparison" (management view) is open to everyone who can see the project
+    if (moduleName === 'Comparison') return 'edit'
     if (rolePerms !== null && moduleName in rolePerms) return rolePerms[moduleName] as Access
     if (moduleNo === 4 || !department || department === 'super_admin') return 'edit'
     const list = DEPT_MODULES[department] || []
@@ -162,12 +165,19 @@ export default function ModuleCard({
   const briefMissing = isDesignBrief && !moApprovedDocUrl
   const isPreConcept = moduleName === 'Pre Concept Design & Checklist'
   const dprName = DPR_NAME[moduleName]
+  const isComparison = moduleName === 'Comparison'
 
   const download = async (e?: { stopPropagation?: () => void }) => {
     e?.stopPropagation?.()
     setDownloading(true)
     try {
-      if (isDesignBrief) {
+      if (isComparison) {
+        // PDF of the last comparison made from this project; otherwise open the page to choose Project B
+        const b = lastCompared(projectId)
+        if (!b) return open()
+        const blob = await downloadComparisonPdf(projectId, b)
+        downloadBlob(blob, `Comparison_${projectId}_vs_${b}.pdf`)
+      } else if (isDesignBrief) {
         const blob = await http.get<Blob>(`/project/${projectId}/design-brief/download?type=mo`, { responseType: 'blob' })
         downloadBlob(blob, `Design_Brief_MO_Report_${projectId}.pdf`)
       } else if (dprName) {
@@ -186,6 +196,7 @@ export default function ModuleCard({
     setModulePreview(false)
     setViewOnly(isView)
     const base = `/dashboard/project/${projectId}`
+    if (isComparison) return navigate(`${base}/comparison`)
     if (moduleName === 'Structures') return navigate(`${base}/design-chapters/structure`)
     if (moduleName === 'MEP') return navigate(`${base}/design-chapters/mep`)
     const chapter = `${base}/modules/${moduleId}/chapter/${firstChapterId}`
@@ -234,6 +245,15 @@ export default function ModuleCard({
         <h4 className="text-lg font-bold text-[#00509d] text-center leading-tight hover:text-blue-700 transition-colors">{moduleName}</h4>
       </div>
 
+      {isComparison ? (
+        <div className="flex flex-col items-center gap-2.5 text-center">
+          <div className="flex items-center gap-2 bg-[#e6f0ff] px-3 py-1.5 rounded-md">
+            <SlidersVertical size={14} className="text-[#00509d]" />
+            <span className="text-[11px] font-semibold text-[#00509d]">Any two projects, side by side</span>
+          </div>
+          <span className="text-[11px] text-gray-500 leading-snug px-2">Design, efficiency, parking, commercials, structure, MEP and delivery compared at a glance.</span>
+        </div>
+      ) : (
       <div className="flex flex-col gap-2.5">
         <div className="flex gap-2 justify-center">
           <div className="flex items-center gap-2 bg-[#e6f0ff] px-3 py-1.5 rounded-md">
@@ -256,16 +276,25 @@ export default function ModuleCard({
           </span>
         </div>
       </div>
+      )}
 
       <div className="flex gap-2.5 mt-4 pt-2">
         <Button
           className="flex-1 bg-[#4caf50] hover:bg-[#43a047] text-white gap-2 h-9 text-xs font-bold rounded-lg shadow-sm transition-all border-none disabled:pointer-events-auto disabled:cursor-not-allowed"
           onClick={(e) => {
             e.stopPropagation()
-            if (canOpen && !briefMissing && (dprName || isDesignBrief)) download(e)
+            if (canOpen && !briefMissing && (dprName || isDesignBrief || isComparison)) download(e)
           }}
-          disabled={downloading || !canOpen || briefMissing || (!dprName && !isDesignBrief)}
-          title={briefMissing ? 'MO Approved Design Brief is not uploaded yet' : !dprName && !isDesignBrief ? 'Download not available for this module' : undefined}
+          disabled={downloading || !canOpen || briefMissing || (!dprName && !isDesignBrief && !isComparison)}
+          title={
+            briefMissing
+              ? 'MO Approved Design Brief is not uploaded yet'
+              : isComparison
+                ? 'PDF of the last comparison (opens the page to choose projects the first time)'
+                : !dprName && !isDesignBrief
+                  ? 'Download not available for this module'
+                  : undefined
+          }
         >
           {downloading ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <FileDown size={15} />}
           Download

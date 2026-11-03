@@ -3,7 +3,15 @@
    Run once in SSMS against the application database (M3M_1O on the server).
    Safe to run more than once.
    ===================================================================== */
+USE [M3M_1O];   -- server database name; change this line if your database is named differently (local test copy: M3M_One)
+GO
 SET NOCOUNT ON;
+
+IF OBJECT_ID(N'dbo.benchmarks') IS NULL
+BEGIN
+  RAISERROR(N'dbo.benchmarks not found: this is not the M3M_1.O database. Select the M3M_1O database and run again.', 16, 1);
+  SET NOEXEC ON;
+END
 
 -- Change 4: Surface Driveway Width benchmark "Min 6 m" -> "Max 6 m"
 IF EXISTS (SELECT 1 FROM dbo.benchmarks WHERE [key] = N'surface driveway width')
@@ -24,3 +32,5 @@ ELSE
 
 SELECT [key], benchmarkValue FROM dbo.benchmarks
 WHERE [key] IN (N'surface driveway width', N'units on ground floor', N'passenger elevators no of lifts');
+GO
+SET NOEXEC OFF;

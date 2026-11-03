@@ -3,6 +3,7 @@
  * total saleable bar, section image) and one "Project Layout — <name>" page per uploaded layout image
  * (the Site Plan Layout page also lists the selected amenities).
  */
+import { groupTotals, isResidentialGroup } from '@/lib/residentialTotals'
 import { contentPage, txt, wrap, textHeight, dash, W, type Ctx, type Doc } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { ImageLoader } from '../index.js'
@@ -136,7 +137,7 @@ export function tableHeader(doc: Doc, cols: Col[], y: number, h = 28) {
   return y + h
 }
 
-type UnitRow = { type?: unknown; count?: unknown; size?: unknown; area?: unknown }
+type UnitRow = { type?: unknown; count?: unknown; size?: unknown; area?: unknown; __total?: boolean }
 type TypeRow = { type?: unknown; typology?: unknown; units?: UnitRow[]; total?: unknown }
 
 /**
@@ -151,6 +152,11 @@ function unitTable(ctx: Ctx, rows: TypeRow[], y: number, newPage: () => number, 
   rows.forEach((g, gi) => {
     let units = arr<UnitRow>(g.units)
     if (units.length === 0) units = [{}]
+    // Residential groups end with a total row: total units and total saleable area
+    if (isResidentialGroup(g)) {
+      const t = groupTotals(g)
+      units = [...units, { __total: true, type: `Total ${str(g.type).trim() || 'Residential'}`, count: String(t.units), size: t.area ? `${Math.round(t.area * 100) / 100} Sqft` : '-' }]
+    }
     let start = 0
     while (start < units.length) {
       let fit = Math.floor((PAGE_BOTTOM - 20 - y + 0.001) / rowH)
@@ -171,11 +177,13 @@ function unitTable(ctx: Ctx, rows: TypeRow[], y: number, newPage: () => number, 
           doc.lineWidth(0.4).moveTo(cTypo.x, y).lineTo(cTypo.x, y + gh).stroke(PD.grid)
         }
         const ty = ry + rowH / 2 - 4.5
-        txt(doc, dash(u.type), cUnit.x + 3, ty, 'S', 9, PD.text, { width: cUnit.w - 6, height: 12, ellipsis: true })
+        const f = u.__total ? 'B' : 'S'
+        if (u.__total) doc.rect(cUnit.x, ry, right - cUnit.x, rowH).fill(PD.thBg)
+        txt(doc, dash(u.type), cUnit.x + 3, ty, f, 9, u.__total ? PD.accent : PD.text, { width: cUnit.w - 6, height: 12, ellipsis: true })
         doc.lineWidth(0.4).moveTo(cUnit.x, ry).lineTo(cUnit.x, ry + rowH).stroke(PD.grid)
-        txt(doc, dash(u.count), cCount.x, ty, 'S', 9, PD.text, { width: cCount.w, align: 'center' })
+        txt(doc, dash(u.count), cCount.x, ty, f, 9, u.__total ? PD.accent : PD.text, { width: cCount.w, align: 'center' })
         doc.lineWidth(0.4).moveTo(cCount.x, ry).lineTo(cCount.x, ry + rowH).stroke(PD.grid)
-        txt(doc, dash(u.size), cSize.x, ty, 'S', 9, PD.text, { width: cSize.w, align: 'center' })
+        txt(doc, dash(u.size), cSize.x, ty, f, 9, u.__total ? PD.accent : PD.text, { width: cSize.w, align: 'center' })
         doc.lineWidth(0.4).moveTo(cSize.x, ry).lineTo(cSize.x, ry + rowH).stroke(PD.grid)
       })
       doc.lineWidth(0.5).rect(X0, y, right - X0, gh).stroke(PD.grid)
@@ -323,7 +331,7 @@ const projectDetails: ModuleRenderer = async (ctx, input, loadImage) => {
   const rows = arr<TypeRow>(d.tableRows)
 
   // the page is laid out to fit: card and table rows shrink together (factor s) when the table is long
-  const nUnits = rows.reduce((t, r) => t + Math.max(1, arr(r.units).length), 0)
+  const nUnits = rows.reduce((t, r) => t + Math.max(1, arr(r.units).length) + (isResidentialGroup(r) ? 1 : 0), 0)
   const fixed = 75 + 24 + 22 + (customs.length ? 22 + 18 + 18 * customs.length + 22 : 0) + (rows.length ? 24 + 28 + 20 : 0)
   let sc = rows.length ? Math.min(1, (538.27 - fixed) / (60 + 26 * nUnits)) : 1
   if (sc < 0.6) sc = 1 // too long to squeeze: full-size rows, table continues on further pages

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import PageLoader from '@/components/common/PageLoader'
 import { errorMessage, getProject, getSummary, saveSummary, updateProject, uploadFile } from '@/api/chapters-a'
+import { groupTotals, isResidentialGroup, residentialTotals } from '@/lib/residentialTotals'
 import type { CustomField, LayoutFile, ProjectLayout, TypeRow } from '@/types/chapters-a'
 
 const DEFAULT_LAYOUTS: ProjectLayout[] = [
@@ -134,6 +135,18 @@ export default function ProjectDetailsLayoutForm() {
         site_area_acres: details.totalArea,
       })
       const grand = rows.reduce((s, r) => s + num(r.total), 0)
+      const res = residentialTotals(rows)
+      // Module 6 "Saleable Area" = residential total only (other types such as Retail / Club are not counted)
+      if (res.area > 0) {
+        try {
+          const pld = (await getSummary(projectId!))?.projectLevelDesignData
+          await saveSummary(projectId!, {
+            projectLevelDesignData: { ...(pld ?? {}), keyRatioInputs: { ...(pld?.keyRatioInputs ?? {}), saleableArea: String(res.area) } },
+          })
+        } catch (e) {
+          console.error('Could not update Module 6 saleable area:', e)
+        }
+      }
       await saveSummary(projectId!, {
         projectDetailsLayoutData: {
           noOfTowers: details.noOfTowers,
@@ -144,6 +157,8 @@ export default function ProjectDetailsLayoutForm() {
           customFields,
           customFieldsImage: sectionImage,
           grandTotalSaleable: grand || undefined,
+          residentialTotalSaleable: res.area || undefined,
+          residentialTotalUnits: res.units || undefined,
         },
       })
       toast.success('Project Details & Layout saved successfully!')
@@ -477,6 +492,19 @@ export default function ProjectDetailsLayoutForm() {
                           )}
                         </tr>
                       ))}
+                      {isResidentialGroup(r) && (
+                        <tr className="border-b bg-[#eef3fb]">
+                          <td colSpan={3} className="px-4 py-2 border-r text-right text-xs font-bold text-[#1a3566]">
+                            Total {String(r.type || 'Residential').trim()}
+                          </td>
+                          <td className="px-4 py-2 border-r text-center text-xs font-bold text-[#1a3566]">{groupTotals(r).units.toLocaleString('en-IN')}</td>
+                          <td className="px-4 py-2 border-r" />
+                          <td className="px-4 py-2 border-r text-center text-xs font-bold text-[#1a3566]">
+                            {groupTotals(r).area > 0 ? groupTotals(r).area.toLocaleString('en-IN') : '-'}
+                          </td>
+                          <td className="px-4 py-2" />
+                        </tr>
+                      )}
                     </Fragment>
                   ))}
                 </tbody>

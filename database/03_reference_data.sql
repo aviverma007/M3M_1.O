@@ -553,7 +553,7 @@ INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, 
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (8, N'max grade of concrete', N'M40 to M60', N'[]', '2026-10-28T06:48:22.407', '2026-10-28T06:48:22.407');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (9, N'steel consumption coefficient', N'4.5 to 5.5 kg/sq ft', N'[]', '2026-10-28T06:48:22.407', '2026-10-28T06:48:22.407');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (10, N'concrete consumption coefficient', N'0.035 to 0.045 cum/sq ft', N'[]', '2026-10-28T06:48:22.407', '2026-10-28T06:48:22.407');
-INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (11, N'passenger elevators no of lifts', N'4', N'[]', '2026-10-28T06:48:22.407', '2026-10-28T06:48:22.407');
+INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (11, N'passenger elevators no of lifts', N'2', N'[]', '2026-10-28T06:48:22.407', '2026-10-28T06:48:22.407');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (12, N'passenger elevators speed of lift', N'3 to 3.5 m/sec', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (13, N'passenger elevators average waiting time', N'30 to 45 sec', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (14, N'service elevators no of lifts', N'1', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
@@ -573,7 +573,7 @@ INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, 
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (28, N'far utilization', N'95 to 100 %', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (29, N'balcony area far %', N'8 to 12 %', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (30, N'basement parking efficiency', N'30 to 35 sqm/car', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
-INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (31, N'surface driveway width', N'6 m', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
+INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (31, N'surface driveway width', N'Max 6 m', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (32, N'basement clear height ramp entrance', N'2.4 m', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (33, N'ca sa', N'0.68 to 0.75', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');
 INSERT INTO dbo.benchmarks (id, [key], benchmarkValue, validOptions, createdAt, updatedAt) VALUES (34, N'balcony sa', N'8 to 12 %', N'[]', '2026-10-28T06:48:22.408', '2026-10-28T06:48:22.408');

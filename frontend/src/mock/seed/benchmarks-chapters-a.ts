@@ -19,7 +19,7 @@ registerBenchmarks([
   { label: 'Concrete Consumption Coefficient', benchmarkValue: '0.035 to 0.045 cum/sq ft' },
 
   /* ---------- MEP: elevators ---------- */
-  { section: 'passenger elevators', label: 'No. Of Lifts', benchmarkValue: '4' },
+  { section: 'passenger elevators', label: 'No. Of Lifts per Tower', benchmarkValue: '2' },
   { section: 'passenger elevators', label: 'Speed Of Lift', benchmarkValue: '3 to 3.5 m/sec' },
   { section: 'passenger elevators', label: 'Average Waiting Time', benchmarkValue: '30 to 45 sec' },
   { section: 'service elevators', label: 'No. Of Lifts', benchmarkValue: '1' },

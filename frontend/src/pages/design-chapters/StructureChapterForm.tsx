@@ -33,10 +33,10 @@ const SYSTEM: Field[] = [
 const MATERIAL: Field[] = [
   { name: 'maxGradeOfConcrete', label: 'Max. Grade of Concrete', type: 'select', options: ['M25', 'M30', 'M35', 'M40', 'M45', 'M50', 'M55', 'M60'] },
   { name: 'builtUpArea', label: 'Built Up Area', type: 'text', unit: 'Sq. ft' },
-  { name: 'steelConsumptionCoefficient', label: 'Steel Consumption Coefficient', type: 'text', unit: 'per' },
+  { name: 'steelConsumptionCoefficient', label: 'Steel Consumption Coefficient', type: 'text', unit: 'Kg/sqft' },
   { name: 'totalSteelConsumption', label: 'Total Steel Consumption', type: 'text', unit: 'Kg' },
-  { name: 'concreteConsumptionCoefficient', label: 'Concrete Consumption Coefficient', type: 'text', unit: '' },
-  { name: 'totalConcreteConsumption', label: 'Total Concrete Consumption', type: 'text', unit: 'Cubic m' },
+  { name: 'concreteConsumptionCoefficient', label: 'Concrete Consumption Coefficient', type: 'text', unit: 'cum/sqft' },
+  { name: 'totalConcreteConsumption', label: 'Total Concrete Consumption', type: 'text', unit: 'cu. m' },
 ]
 const ALL = [...FORMWORK, ...SYSTEM, ...MATERIAL]
 

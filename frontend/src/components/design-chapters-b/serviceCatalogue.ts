@@ -1,4 +1,31 @@
-export type ServiceParam = { name: string; label: string; type: 'select' | 'input' | 'switch'; options?: string[]; unit?: string; benchmark: string | boolean }
+/** grey detail line under a value: typed per project (input) or a fixed description of the chosen option */
+export type ServiceDetail =
+  | { kind: 'input'; name: string; placeholder: string; unit?: string; prefix?: string; onlyWhenYes?: boolean }
+  | { kind: 'fixed'; text: Record<string, string> }
+
+export type ServiceParam = {
+  name: string
+  label: string
+  type: 'select' | 'input' | 'switch'
+  options?: string[]
+  unit?: string
+  benchmark: string | boolean
+  detail?: ServiceDetail
+  /** false = the DPR shows no "Req:" line, only the value (green when it matches the benchmark) and the detail line */
+  reqInReport?: boolean
+}
+
+/** text of the grey detail line for a parameter ("Capacity: 200 KLD", "Separate soil & waste stacks", …), '' when none */
+export function serviceDetailText(p: ServiceParam, values: Record<string, unknown> | undefined): string {
+  const d = p.detail
+  if (!d || !values) return ''
+  const v = values[p.name]
+  if (d.kind === 'fixed') return d.text[String(v ?? '')] ?? ''
+  if (d.onlyWhenYes && !(v === true || v === 'true')) return ''
+  const t = String(values[d.name] ?? '').trim()
+  if (!t) return ''
+  return `${d.prefix ?? ''}${t}${d.unit && /^[0-9.,]+$/.test(t) ? ` ${d.unit}` : ''}`
+}
 
 /** Hardcoded parameter catalogue + benchmark values (same as original). */
 export const SERVICE_DESIGN: { category: string; parameters: ServiceParam[] }[] = [
@@ -59,6 +86,57 @@ export const SERVICE_DESIGN: { category: string; parameters: ServiceParam[] }[] 
       { name: 'driversRooms', label: "Driver's Rooms Provided", type: 'switch', benchmark: true },
       { name: 'serviceToilets', label: 'Toilets for Service Personnel', type: 'switch', benchmark: true },
       { name: 'serviceFacilitiesLocation', label: 'Service Facilities Location', type: 'select', options: ['Basement B1', 'Basement B2', 'Ground Floor', 'Service Block'], benchmark: 'Basement B1' },
+      {
+        name: 'stpTechnology',
+        label: 'STP Technology',
+        type: 'select',
+        options: ['MBBR Technology', 'SBR Technology', 'MBR Technology', 'Conventional'],
+        benchmark: 'MBBR Technology',
+        detail: { kind: 'input', name: 'stpCapacity', placeholder: 'STP capacity, e.g. 200', unit: 'KLD', prefix: 'Capacity: ' },
+        reqInReport: false,
+      },
+      {
+        name: 'drainageStack',
+        label: 'Drainage Stack System',
+        type: 'select',
+        options: ['Two-Pipe Stack System', 'Single-Pipe Stack System'],
+        benchmark: 'Two-Pipe Stack System',
+        detail: { kind: 'fixed', text: { 'Two-Pipe Stack System': 'Separate soil & waste stacks', 'Single-Pipe Stack System': 'Common stack for soil & waste' } },
+        reqInReport: false,
+      },
+      {
+        name: 'meteringSystem',
+        label: 'Metering System',
+        type: 'select',
+        options: ['Multi-Metering', 'Single-Point Metering'],
+        benchmark: 'Multi-Metering',
+        detail: { kind: 'fixed', text: { 'Multi-Metering': 'Individual metering for each unit', 'Single-Point Metering': 'Single bulk meter for the whole project' } },
+        reqInReport: false,
+      },
+    ],
+  },
+  {
+    category: 'Electrical & Connectivity',
+    parameters: [
+      { name: 'accessControl', label: 'Access Control', type: 'switch', benchmark: true, reqInReport: false },
+      { name: 'evCharging', label: 'EV Charging Provision', type: 'switch', benchmark: true, reqInReport: false },
+      {
+        name: 'emergencyLights',
+        label: 'Emergency Lights',
+        type: 'switch',
+        benchmark: true,
+        detail: { kind: 'input', name: 'emergencyLightsLocation', placeholder: 'Where, e.g. Master Bedroom & Living / Dining', onlyWhenYes: true },
+        reqInReport: false,
+      },
+      {
+        name: 'emergencySwitch',
+        label: 'Emergency Switch',
+        type: 'switch',
+        benchmark: true,
+        detail: { kind: 'input', name: 'emergencySwitchLocation', placeholder: 'Where, e.g. Master Bathroom', onlyWhenYes: true },
+        reqInReport: false,
+      },
+      { name: 'fibreConnectivity', label: 'Fibre Connectivity', type: 'switch', benchmark: true, reqInReport: false },
     ],
   },
 ]

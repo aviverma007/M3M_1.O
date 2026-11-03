@@ -15,6 +15,9 @@ export type ProjectDetailsLayoutData = {
   customFields?: CustomField[]
   customFieldsImage?: string
   grandTotalSaleable?: number
+  /** sum of the Residential group(s) only — feeds Module 6 Saleable Area */
+  residentialTotalSaleable?: number
+  residentialTotalUnits?: number
 }
 
 /* ---------------- Project Level Design ---------------- */

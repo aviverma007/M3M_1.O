@@ -148,8 +148,8 @@ export default function ModuleCard({
   }, [department, company])
 
   const access: Access = (() => {
-    // modules 1-3 are locked for everyone (as in the original app)
-    if (moduleNo <= 3) return 'none'
+    // modules 1-3 and Design Brief (module 4 for residential, 3 for commercial) are locked for everyone
+    if (moduleNo <= 3 || moduleName === 'Design Brief') return 'none'
     if (rolePerms !== null && moduleName in rolePerms) return rolePerms[moduleName] as Access
     if (moduleNo === 4 || !department || department === 'super_admin') return 'edit'
     const list = DEPT_MODULES[department] || []

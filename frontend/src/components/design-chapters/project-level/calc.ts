@@ -23,10 +23,7 @@ export const ADDITIONAL_DEFAULTS = (): AdditionalElements2 => ({
     groundFloorEntranceLobby: '', openingsToGroundFloorLobby: '', floorToFloorHeight: '', typicalFloor: '', stilt: '', pentHouse: '', pentHousePlanning: '',
     unitsOnGroundFloor: '', surfaceDrivewayWidth: '', rampsEntryToBasementWidth: '', basementClearHeightRamp: '', basementClearHeightB1: '',
     basementClearHeightB2: '', totalFromTypologySum: '', noOfParkingSlots: '', parkingRequirement: '', fsi: '', valueInProject: '', jhkParkingSlot: '',
-    extraParkingReqs: [
-      { label: '2 BHK + STUDY', value: '' },
-      { label: '1 BHK + STUDY', value: '' },
-    ],
+    extraParkingReqs: [],
   },
 })
 

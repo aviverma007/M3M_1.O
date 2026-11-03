@@ -36,6 +36,14 @@ export function isDeviation(value: unknown, b?: Benchmark | null) {
     return false
   }
   if ((/^yes\b/i.test(bv) && /^no$/i.test(v)) || (/^no\b/i.test(bv) && /^yes$/i.test(v))) return true
+  // "Max 6 m" / "Min 2": explicit upper / lower limit
+  const limit = bv.match(/^(max|min)\.?\s*([0-9]+(?:\.[0-9]+)?)/i)
+  if (limit) {
+    const m = parseFloat(limit[2])
+    const n = parseFloat(v.replace(/[^0-9.]/g, ''))
+    if (isNaN(n)) return false
+    return limit[1].toLowerCase() === 'max' ? n > m : n < m
+  }
   const range = bv.match(/([0-9]+(?:\.[0-9]+)?)\s*%?\s*(?:[-–—]|to)\s*([0-9]+(?:\.[0-9]+)?)/i)
   if (range) {
     const lo = parseFloat(range[1])

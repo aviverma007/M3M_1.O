@@ -10,7 +10,7 @@ import { SaveProjectFooter } from '@/components/design-chapters-b/PageChrome'
 import { errorMessage, saveSummary, useSummaryLoader } from '@/api/chapters-b'
 import { cn } from '@/lib/utils'
 import type { FieldValue } from '@/types/chapters-b'
-import { SERVICE_DESIGN, type ServiceParam as Param } from '@/components/design-chapters-b/serviceCatalogue'
+import { SERVICE_DESIGN, serviceDetailText, type ServiceParam as Param } from '@/components/design-chapters-b/serviceCatalogue'
 
 const OTHER_RE = /^(other|others|any other|any others)$/
 
@@ -88,12 +88,13 @@ export default function ServiceDesignForm() {
                         <span className={`text-[12px] font-medium ${m === false ? 'text-red-600' : 'text-gray-600'}`}>{p.label}</span>
                         {m === false && <span className="ml-2 text-[10px] text-red-500 font-semibold">● Benchmark</span>}
                         <p className="text-[10px] mt-1 text-gray-400">
-                          Req: <span className="font-semibold text-blue-400">{String(p.benchmark)}</span>
+                          Req: <span className="font-semibold text-blue-400">{p.benchmark === true ? 'Yes' : String(p.benchmark)}</span>
                         </p>
                       </td>
                       <td className="px-6 py-6">
                         <div className="space-y-2">
                           <ParamInput param={p} value={values[p.name]} match={m} onChange={(v) => set(p.name, v)} />
+                          <ParamDetail param={p} values={values} onChange={set} />
                           {m !== null && (
                             <p className={cn('text-[10px] font-bold italic', m ? 'text-green-500' : 'text-red-500')}>
                               {m ? 'Within Benchmark' : 'Selected value does not match benchmark'}
@@ -111,6 +112,29 @@ export default function ServiceDesignForm() {
       </div>
 
       <SaveProjectFooter saving={saving} onSave={save} innerClassName="w-full px-6 flex justify-end gap-3" />
+    </div>
+  )
+}
+
+/** extra line under a value: typed per project (STP capacity, emergency light / switch location) or a fixed description */
+function ParamDetail({ param: p, values, onChange }: { param: Param; values: Record<string, FieldValue>; onChange: (name: string, v: FieldValue) => void }) {
+  const d = p.detail
+  if (!d) return null
+  if (d.kind === 'fixed') {
+    const t = serviceDetailText(p, values)
+    return t ? <p className="text-[11px] text-gray-500">{t}</p> : null
+  }
+  if (d.onlyWhenYes && !values[p.name]) return null
+  const v = values[d.name]
+  return (
+    <div className="relative">
+      <Input
+        value={typeof v === 'string' ? v : ''}
+        onChange={(e) => onChange(d.name, e.target.value)}
+        placeholder={d.placeholder}
+        className="h-9 text-[12px] bg-white border border-gray-200 focus:ring-1 focus:ring-blue-500 rounded-lg pr-14"
+      />
+      {d.unit && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold italic text-gray-400">{d.unit}</span>}
     </div>
   )
 }

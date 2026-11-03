@@ -1,5 +1,5 @@
 /* Service Design Considerations — "Parameter | Details" table with Req: lines. */
-import { SERVICE_DESIGN } from '@/components/design-chapters-b/serviceCatalogue'
+import { SERVICE_DESIGN, serviceDetailText } from '@/components/design-chapters-b/serviceCatalogue'
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import { isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
@@ -48,6 +48,12 @@ const serviceDesign: ModuleRenderer = (ctx, input) => {
       .filter((p) => !isEmpty(data?.[p.name]))
       .map((p): ParamRow => {
         const v = data![p.name]
+        const benchText = String(p.benchmark === true ? 'Yes' : p.benchmark)
+        if (p.reqInReport === false) {
+          // newer parameters: value (green when it matches the benchmark, red when not) + grey detail line, no "Req:"
+          const note = serviceDetailText(p, data)
+          return { label: p.label, value: show(v), unit: p.unit, note: note || undefined, ok: show(v) === benchText }
+        }
         const rule = RULES[p.name] ?? { req: String(p.benchmark === true ? 'Yes' : p.benchmark), ok: (x: unknown) => show(x) === String(p.benchmark === true ? 'Yes' : p.benchmark) }
         const value = show(v)
         const unit = p.unit && /^-?[0-9.]+$/.test(value) ? p.unit : undefined

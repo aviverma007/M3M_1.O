@@ -6,7 +6,8 @@ import { ChevronLeft, Save, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PageLoader from '@/components/common/PageLoader'
 import { useBenchmarks } from '@/lib/benchmark'
-import { errorMessage, getProject, getProjectOptions, getSummary, saveSummary } from '@/api/chapters-a'
+import { errorMessage, getProject, getProjectOptions, getSummary, saveSummary, updateProject } from '@/api/chapters-a'
+import { residentialTotals } from '@/lib/residentialTotals'
 import InputPanel from '@/components/design-chapters/project-level/InputPanel'
 import OutputPanel from '@/components/design-chapters/project-level/OutputPanel'
 import CompareSection, { type Compared, type ProjectLite } from '@/components/design-chapters/project-level/CompareSection'
@@ -33,6 +34,8 @@ export default function ProjectLevelDesignForm() {
   const [area, setArea] = useState<AreaStatementInputs>(AREA_STATEMENT_DEFAULTS)
   const [extra, setExtra] = useState<AdditionalElements2>(ADDITIONAL_DEFAULTS)
   const [clusters, setClusters] = useState<ClusterConfig[]>([newCluster()])
+  const [module5Rows, setModule5Rows] = useState<unknown>([])
+  const [loadedPermFAR, setLoadedPermFAR] = useState('')
 
   useEffect(() => {
     ;(async () => {
@@ -40,15 +43,19 @@ export default function ProjectLevelDesignForm() {
         const p = await getProject(projectId!)
         const farPerm = parseFloat(p?.far_permissible) || 0
         const permSqft = farPerm ? Math.round(farPerm * 10.7639) : null
+        setLoadedPermFAR(permSqft ? String(permSqft) : '')
         const [summary, list] = await Promise.allSettled([getSummary(projectId!), getProjectOptions()])
         if (summary.status === 'fulfilled') {
           const s = summary.value
+          setModule5Rows(s?.projectDetailsLayoutData?.tableRows ?? [])
           const d = s?.projectLevelDesignData
           if (d) {
             if (d.keyRatioInputs) {
               const k = { ...d.keyRatioInputs }
               if (!k.buildingHeight && s?.projectDetailsLayoutData?.towerHeight) k.buildingHeight = s.projectDetailsLayoutData.towerHeight
-              if (!k.saleableArea && s?.projectDetailsLayoutData?.grandTotalSaleable) k.saleableArea = String(s.projectDetailsLayoutData.grandTotalSaleable)
+              // Saleable Area comes from Module 5's Residential total only
+              const resArea = residentialTotals(s?.projectDetailsLayoutData?.tableRows).area
+              if (!k.saleableArea && resArea > 0) k.saleableArea = String(resArea)
               if (permSqft) k.permissibleFAR = String(permSqft)
               setKeyRatio(k)
             }
@@ -60,7 +67,6 @@ export default function ProjectLevelDesignForm() {
                 const reqs: ParkingReq[] = []
                 if (o.parkingReq2BHK) reqs.push({ label: '2 BHK + STUDY', value: o.parkingReq2BHK })
                 if (o.parkingReq1BHK) reqs.push({ label: '1 BHK + STUDY', value: o.parkingReq1BHK })
-                if (!reqs.length) reqs.push({ label: '2 BHK + STUDY', value: '' }, { label: '1 BHK + STUDY', value: '' })
                 h.other = { ...h.other, extraParkingReqs: reqs }
               }
               setExtra(h)
@@ -106,6 +112,9 @@ export default function ProjectLevelDesignForm() {
       await saveSummary(projectId!, {
         projectLevelDesignData: { keyRatioInputs: keyRatio, areaStatementInputs: area, additionalElements2: extra, clusterConfigs: clusters, compareProjectIds: selected },
       })
+      // Permissible FAR is entered here in sq ft; the project record keeps it in sq m (Edit Project form)
+      const pfSqft = parseFloat(String(keyRatio.permissibleFAR ?? '').replace(/,/g, ''))
+      if (Number.isFinite(pfSqft) && pfSqft > 0 && String(keyRatio.permissibleFAR).trim() !== loadedPermFAR) await updateProject(projectId!, { far_permissible: String(Math.round((pfSqft / 10.7639) * 100) / 100) })
       toast.success('Project Level Design saved successfully!')
       navigate(-1)
     } catch (e) {
@@ -141,6 +150,7 @@ export default function ProjectLevelDesignForm() {
             clusters={clusters}
             setClusters={setClusters}
             benchmarks={benchmarks}
+            module5Rows={module5Rows}
           />
         </div>
         <div className="lg:col-span-7 space-y-6">

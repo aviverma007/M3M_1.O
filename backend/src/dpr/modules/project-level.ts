@@ -7,6 +7,7 @@ import { contentPage, emptyMessage, txt, type Ctx, type Doc } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { DprInput } from '../index.js'
 import { areaStatement, comparisonRatios, keyRatioFormula } from '@/components/design-chapters/project-level/calc'
+import { fmtNum, parkingRequired } from '@/lib/parkingRequired'
 import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioInputs, ParkingReq, ProjectLevelDesignData } from '@/types/chapters-a'
 
 /* ------------------------------------------------------------------ benchmark rules (same as frontend lib/benchmark.ts) */
@@ -36,6 +37,14 @@ function isDeviation(value: unknown, b?: Benchmark | null) {
     return false
   }
   if ((/^yes\b/i.test(bv) && /^no$/i.test(v)) || (/^no\b/i.test(bv) && /^yes$/i.test(v))) return true
+  // "Max 6 m" / "Min 2": explicit upper / lower limit
+  const limit = bv.match(/^(max|min)\.?\s*([0-9]+(?:\.[0-9]+)?)/i)
+  if (limit) {
+    const m = parseFloat(limit[2])
+    const n = parseFloat(v.replace(/[^0-9.]/g, ''))
+    if (isNaN(n)) return false
+    return limit[1].toLowerCase() === 'max' ? n > m : n < m
+  }
   const range = bv.match(/([0-9]+(?:\.[0-9]+)?)\s*%?\s*(?:[-–—]|to)\s*([0-9]+(?:\.[0-9]+)?)/i)
   if (range) {
     const lo = parseFloat(range[1])
@@ -300,7 +309,7 @@ function areaStatementPage(ctx: Ctx, p: AreaStatementInputs) {
 
 /* ------------------------------------------------------------------ 2. Project Level Parameters */
 type PRow =
-  | { kind: 'row'; label: string; value: string; unit: string; lines?: string[]; benchLabels?: string[] }
+  | { kind: 'row'; label: string; value: string; unit: string; lines?: string[]; benchLabels?: string[]; cols?: string[][]; footer?: string }
   | { kind: 'section'; label: string }
 
 function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefined) {
@@ -338,11 +347,13 @@ function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefine
       stripe = 0
       continue
     }
-    const b = r.lines ? null : bench(r.benchLabels ?? [r.label], r.value, benchmarks)
-    const valueLines = r.lines ?? [r.value]
+    const b = r.lines || r.cols ? null : bench(r.benchLabels ?? [r.label], r.value, benchmarks)
+    const valueLines = r.cols ? [] : r.lines ?? [r.value]
     doc.font('S').fontSize(9)
     const labelH = doc.heightOfString(r.label, { width: SPLIT - 43 - 8 })
-    const valH = valueLines.length * lh(9) + (b ? 3 + lh(7) : 0)
+    const valH = r.cols
+      ? (r.cols.length + (r.footer ? 1 : 0)) * (lh(9) + 2) + (r.footer ? 3 : 0)
+      : valueLines.length * lh(9) + (b ? 3 + lh(7) : 0)
     const h = Math.max(labelH, valH) + 12
     if (y + h > LIMIT) header()
     doc.rect(L, y, R - L, h).fill(stripe++ % 2 ? '#F0F4F8' : '#FFFFFF')
@@ -357,6 +368,20 @@ function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefine
       }
     })
     if (b) txt(doc, b.req, 343, y + 5 + lh(9) + 2, 'R', 7, b.dev ? RED : '#6B7280')
+    if (r.cols) {
+      // aligned columns: "TYPE 1 - 2BHK+1T+SP | 1.5 ECS x 6 Units | = 9 ECS"
+      const CX = [343, 560, 680]
+      const CW = [CX[1] - CX[0] - 8, CX[2] - CX[1] - 8, R - CX[2] - 8]
+      r.cols.forEach((cells, i) => {
+        const ty = y + 5 + i * (lh(9) + 2)
+        cells.forEach((c, j) => txt(doc, c, CX[j], ty, 'S', 9, TEXT, { width: CW[j], ellipsis: true }))
+      })
+      if (r.footer) {
+        const ty = y + 5 + r.cols.length * (lh(9) + 2) + 3
+        line(doc, 343, ty - 3, R - 8, ty - 3, BORDER, 0.5)
+        txt(doc, r.footer, 343, ty, 'B', 9, NAVY)
+      }
+    }
     line(doc, SPLIT, y, SPLIT, y + h, BORDER, 0.5)
     line(doc, L, y + h, R, y + h, BORDER, 0.5)
     line(doc, L, y, L, y + h, BORDER, 0.5)
@@ -365,7 +390,7 @@ function paramsPages(ctx: Ctx, rows: PRow[], benchmarks: BenchmarkMap | undefine
   }
 }
 
-const KR_PARAMS: { label: string; key: string; unit: string; bench?: string }[] = [
+const KR_PARAMS: { label: string; key: string; unit: string; bench?: string; hidden?: boolean }[] = [
   { label: 'Building Height', key: 'buildingHeight', unit: 'm' },
   { label: 'Carpet Area', key: 'carpetArea', unit: 'sq ft' },
   { label: 'Saleable Area', key: 'saleableArea', unit: 'sq ft' },
@@ -392,7 +417,7 @@ const KR_PARAMS: { label: string; key: string; unit: string; bench?: string }[] 
   { label: 'Floor to Floor Height Basement B1 B2', key: 'floorToFloorHeightBasementB1B2', unit: 'm' },
   { label: 'Floor to Floor Height (B1 - GF) Tower Area', key: 'floorToFloorHeightB1GFTower', unit: 'm' },
   { label: 'Floor to Floor Height (B1 - GF) Non Tower Area', key: 'floorToFloorHeightB1GFNonTower', unit: 'm' },
-  { label: 'Floor to Floor Height (B2 - B1)', key: 'floorToFloorHeightB2B1', unit: 'm' },
+  { label: 'Floor to Floor Height (B2 - B1)', key: 'floorToFloorHeightB2B1', unit: 'm', hidden: true },
   { label: 'Floor to Floor Height (B3 - B2)', key: 'floorToFloorHeightB3B2', unit: 'm' },
   { label: 'Car Length', key: 'carLength', unit: 'm' },
   { label: 'Car Width', key: 'carWidth', unit: 'm' },
@@ -422,21 +447,29 @@ const OTHER_PARAMS: { label: string; key: string; unit: string; legacy?: boolean
 
 const filled = (v: unknown) => v !== undefined && v !== null && String(v).trim() !== ''
 
-function parameterRows(l: KeyRatioInputs, extra: AdditionalElements2 | undefined): PRow[] {
+function parameterRows(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, module5Rows?: unknown): PRow[] {
   const rows: PRow[] = []
   const known = new Set(KR_PARAMS.map((f) => f.key))
   for (const f of KR_PARAMS) {
-    if (!filled(l[f.key])) continue
+    if (f.hidden || !filled(l[f.key])) continue
     rows.push({ kind: 'row', label: f.label, value: str(l[f.key]), unit: f.unit, benchLabels: [f.label, ...(f.bench ? [f.bench] : [])] })
   }
   for (const [k, v] of Object.entries(l)) if (!known.has(k) && filled(v)) rows.push({ kind: 'row', label: autoLabel(k), value: str(v), unit: '' })
   const o = (extra?.other ?? {}) as Record<string, unknown>
   const more: PRow[] = []
   for (const f of OTHER_PARAMS) if (filled(o[f.key])) more.push({ kind: 'row', label: f.label, value: str(o[f.key]), unit: f.unit })
-  const reqs = ((o.extraParkingReqs as ParkingReq[] | undefined) ?? []).filter((r) => r && filled(r.value))
-  if (reqs.length) more.push({ kind: 'row', label: 'Extra Parking Reqs', value: '', unit: '', lines: reqs.flatMap((r) => [`Label: ${r.label ?? ''}`, `Value: ${r.value ?? ''}`]) })
+  // Parking Required: ECS per unit x units (Module 5) = ECS, then the total
+  const pr = parkingRequired((o.extraParkingReqs as ParkingReq[] | undefined) ?? [], module5Rows)
+  if (pr.rows.length)
+    more.push({
+      kind: 'row',
+      label: 'Parking Required',
+      value: '',
+      unit: '',
+      cols: pr.rows.map((r) => [r.label, `${fmtNum(r.ecs ?? 0)} ECS x ${r.units ?? '-'} Units`, `= ${r.total === null ? '-' : fmtNum(r.total)} ECS`]),
+      footer: `Total Car Parks Required = ${fmtNum(pr.total)} ECS`,
+    })
   if (filled(o.openingsToGroundFloorLobby)) more.push({ kind: 'row', label: 'Openings To Ground Floor Lobby', value: str(o.openingsToGroundFloorLobby), unit: '' })
-  reqs.forEach((r) => more.push({ kind: 'row', label: str(r.label), value: str(r.value), unit: 'Nos.' }))
   if (more.length) rows.push({ kind: 'section', label: 'Additional Elements' }, ...more)
   return rows
 }
@@ -779,7 +812,7 @@ const projectLevel: ModuleRenderer = (ctx, input) => {
   const benchmarks = input.benchmarks
 
   areaStatementPage(ctx, d.areaStatementInputs ?? {})
-  paramsPages(ctx, parameterRows(l, d.additionalElements2), benchmarks)
+  paramsPages(ctx, parameterRows(l, d.additionalElements2, (s.projectDetailsLayoutData as { tableRows?: unknown } | undefined)?.tableRows), benchmarks)
   breakdownPage(ctx, d.additionalElements2)
   keyRatioPages(ctx, keyRatioGroups(l, d.additionalElements2, display), benchmarks)
   // "Additional Elements 2/2": cluster tables, or the empty page the original leaves when there are none

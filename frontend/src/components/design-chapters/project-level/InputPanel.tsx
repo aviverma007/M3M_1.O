@@ -6,6 +6,7 @@ import { checkDeviation, formatBenchmark, getBenchmark, reqLabel, type Benchmark
 import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioInputs, ParkingReq } from '@/types/chapters-a'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui'
 import { newCluster } from './calc'
+import { fmtNum, module5Units, parkingRequired } from '@/lib/parkingRequired'
 
 type F = { label: string; key: string; unit: string }
 
@@ -162,9 +163,65 @@ export type InputPanelProps = {
   clusters: ClusterConfig[]
   setClusters: (v: ClusterConfig[]) => void
   benchmarks: BenchmarkMap | null
+  /** Module 5 unit table (units per type for Parking Required) */
+  module5Rows?: unknown
 }
 
-export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea, extra: n, setExtra, clusters, setClusters, benchmarks }: InputPanelProps) {
+/** Parking Required: ECS per unit for each Module 5 unit type; units come from Module 5; total = ECS x units */
+function ParkingRequired({ reqs, setReqs, module5Rows }: { reqs: ParkingReq[]; setReqs: (r: ParkingReq[]) => void; module5Rows: unknown }) {
+  const groups = Array.isArray(module5Rows) ? (module5Rows as { type?: unknown }[]) : []
+  const resGroups = groups.filter((g) => /resid/i.test(String(g?.type ?? '')))
+  const types = module5Units(resGroups.length ? resGroups : groups)
+  const k = (s: unknown) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const valueOf = (label: string) => reqs.find((r) => k(r.label) === k(label))?.value ?? ''
+  const setValue = (label: string, v: string) => {
+    const i = reqs.findIndex((r) => k(r.label) === k(label))
+    setReqs(i >= 0 ? reqs.map((r, j) => (j === i ? { ...r, value: v } : r)) : [...reqs, { label, value: v }])
+  }
+  const custom = reqs.map((r, i) => ({ r, i })).filter(({ r }) => !types.some((t) => k(t.label) === k(r.label)))
+  const calc = parkingRequired(reqs, module5Rows)
+  const totalOf = (label: string) => calc.rows.find((x) => k(x.label) === k(label))
+  const cell = 'text-xs text-gray-600 whitespace-nowrap'
+  return (
+    <div className="space-y-2 mt-2">
+      <label className="text-xs font-bold text-gray-700">Parking Required</label>
+      {types.length === 0 && <p className="text-[11px] text-gray-400">Add unit types in Module 5 (Project Details + Layout Plans) to list them here.</p>}
+      {types.map((t) => {
+        const row = totalOf(t.label)
+        return (
+          <div key={t.label} className="ml-2 grid grid-cols-[1fr_70px_150px] items-center gap-2">
+            <span className="text-xs font-semibold text-gray-800 truncate" title={t.label}>
+              {t.label}
+            </span>
+            <Input value={valueOf(t.label)} onChange={(e) => setValue(t.label, e.target.value)} placeholder="ECS" className="h-8 text-xs border-gray-200 text-center" />
+            <span className={cell}>
+              ECS x {t.units} Units = <b>{row && row.total !== null ? `${fmtNum(row.total)} ECS` : '-'}</b>
+            </span>
+          </div>
+        )
+      })}
+      {custom.map(({ r, i }) => (
+        <div key={`c${i}`} className="ml-2 grid grid-cols-[1fr_70px_auto_auto] items-center gap-2">
+          <Input value={r.label} onChange={(e) => setReqs(reqs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} placeholder="Type name" className="h-8 text-xs border-gray-200" />
+          <Input value={r.value} onChange={(e) => setReqs(reqs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} placeholder="ECS" className="h-8 text-xs border-gray-200 text-center" />
+          <span className={cell}>ECS (type not in Module 5)</span>
+          <button type="button" onClick={() => setReqs(reqs.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors">
+            <Trash2 size={13} />
+          </button>
+        </div>
+      ))}
+      <div className="ml-2 flex items-center justify-between border-t pt-2">
+        <button type="button" onClick={() => setReqs([...reqs, { label: '', value: '' }])} className={ADD_BTN}>
+          <Plus size={12} />
+          Add Other Type
+        </button>
+        <span className="text-xs font-bold text-blue-900">Total Car Parks Required = {fmtNum(calc.total)} ECS</span>
+      </div>
+    </div>
+  )
+}
+
+export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea, extra: n, setExtra, clusters, setClusters, benchmarks, module5Rows }: InputPanelProps) {
   const kr = (fields: F[]) => fields.map((f) => <BenchInput key={f.key} f={f} value={l[f.key]} onChange={(v) => setKeyRatio({ ...l, [f.key]: v })} benchmarks={benchmarks} />)
   const as = (fields: F[], pr: string) => fields.map((f) => <PlainInput key={f.key} f={f} value={p[f.key]} pr={pr} onChange={(v) => setArea({ ...p, [f.key]: v })} />)
   const other = n.other as Record<string, string>
@@ -323,36 +380,7 @@ export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea,
               <h3 className={H3}>BASEMENT & PARKING STRATEGY</h3>
               <div className="grid grid-cols-1 gap-4">
                 {ot(BASEMENT)}
-                <div className="space-y-1.5 mt-2">
-                  <label className="text-xs font-bold text-gray-700">Parking Requirement</label>
-                </div>
-                {reqs.map((r, i) => (
-                  <div key={i} className="ml-4 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={r.label}
-                        onChange={(e) => setReqs(reqs.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
-                        placeholder="Type name"
-                        className="h-8 text-xs border-gray-200 flex-1"
-                      />
-                      <button type="button" onClick={() => setReqs(reqs.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                    <Input
-                      value={r.value}
-                      onChange={(e) => setReqs(reqs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))}
-                      placeholder=""
-                      className="bg-gray-50/50 text-sm h-10 border-gray-100"
-                    />
-                  </div>
-                ))}
-                <div className="ml-4 mt-2">
-                  <button type="button" onClick={() => setReqs([...reqs, { label: '', value: '' }])} className={ADD_BTN}>
-                    <Plus size={12} />
-                    Add Parking Type
-                  </button>
-                </div>
+                <ParkingRequired reqs={reqs} setReqs={setReqs} module5Rows={module5Rows} />
               </div>
             </div>
           </AccordionContent>

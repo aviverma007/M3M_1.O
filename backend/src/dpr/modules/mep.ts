@@ -8,7 +8,7 @@ const TITLE = 'Design Considerations — MEP Parameters'
 type Def = { name: string; label: string; unit?: string; req?: string; ok?: (v: unknown) => boolean | undefined }
 
 const lifts = (p: 'passenger' | 'service'): Def[] => [
-  { name: `${p}LiftsNo`, label: 'No. Of Lifts' },
+  { name: `${p}LiftsNo`, label: p === 'passenger' ? 'No. Of Lifts per Tower' : 'No. Of Lifts' },
   { name: `${p}LiftsStops`, label: 'No. Of Stops' },
   p === 'passenger'
     ? { name: `${p}LiftsSpeed`, label: 'Speed Of Lift', unit: 'm/sec', req: '3 to 3.5', ok: (v) => inRange(v, 3, 3.5) }

@@ -122,9 +122,13 @@ async function main() {
       }
     }
   }
+  // benchmark decisions made in this app (Nov 2026 change set) win over what the original reports show
+  const remove = ['building height', 'far utilization', 'balcony area far %', 'units on ground floor']
+  for (const k of Object.keys(entries)) if (remove.includes(k)) delete entries[k]
   if (Object.keys(entries).length) {
+    entries['surface driveway width'] = { benchmarkValue: 'Max 6 m', validOptions: [] }
+    entries['passenger elevators no of lifts'] = { benchmarkValue: '2', validOptions: [] }
     // placeholder benchmarks seeded with the app that the original application doesn't have (they would add Req: lines it never shows)
-    const remove = ['building height', 'far utilization', 'balcony area far %']
     const r = await api('PUT', '/benchmark', { entries, remove })
     step(`Benchmarks from the original reports saved (${r?.updated ?? 0})`)
   }

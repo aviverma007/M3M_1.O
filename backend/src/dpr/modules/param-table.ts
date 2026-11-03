@@ -22,6 +22,8 @@ export type ParamRow = {
   req?: string
   /** true = meets benchmark (green), false = deviates (red), undefined = neutral */
   ok?: boolean
+  /** grey detail line under the value (no "Req:" prefix), e.g. "Capacity: 200 KLD" */
+  note?: string
 }
 export type ParamSection = { title: string; rows: ParamRow[] }
 
@@ -64,7 +66,8 @@ export function renderParamTable(ctx: Ctx, title: string, headers: [string, stri
       const unit = r.unit && /^-?[0-9.]+$/.test(r.value) ? r.unit : undefined
       const valueText = r.value + (unit ? ` ${unit}` : '')
       const valueH = lh(doc, valueText, X + TW - SPLIT - 16, 'S', 9)
-      const h = Math.max(labelH, valueH + (r.req !== undefined ? 12.45 : 0)) + 12
+      const noteH = r.note ? lh(doc, r.note, X + TW - SPLIT - 16, 'R', 7.5) + 2 : 0
+      const h = Math.max(labelH, valueH + (r.req !== undefined ? 12.45 : 0) + noteH) + 12
       if (y + h > LIMIT) {
         page()
       }
@@ -79,6 +82,7 @@ export function renderParamTable(ctx: Ctx, title: string, headers: [string, stri
       } else {
         doc.font('S').fontSize(9).fillColor(color).text(valueText, SPLIT + 8, y + 5, { width: vw })
       }
+      if (r.note) doc.font('R').fontSize(7.5).fillColor(GREY).text(r.note, SPLIT + 8, y + 5 + valueH + 2, { width: vw })
       if (r.req !== undefined) {
         doc.font('R').fontSize(7).fillColor(r.ok === false ? C.red : GREY).text(`Req: ${r.req}`, SPLIT + 8, y + 5 + valueH + 2, { width: vw })
       }

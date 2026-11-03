@@ -33,10 +33,10 @@ const SECTIONS: { title: string; fields: Def[] }[] = [
     fields: [
       { name: 'maxGradeOfConcrete', label: 'Max. Grade of Concrete', req: 'Not explicitly stated (inferred M50)', ok: (v) => num(v) <= 50 },
       { name: 'builtUpArea', label: 'Built Up Area', unit: 'Sq. ft' },
-      { name: 'steelConsumptionCoefficient', label: 'Steel Consumption Coefficient', req: '6.1 to 6.5', ok: (v) => inRange(v, 6.1, 6.5) },
+      { name: 'steelConsumptionCoefficient', label: 'Steel Consumption Coefficient (Kg/sqft)', req: '6.1 to 6.5', ok: (v) => inRange(v, 6.1, 6.5) },
       { name: 'totalSteelConsumption', label: 'Total Steel Consumption', unit: 'Kg' },
-      { name: 'concreteConsumptionCoefficient', label: 'Concrete Consumption Coefficient', req: '0 to 0.046', ok: (v) => inRange(v, 0, 0.046) },
-      { name: 'totalConcreteConsumption', label: 'Total Concrete Consumption', unit: 'Cubic m' },
+      { name: 'concreteConsumptionCoefficient', label: 'Concrete Consumption Coefficient (cum/sqft)', req: '0 to 0.046', ok: (v) => inRange(v, 0, 0.046) },
+      { name: 'totalConcreteConsumption', label: 'Total Concrete Consumption', unit: 'cu. m' },
     ],
   },
 ]

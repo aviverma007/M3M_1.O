@@ -13,7 +13,7 @@ import SelectWithOther from '@/components/shared/SelectWithOther'
 import { useAuth } from '@/auth/AuthContext'
 import { downloadBlob } from '@/lib/download'
 import { checkDeviation, formatBenchmark, getBenchmark, reqLabel, useBenchmarks } from '@/lib/benchmark'
-import { downloadMepInputs, errorMessage, getKeyRatioAvgWait, getMep, getMepAssignees, saveMep } from '@/api/chapters-a'
+import { downloadMepInputs, errorMessage, getMep, getMepAssignees, saveMep } from '@/api/chapters-a'
 import type { User } from '@/types'
 import type { MepRecord } from '@/types/chapters-a'
 
@@ -25,7 +25,7 @@ const GROUPS: Group[] = [
     group: 'Elevators (Passenger)',
     benchmarkPrefix: 'passenger elevators',
     fields: [
-      { name: 'passengerLiftsNo', label: 'No. Of Lifts', type: 'text' },
+      { name: 'passengerLiftsNo', label: 'No. Of Lifts per Tower', type: 'text' },
       { name: 'passengerLiftsStops', label: 'No. Of Stops', type: 'text' },
       { name: 'passengerLiftsSpeed', label: 'Speed Of Lift', type: 'text', unit: 'm/sec' },
       { name: 'passengerAverageWait', label: 'Average Waiting Time', type: 'text', unit: 'sec' },
@@ -105,38 +105,7 @@ export default function MEPChapterForm() {
     defaultValues: FLAT.reduce((acc, f) => ({ ...acc, [f.name]: '', [`${f.name}Note`]: null }), {}),
   })
 
-  /* average waiting time prefilled from Key Ratio */
-  useEffect(() => {
-    if (!projectId) return
-    getKeyRatioAvgWait(projectId)
-      .then((w) => {
-        if (w) {
-          setValue('passengerAverageWait', w)
-          setValue('serviceAverageWait', w)
-        }
-      })
-      .catch((e) => console.error('Error fetching Key Ratio data for MEP:', e))
-  }, [projectId, setValue])
-
-  /* average waiting time = stops * 7 / (speed * lifts) */
-  const autoWait = (no: unknown, stops: unknown, speed: unknown, target: string) => {
-    if (no && stops && speed) {
-      const n = parseFloat(String(no)) || 0
-      const st = parseFloat(String(stops)) || 0
-      const sp = parseFloat(String(speed)) || 0
-      if (n > 0 && sp > 0) setValue(target, ((st * 7) / (sp * n)).toFixed(2))
-    }
-  }
-  const [pNo, pStops, pSpeed, sNo, sStops, sSpeed] = [
-    watch('passengerLiftsNo'),
-    watch('passengerLiftsStops'),
-    watch('passengerLiftsSpeed'),
-    watch('serviceLiftsNo'),
-    watch('serviceLiftsStops'),
-    watch('serviceLiftsSpeed'),
-  ]
-  useEffect(() => autoWait(pNo, pStops, pSpeed, 'passengerAverageWait'), [pNo, pStops, pSpeed]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => autoWait(sNo, sStops, sSpeed, 'serviceAverageWait'), [sNo, sStops, sSpeed]) // eslint-disable-line react-hooks/exhaustive-deps
+  /* Average Waiting Time is entered manually (no auto-calculation) */
 
   useEffect(() => {
     ;(async () => {

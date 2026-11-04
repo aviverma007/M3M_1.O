@@ -2,3 +2,7 @@
 # project data imports (real project data - never commit)
 *_import.zip
 *_import/
+
+# python bytecode
+__pycache__/
+*.pyc

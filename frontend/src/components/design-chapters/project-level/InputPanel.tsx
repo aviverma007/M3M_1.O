@@ -173,29 +173,40 @@ function ParkingRequired({ reqs, setReqs, module5Rows }: { reqs: ParkingReq[]; s
   const resGroups = groups.filter((g) => /resid/i.test(String(g?.type ?? '')))
   const types = module5Units(resGroups.length ? resGroups : groups)
   const k = (s: unknown) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
-  const valueOf = (label: string) => reqs.find((r) => k(r.label) === k(label))?.value ?? ''
-  const setValue = (label: string, v: string) => {
-    const i = reqs.findIndex((r) => k(r.label) === k(label))
+  // a unit type can appear more than once in Module 5: the n-th occurrence uses the n-th row with that name
+  const occ = types.map((t, i) => types.slice(0, i).filter((x) => k(x.label) === k(t.label)).length)
+  const reqIndex = (label: string, n: number) => reqs.map((r, j) => ({ r, j })).filter(({ r }) => k(r.label) === k(label))[n]?.j ?? -1
+  const valueOf = (label: string, n: number) => {
+    const j = reqIndex(label, n)
+    return j >= 0 ? reqs[j].value ?? '' : ''
+  }
+  const setValue = (label: string, n: number, v: string) => {
+    const i = reqIndex(label, n)
     setReqs(i >= 0 ? reqs.map((r, j) => (j === i ? { ...r, value: v } : r)) : [...reqs, { label, value: v }])
   }
-  const custom = reqs.map((r, i) => ({ r, i })).filter(({ r }) => !types.some((t) => k(t.label) === k(r.label)))
+  const claimed = new Set(types.map((t, ti) => reqIndex(t.label, occ[ti])).filter((j) => j >= 0))
+  const custom = reqs.map((r, i) => ({ r, i })).filter(({ i }) => !claimed.has(i))
   const calc = parkingRequired(reqs, module5Rows)
-  const totalOf = (label: string) => calc.rows.find((x) => k(x.label) === k(label))
+  const ecsTotal = (v: string, units: number) => {
+    const e = parseFloat(String(v).replace(/,/g, ''))
+    return Number.isFinite(e) ? fmtNum(e * units) : null
+  }
   const cell = 'text-xs text-gray-600 whitespace-nowrap'
   return (
     <div className="space-y-2 mt-2">
       <label className="text-xs font-bold text-gray-700">Parking Required</label>
       {types.length === 0 && <p className="text-[11px] text-gray-400">Add unit types in Module 5 (Project Details + Layout Plans) to list them here.</p>}
-      {types.map((t) => {
-        const row = totalOf(t.label)
+      {types.map((t, ti) => {
+        const v = valueOf(t.label, occ[ti])
+        const tot = ecsTotal(v, t.units)
         return (
-          <div key={t.label} className="ml-2 grid grid-cols-[1fr_70px_150px] items-center gap-2">
+          <div key={`${t.label}-${ti}`} className="ml-2 grid grid-cols-[1fr_70px_150px] items-center gap-2">
             <span className="text-xs font-semibold text-gray-800 truncate" title={t.label}>
               {t.label}
             </span>
-            <Input value={valueOf(t.label)} onChange={(e) => setValue(t.label, e.target.value)} placeholder="ECS" className="h-8 text-xs border-gray-200 text-center" />
+            <Input value={v} onChange={(e) => setValue(t.label, occ[ti], e.target.value)} placeholder="ECS" className="h-8 text-xs border-gray-200 text-center" />
             <span className={cell}>
-              ECS x {t.units} Units = <b>{row && row.total !== null ? `${fmtNum(row.total)} ECS` : '-'}</b>
+              ECS x {t.units} Units = <b>{tot !== null ? `${tot} ECS` : '-'}</b>
             </span>
           </div>
         )

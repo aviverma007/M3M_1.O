@@ -3,7 +3,7 @@ import { contentPage, txt, W, type Ctx, type Doc } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { ImageLoader } from '../index.js'
 import type { Typology } from '@/types/chapters-a'
-import { calcValue, efficiencies } from '@/lib/unitLevelCalc'
+import { calcValue, efficiencies, numText } from '@/lib/unitLevelCalc'
 
 const num = (v: unknown) => parseFloat(String(v ?? '')) || 0
 const has = (v: unknown) => v !== undefined && v !== null && String(v).trim() !== ''
@@ -26,14 +26,14 @@ function typologyRows(t: Typology): Row[] {
     { label: 'RERA Carpet Area', value: str(t.carpetArea), unit: 'Sqft' },
     { label: 'Balcony Area — FAR', value: str(t.balconyAreaFar), unit: 'Sqft' },
     { label: 'Balcony Area — Non-FAR', value: str(t.balconyAreaNonFar), unit: 'Sqft' },
-    { label: 'Total Balcony Area', value: hasBal ? String(bf + bnf) : '', unit: 'Sqft', hi: true },
+    { label: 'Total Balcony Area', value: hasBal ? numText(bf + bnf) : '', unit: 'Sqft', hi: true },
     {
       label: 'Unit Area — Covered + Balcony',
-      value: has(t.coveredArea) || hasBal ? String(num(t.coveredArea) + bf + bnf) : '',
+      value: has(t.coveredArea) || hasBal ? numText(num(t.coveredArea) + bf + bnf) : '',
       unit: 'Sqft',
     },
     { label: 'Core Area (Non Saleable FAR)', value: str(t.circulationFar), unit: 'Sqft' },
-    { label: 'Balcony FAR + Unit FAR', value: has(t.unitFar) || has(t.balconyAreaFar) ? String(num(t.unitFar) + bf) : '', unit: 'Sqft' },
+    { label: 'Balcony FAR + Unit FAR', value: has(t.unitFar) || has(t.balconyAreaFar) ? numText(num(t.unitFar) + bf) : '', unit: 'Sqft' },
     { label: 'Wall area (Unit external wall Area)', value: str(t.wallArea), unit: 'Sqft' },
     { label: 'AC Area', value: str(t.acArea), unit: 'Sqft' },
     { label: 'Core Area (Non Saleable FAR)', value: str(t.coreArea), unit: 'Sqft' },
@@ -152,7 +152,6 @@ const GROUPS: { title: string; rows: { label: string; key: string; eff?: boolean
     ],
   },
 ]
-const PER_PAGE = 9
 /** rows whose empty value the original prints as a red dash (the others grey) */
 const RED_WHEN_EMPTY = new Set(['Balcony Area (FAR)', 'Unit Covered Area', 'Balcony Area (FAR + Non-FAR)', 'Total Unit Area (Covered + Balcony)', 'Balcony/SA'])
 
@@ -171,7 +170,8 @@ function summaryPage(ctx: Ctx, types: Typology[]) {
   doc.lineWidth(0.5).moveTo(x0 + labelW, y).lineTo(x0 + labelW, y + 22).stroke() // no colour set, as in the original
   txt(doc, 'UNIT TYPE NAME', x0 + 8, y + 7.5, 'S', 7, '#FFFFFF')
   types.forEach((t, i) => {
-    txt(doc, str(t.name) || '-', colX(i), y + 7.5, 'S', 7, '#FFFFFF', { width: colW, align: 'center' })
+    // 6pt padding each side (narrow columns wrap the name, as the original does with many unit types)
+    txt(doc, str(t.name) || '-', colX(i) + 6, y + 7.5, 'S', 7, '#FFFFFF', { width: Math.max(colW - 12, 1), align: 'center', lineBreak: true })
     if (i < types.length - 1) doc.lineWidth(0.5).moveTo(colX(i + 1), y).lineTo(colX(i + 1), y + 22).stroke()
   })
   y += 22
@@ -191,7 +191,7 @@ function summaryPage(ctx: Ctx, types: Typology[]) {
         const raw = r.eff ? effs[i][r.key] : calcValue(t, r.key)
         const empty = !raw || raw === '--'
         const dashColor = RED_WHEN_EMPTY.has(r.key) ? '#DC2626' : '#64748B'
-        txt(doc, empty ? '—' : raw, colX(i), y + 5.5, 'S', 7, empty ? dashColor : '#1A202C', { width: colW, align: 'center' })
+        txt(doc, empty ? '—' : raw, colX(i) + 6, y + 5.5, 'S', 7, empty ? dashColor : '#1A202C', { width: Math.max(colW - 12, 1), align: 'center', lineBreak: true })
         if (i < types.length - 1) doc.lineWidth(0.3).moveTo(colX(i + 1), y).lineTo(colX(i + 1), y + 18).stroke('#E5E7EB')
       })
       y += 18
@@ -208,6 +208,6 @@ const unitLevel: ModuleRenderer = async (ctx, input, loadImage) => {
     return
   }
   for (const t of types) await typologyPage(ctx, t, loadImage)
-  for (let i = 0; i < types.length; i += PER_PAGE) summaryPage(ctx, types.slice(i, i + PER_PAGE))
+  summaryPage(ctx, types) // the original prints every unit type on one summary page (columns narrow as needed)
 }
 export default unitLevel

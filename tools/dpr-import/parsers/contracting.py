@@ -1,4 +1,5 @@
 """Contracting Strategy -> summary.contractingStrategyData {contractors, packages, availableElements}"""
+import re
 from .cs_common import fills, header_rects, header_columns, join, cell_texts, undash
 
 GROUP_FILL = '#EEF2F8'
@@ -53,6 +54,15 @@ def parse(pages, ctx):
                     g['page'] = p.no; ct_groups.append(g)
     if not pk_groups and not ct_groups:
         return {'summary': {}, 'notes': ['no contracting strategy configured']}
+    # a package continued on the next page is printed as "<name> (cont.)" / "<type> (cont.)": one package
+    merged = []
+    for g in pk_groups:
+        cells = [re.sub(r'\s*\(cont\.\)\s*$', '', c) for c in g['cells']]
+        if merged and any(c.rstrip().endswith('(cont.)') for c in g['cells']) and merged[-1]['cells'][:1] == cells[:1]:
+            merged[-1]['rows'] += g['rows']
+        else:
+            merged.append(dict(g, cells=cells))
+    pk_groups = merged
     packages, eid = [], 1
     for i, g in enumerate(pk_groups):
         name, ctype = (g['cells'] + ['', ''])[:2]

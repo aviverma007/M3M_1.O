@@ -56,11 +56,12 @@ function groupedTable(ctx: Ctx, title: string, cols: GCol[], nGroup: number, gro
     return header(ctx, cols, TOP)
   }
   let y = newPage()
-  const closeGroup = (g: Group, y0: number, y1: number) => {
+  // a group continued on the next page is labelled "<name> (cont.)", as in the original report
+  const closeGroup = (g: Group, y0: number, y1: number, cont = false) => {
     for (let i = 0; i < nGroup; i++) {
       const w = cols[i].width
       doc.rect(gx[i], y0, w, y1 - y0).fill(GROUP_FILL)
-      const s = g.cells[i] ?? '-'
+      const s = (g.cells[i] ?? '-') + (cont ? ' (cont.)' : '')
       const th = textH(ctx, s, w, 'B')
       doc.font('B').fontSize(9).fillColor(NAVY).text(s, gx[i] + PAD, y0 + (y1 - y0 - th) / 2, { width: w - PAD * 2 })
       doc.lineWidth(0.5).rect(gx[i], y0, w, y1 - y0).stroke(RULE)
@@ -69,12 +70,14 @@ function groupedTable(ctx: Ctx, title: string, cols: GCol[], nGroup: number, gro
   }
   for (const g of groups) {
     let y0 = y
+    let cont = false
     g.rows.forEach((r, ri) => {
       const h = Math.max(...cols.slice(nGroup).map((c, ci) => textH(ctx, r[ci] ?? '-', c.width))) + 12
       if (y + h > TABLE_LIMIT && y > y0) {
-        closeGroup(g, y0, y)
+        closeGroup(g, y0, y, cont)
         y = newPage()
         y0 = y
+        cont = true
       }
       doc.rect(rowX, y, right - rowX, h).fill(ri % 2 === 0 ? '#FFFFFF' : ZEBRA)
       cols.slice(nGroup).forEach((c, ci) => {
@@ -86,7 +89,7 @@ function groupedTable(ctx: Ctx, title: string, cols: GCol[], nGroup: number, gro
       if (ri < g.rows.length - 1) doc.lineWidth(0.3).moveTo(rowX, y + h).lineTo(right, y + h).stroke(RULE)
       y += h
     })
-    closeGroup(g, y0, y)
+    closeGroup(g, y0, y, cont)
   }
 }
 

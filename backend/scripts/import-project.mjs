@@ -94,7 +94,53 @@ async function api(method, p, body, { form } = {}) {
 }
 const step = (s) => console.log(`- ${s}`)
 
+/* projects renamed in the original application after other reports referenced them (old name -> current name) */
+const NAME_ALIASES = {
+  "gic pocket c -nature's court": "GIC Nature's Court- Manesar",
+}
+
+/* Old reports store parking as free-text types ("2 BHK + STUDY" = 1). The app now wants one row per Module 5 unit type
+   (ECS per unit x units = ECS), so map each Module 5 residential unit type to the old row with the same BHK count
+   (or penthouse). Old rows no unit type uses are kept as extra rows; unit types without a match are left for the user. */
+function migrateParking(summary) {
+  const other = summary?.projectLevelDesignData?.additionalElements2?.other
+  if (!Array.isArray(other?.extraParkingReqs)) return null
+  // rows without an ECS value are the original application's default placeholders ("2 BHK + STUDY", "1 BHK + STUDY")
+  const reqs = other.extraParkingReqs.filter((r) => r && String(r.label ?? '').trim() && String(r.value ?? '').trim())
+  if (reqs.length !== other.extraParkingReqs.length) other.extraParkingReqs = reqs
+  if (!reqs.length) return null
+  const groups = Array.isArray(summary?.projectDetailsLayoutData?.tableRows) ? summary.projectDetailsLayoutData.tableRows : []
+  const res = groups.filter((g) => /resid/i.test(String(g?.type ?? '')))
+  const types = (res.length ? res : groups).flatMap((g) => (Array.isArray(g?.units) ? g.units : [])).map((u) => String(u?.type ?? '').trim()).filter(Boolean)
+  if (!types.length) return null
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (reqs.every((r) => types.some((t) => norm(t) === norm(r.label)))) return null // already in the new format
+  const bucket = (s) => (/pent\s*house/i.test(s) ? 'ph' : /(\d+(?:\.\d)?)\s*bhk/i.exec(s)?.[1] ?? null)
+  // type code: "TYPE 2A", "(Type7C)", "Type-1", "TYP B1" -> "2a" / "7c" / "1" / "b1"
+  const code = (s) => /\btyp(?:e)?\s*[-–]?\s*([a-z0-9]+)\b/i.exec(String(s))?.[1]?.toLowerCase() ?? null
+  const used = new Set()
+  const mapped = []
+  for (const t of types) {
+    const c = code(t)
+    const byCode = c ? reqs.filter((x) => code(x.label) === c) : []
+    const b = bucket(t)
+    // same type code first (one match, or the one with the same BHK count), then the same BHK count / penthouse
+    const r =
+      (byCode.length === 1 ? byCode[0] : byCode.find((x) => bucket(String(x.label)) === b)) ??
+      (b && !byCode.length ? reqs.find((x) => bucket(String(x.label)) === b && !code(x.label)) ?? reqs.find((x) => bucket(String(x.label)) === b) : undefined)
+    if (r) {
+      mapped.push({ label: t, value: String(r.value ?? '') })
+      used.add(r)
+    }
+  }
+  if (!mapped.length) return null
+  other.extraParkingReqs = [...mapped, ...reqs.filter((r) => !used.has(r))]
+  return `${mapped.length} of ${types.length} unit types`
+}
+
 async function findProjectsByName(name) {
+  const alias = NAME_ALIASES[String(name).trim().toLowerCase()]
+  if (alias) name = alias
   const d = await api('GET', `/project?search=${encodeURIComponent(name)}&page=1&limit=100`)
   return (d?.rows ?? []).filter((p) => String(p.name).trim().toLowerCase() === String(name).trim().toLowerCase())
 }
@@ -223,6 +269,8 @@ async function importOne(dataDir) {
     }
     summary.projectLevelDesignData.compareProjectIds = ids
   }
+  const parking = migrateParking(summary)
+  if (parking) step(`Parking Required rows matched to Module 5 unit types (${parking})`)
   await api('POST', `/project/${projectId}/design-brief-summary`, summary)
   step(`Design chapters saved (${Object.keys(summary).length} sections, ${uploaded.size} images uploaded)`)
 

@@ -183,12 +183,14 @@ const landscape: ModuleRenderer = (ctx, input) => {
 
   const heads = d.amenitiesList?.length ? d.amenitiesList : (DEFAULT_AMENITIES as Head[])
   const selected = new Set(d.selectedAmenities ?? [])
+  // an amenity already listed under an earlier head is skipped; a repeat within the same head is printed again (as the original)
   const seen = new Set<string>()
   const groups = heads
-    .map((h) => ({
-      head: h.head,
-      items: (h.items ?? []).filter((it) => selected.has(it) && !seen.has(it) && (seen.add(it), true)),
-    }))
+    .map((h) => {
+      const items = (h.items ?? []).filter((it) => selected.has(it) && !seen.has(it))
+      items.forEach((it) => seen.add(it))
+      return { head: h.head, items }
+    })
     .filter((g) => g.items.length)
 
   if (!cards.length && !groups.length) {

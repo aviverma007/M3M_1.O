@@ -68,7 +68,8 @@ export function detailsGrid(doc: Doc, items: { label: string; value: string }[],
       const cx = X0 + c * cw
       if (r % 2 === 0) doc.rect(cx, ry, cw, rh).fill(PD.cellBg)
       txt(doc, it.label, cx + 6, ry + 4, 'S', 8, PD.label, { width: cw - 12, height: 12, ellipsis: true })
-      txt(doc, it.value, cx + 6, ry + 14, 'B', 10, PD.value, { width: cw - 12, height: 12, ellipsis: true })
+      // long values wrap onto a second line, as the original report does ("GIC Nature's Court- / Manesar")
+      txt(doc, it.value, cx + 6, ry + 14, 'B', 10, PD.value, { width: cw - 12, lineBreak: true })
     })
   }
   doc.lineWidth(0.4).rect(X0, y, w, rows * rh).stroke(PD.grid)
@@ -179,7 +180,15 @@ function unitTable(ctx: Ctx, rows: TypeRow[], y: number, newPage: () => number, 
         const ty = ry + rowH / 2 - 4.5
         const f = u.__total ? 'B' : 'S'
         if (u.__total) doc.rect(cUnit.x, ry, right - cUnit.x, rowH).fill(PD.thBg)
-        txt(doc, dash(u.type), cUnit.x + 3, ty, f, 9, u.__total ? PD.accent : PD.text, { width: cUnit.w - 6, height: 12, ellipsis: true })
+        // a long unit type wraps onto a second line when the row is tall enough, instead of being cut off
+        // a long unit type wraps (at a slightly smaller size if needed) instead of being cut off
+        const ink = u.__total ? PD.accent : PD.text
+        const long = textHeight(doc, dash(u.type), cUnit.w - 6, f, 9) > 18
+        const fitSize = long ? [9, 8.5, 8, 7.5, 7].find((z) => textHeight(doc, dash(u.type), cUnit.w - 6, f, z) <= rowH - 2) : undefined
+        if (fitSize) {
+          const h2 = textHeight(doc, dash(u.type), cUnit.w - 6, f, fitSize)
+          wrap(doc, dash(u.type), cUnit.x + 3, ry + (rowH - h2) / 2, cUnit.w - 6, f, fitSize, ink)
+        } else txt(doc, dash(u.type), cUnit.x + 3, ty, f, 9, ink, { width: cUnit.w - 6, height: 12, ellipsis: true })
         doc.lineWidth(0.4).moveTo(cUnit.x, ry).lineTo(cUnit.x, ry + rowH).stroke(PD.grid)
         txt(doc, dash(u.count), cCount.x, ty, f, 9, u.__total ? PD.accent : PD.text, { width: cCount.w, align: 'center' })
         doc.lineWidth(0.4).moveTo(cCount.x, ry).lineTo(cCount.x, ry + rowH).stroke(PD.grid)
@@ -258,7 +267,9 @@ function layoutAmenities(doc: Doc, groups: { head: string; items: string[] }[], 
   for (const g of groups) {
     const head = g.head.toUpperCase()
     const hh = textHeight(doc, head, HEAD_W, 'B', size)
-    if (y > 106.5 && y + 4 + hh + 13 > LIMIT && !nextCol()) return false
+    // a head stays at the bottom of the first column when the head itself fits; its items continue in the second
+    const headH = Math.min(hh, size * 2.7) + 3
+    if (y > 106.5 && y + 4 + headH > LIMIT && !nextCol()) return false
     if (y > 108.5) y += 4
     const bx = colsX[col]
     const barH = Math.min(hh, size * 2.7) + 3

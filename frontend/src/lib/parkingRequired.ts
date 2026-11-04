@@ -38,10 +38,21 @@ export const fmtNum = (x: number) => String(r2(x))
 /** rows with ECS per unit, units and total; only rows with an ECS value */
 export function parkingRequired(reqs: Req[] | unknown, module5Rows: GroupLike[] | unknown) {
   const units = module5Units(module5Rows)
+  // unit types can repeat in Module 5 (same name, different counts): pair rows with entries one-to-one, in order
+  const used = new Set<number>()
+  const take = (label: unknown) => {
+    const k = key(label)
+    const i = units.findIndex((u, j) => !used.has(j) && key(u.label) === k)
+    if (i >= 0) {
+      used.add(i)
+      return units[i].units
+    }
+    return unitsFor(label, units)
+  }
   const rows = (Array.isArray(reqs) ? (reqs as Req[]) : [])
     .map((r) => {
       const ecs = n(r?.value)
-      const u = unitsFor(r?.label, units)
+      const u = take(r?.label)
       return { label: String(r?.label ?? '').trim(), ecs: Number.isFinite(ecs) ? ecs : null, units: u, total: Number.isFinite(ecs) && u !== null ? r2(ecs * u) : null }
     })
     .filter((r) => r.label && r.ecs !== null)

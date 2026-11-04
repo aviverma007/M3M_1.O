@@ -76,9 +76,16 @@ def parse_brief(pages, notes):
             typo = [t for t in inb if t['font'] == 'Semibold' and abs(t['x'] - (cols[1] + 3)) < 0.5]
             utexts = [t for t in inb if t['font'] == 'Semibold' and abs(t['x'] - (cols[2] + 3)) < 0.5]
             units = []
+            prev_line = None
             for u in sorted(utexts, key=lambda t: t['y']):
                 cnt = next((t for t in inb if t['font'] == 'Semibold' and cols[3] <= t['x'] < cols[4] and abs(t['y'] - u['y']) < 0.3), None)
                 siz = next((t for t in inb if t['font'] == 'Semibold' and cols[4] <= t['x'] < cols[5] and abs(t['y'] - u['y']) < 0.3), None)
+                # wrapped unit type: the continuation line has no count/size and the line before keeps pdfkit's trailing space
+                if not cnt and not siz and units and prev_line is not None and prev_line['text'].endswith(' '):
+                    units[-1]['type'] = (units[-1]['type'] + u['text']).strip()
+                    prev_line = u
+                    continue
+                prev_line = u
                 c, sz = clean(cnt['text'] if cnt else ''), clean(siz['text'] if siz else '')
                 cn, sn = numstr(c), numstr(sz)
                 area = fmt_num(cn * sn) if cn is not None and sn is not None else ''
@@ -92,6 +99,46 @@ def parse_brief(pages, notes):
                 tot = sum(float(u['area']) for u in groups[-1]['units'] if u['area'] != '')
                 groups[-1]['total'] = fmt_num(tot) if tot else ''
     return card, customs, groups, side
+
+
+TYPOLOGY_RE = re.compile(r'^[GBS]\s*\+\s*\S', re.I)
+
+
+def recover_overflow(spill, groups, notes):
+    """The original application sometimes overflows a long unit table: every remaining cell is printed alone on a
+    blank page (no header). Rebuild the rows from that cell sequence: unit rows are (type, count, size) triplets,
+    a new group starts with (group name, typology), and a last '<n> Sqft' cell is the grand total."""
+    cells = []
+    for p in spill:
+        for t in sorted(p.texts, key=lambda t: (t['y'], t['x'])):
+            v = t['text'].strip()
+            if v: cells.append(v)
+    if not cells:
+        return None
+    total = None
+    if re.match(r'^[\d.,]+\s*Sqft$', cells[-1], re.I):
+        total = numstr(cells.pop().split()[0].replace(',', ''))
+    while cells and re.match(r'^total\b', cells[-1], re.I):  # the "Total Saleable Area" label of the total row
+        cells.pop()
+    i, added = 0, 0
+    while i < len(cells):
+        if i + 1 < len(cells) and TYPOLOGY_RE.match(cells[i + 1]) and not TYPOLOGY_RE.match(cells[i]):
+            groups.append({'type': clean(cells[i]), 'typology': clean(cells[i + 1]), 'units': [], 'total': ''})
+            i += 2
+            continue
+        if not groups:
+            break
+        typ, c, sz = (cells[i:i + 3] + ['', '', ''])[:3]
+        c, sz = clean(c), clean(sz)
+        cn, sn = numstr(c), numstr(sz)
+        groups[-1]['units'].append({'type': clean(typ), 'count': c, 'size': sz, 'area': fmt_num(cn * sn) if cn is not None and sn is not None else '', 'total': ''})
+        added += 1
+        i += 3
+    for g in groups:
+        tot = sum(float(u['area']) for u in g['units'] if u['area'] != '')
+        g['total'] = fmt_num(tot) if tot else ''
+    notes.append(f'unit table overflowed onto {len(spill)} blank pages in the original report: {added} rows recovered')
+    return total
 
 
 def parse_info_box(page):
@@ -144,6 +191,9 @@ def parse(pages, ctx):
     if not brief:
         return {'notes': ['no Project Brief page']}
     card, customs, groups, side = parse_brief(brief, notes)
+    # header-less pages right after the brief = unit table overflow of the original report
+    spill = [p for p in pages if not p.title and p.no > brief[-1].no and (not layouts_p or p.no < layouts_p[0].no)]
+    report_total = recover_overflow(spill, groups, notes) if spill else None
     d = {}
     d['noOfTowers'] = card.get('noOfTowers', '')
     d['towerHeight'] = re.sub(r'\s*m$', '', card.get('towerHeight', ''))
@@ -174,6 +224,8 @@ def parse(pages, ctx):
         d['tableRows'] = groups
         g = sum(float(r['total']) for r in groups if r['total'] != '')
         if g: d['grandTotalSaleable'] = fmt_num(g)
+        if report_total is not None and abs(report_total - g) > 0.05:
+            notes.append(f'unit table total {fmt_num(g)} differs from the report total {fmt_num(report_total)}')
     d['customFields'] = customs
     if side and side.get('file'):
         d['customFieldsImage'] = img_ref(side)

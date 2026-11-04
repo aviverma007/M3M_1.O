@@ -33,7 +33,8 @@ def _kitchen(pages, notes):
         entry = {}
         for r in g['rows']:
             k = key_for_label(cfg, join_lines(r['label']))
-            v = join_lines(r['value'])
+            # a wrapped line keeps its trailing space; a line without one ended with a typed line break
+            v = ''.join(x if i == 0 or r['value'][i - 1].endswith(' ') else '\n' + x for i, x in enumerate(r['value'])).strip()
             entry[k] = split_multi(cfg, k, v) if k in cfg['arrayKeys'] else v
         out[f'kitchen-goods_{rid}'] = entry
     return out

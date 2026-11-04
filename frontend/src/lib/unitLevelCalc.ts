@@ -4,6 +4,9 @@ import type { Typology } from '@/types/chapters-a'
 const n = (v: unknown) => parseFloat(String(v ?? '')) || 0
 
 /** "Calculations" table value */
+/** number as text without floating-point noise (272.64000000000004 -> "272.64") */
+export const numText = (x: number) => String(Number(x.toPrecision(12)))
+
 export function calcValue(t: Typology, row: string) {
   const covered = n(t.coveredArea)
   const uf = n(t.unitFar)
@@ -27,7 +30,7 @@ export function calcValue(t: Typology, row: string) {
     'AC Area': ac || null,
   }
   const x = v[row]
-  return x != null ? String(x) : '--'
+  return x != null ? numText(x) : '--'
 }
 
 const ratio = (a: number, b: number, pct = false) => (!b || isNaN(a) || isNaN(b) ? '--' : pct ? ((a / b) * 100).toFixed(2) + '%' : (a / b).toFixed(2))

@@ -43,10 +43,12 @@ const schedule: ModuleRenderer = async (ctx, input, loadImage) => {
   } else {
     const rows: string[][] = []
     const styles: RowStyle[] = []
+    // the original highlights every master row once any master has sub-tasks (plain rows when none has)
+    const anySubs = masters.some((m) => (m.subTasks ?? []).some((s) => filled(s.task)))
     masters.forEach((m) => {
       const subs = (m.subTasks ?? []).filter((s) => filled(s.task))
       rows.push([val(m.task), val(m.duration), val(m.start), val(m.finish)])
-      styles.push(subs.length ? MASTER : {})
+      styles.push(anySubs ? MASTER : {})
       subs.forEach((s) => {
         rows.push([`  — ${val(s.task)}`, val(s.duration), val(s.start), val(s.finish)])
         styles.push({})

@@ -31,9 +31,9 @@ export function facadeSections(input: DprInput): ParamSection[] {
   add('Average SHGC (area-weighted)', d2(sum.avgShgc, 2))
   add('Glass U-Value (centre of glass, area-weighted)', d2(sum.avgUCentre, 2), 'W/m²K')
   add('SHGC-Weighted Glazed Area', d2(sum.shgcWeightedArea, 0), 'sq ft')
-  add('Façade Cost', d2(sum.costCr, 2), 'Rs. Cr', sum.mixedScope ? `Mixed cost bases — ${sum.mixedScope}` : undefined)
-  add('Façade Cost per sq ft of Façade Area', d2(sum.costPerSqftFacade, 0), 'Rs./sq ft')
-  add('Façade Cost per sq ft of Saleable Area', d2(sum.costPerSqftSaleable, 0), 'Rs./sq ft')
+  add('Façade Budget', d2(sum.costCr, 2), 'Rs. Cr')
+  add('Budget per sq ft of Façade Area', d2(sum.costPerSqftFacade, 0), 'Rs./sq ft')
+  add('Budget per sq ft of Saleable Area', d2(sum.costPerSqftSaleable, 0), 'Rs./sq ft')
 
   const sections: ParamSection[] = [{ title: 'Calculated Output — all façade systems', rows: out }]
   data.systems.forEach((s, i) => {
@@ -54,11 +54,9 @@ export function facadeSections(input: DprInput): ParamSection[] {
         if (o.opaquePct !== null) rows.push({ label: 'Opaque % (this system)', value: fmtNum(o.opaquePct, 1), unit: '%' })
       }
       if (sec.id === 'D') {
-        if (o.costPerSqftFacade !== null) rows.push({ label: 'Cost per sq ft of Façade Area', value: fmtNum(o.costPerSqftFacade, 0), unit: 'Rs./sq ft' })
-        if (o.costPerSqftSaleable !== null) rows.push({ label: 'Cost per sq ft of Saleable Area', value: fmtNum(o.costPerSqftSaleable, 0), unit: 'Rs./sq ft' })
-        if (o.glassCostPerSqft !== null) rows.push({ label: 'Glass Cost per sq ft of Glazed Area', value: fmtNum(o.glassCostPerSqft, 0), unit: 'Rs./sq ft' })
+        if (o.costPerSqftFacade !== null) rows.push({ label: 'Budget per sq ft of Façade Area', value: fmtNum(o.costPerSqftFacade, 0), unit: 'Rs./sq ft' })
+        if (o.costPerSqftSaleable !== null) rows.push({ label: 'Budget per sq ft of Saleable Area', value: fmtNum(o.costPerSqftSaleable, 0), unit: 'Rs./sq ft' })
       }
-      if (sec.id === 'E' && s.documents?.length) rows.push({ label: 'Supporting documents', value: s.documents.map((d) => d.name).join(', ') })
       if (rows.length) sections.push({ title: `${systemTitle(s, i)} · ${sec.title.replace(/^[A-E][0-9]? · /, '')}`, rows })
     }
     if (s.remarks?.trim()) sections.push({ title: `${systemTitle(s, i)} · Remarks`, rows: [{ label: 'Remarks', value: s.remarks.trim() }] })
@@ -90,7 +88,7 @@ const facade: ModuleRenderer = (ctx, input) => {
       { label: 'Glazed (sq ft)', width: 75 },
       { label: 'WWR %', width: 50 },
       { label: 'U / SHGC / VLT', width: 85 },
-      { label: 'Cost (Rs. Cr)', width: 65 },
+      { label: 'Budget (Rs. Cr)', width: 65 },
       { label: 'Rs./sq ft', width: 55 },
       { label: 'Design Stage', width: 106 },
     ],

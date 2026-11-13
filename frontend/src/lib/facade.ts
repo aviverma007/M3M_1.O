@@ -54,6 +54,7 @@ export const OPT = {
   glassCoating: ['Clear', 'Tinted', 'Reflective', 'Low-E', 'Solar Control', 'Low-E + Solar Control', 'No Coating', 'Other'],
   heatTreatment: ['Annealed', 'Heat Strengthened', 'Fully Toughened', 'Laminated', 'Heat Strengthened Laminated', 'Toughened Laminated', 'Other'],
   spacer: ['Aluminium Spacer', 'Warm Edge Spacer', 'Other', 'Not Applicable'],
+  interlayer: ['SGP', 'PVB'],
   gst: ['Inclusive', 'Exclusive'],
   commercialStage: ['Budgetary Estimate', 'Tender Cost', 'Awarded Cost', 'Revised Cost', 'Actual Cost'],
   designStage: ['Concept Design', 'Design Development', 'GFC Drawings', 'Shop Drawing Stage', 'Execution Stage', 'Completed'],
@@ -89,6 +90,12 @@ export type FacadeSystem = {
   innerGlass?: string
   cavity?: string
   interlayer?: string
+  interlayerType?: string
+  railCurved?: string
+  railOuterGlass?: string
+  railInnerGlass?: string
+  railInterlayer?: string
+  railInterlayerType?: string
   cavityFilling?: string
   glassCoating?: string
   heatTreatment?: string
@@ -150,7 +157,7 @@ export const kind = (s: FacadeSystem) => ({
   cladding: CLADDING.has(s.assembly ?? '') || isOther(s),
   sliding: /sliding|slide/i.test(s.windowType ?? '') || s.assembly === 'Aluminium Sliding Door System',
   multiPane: /^(DGU|TGU)/.test(s.glazingConfig ?? '') || s.glazingConfig === 'Other',
-  laminated: s.laminated === 'Yes' || /laminated/i.test(s.heatTreatment ?? ''),
+  laminated: s.laminated === 'Yes',
 })
 
 /* ------------------------------------------------------------------ form layout (one list for form, DPR and checks) */
@@ -218,13 +225,30 @@ export const SECTIONS: FSection[] = [
       { key: 'outerGlass', label: 'Outer Glass Thickness', type: 'number', unit: 'mm', need: 'recommended' },
       { key: 'innerGlass', label: 'Inner Glass Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => k(s).multiPane },
       { key: 'cavity', label: 'Cavity Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => k(s).multiPane },
-      { key: 'laminated', label: 'Laminated Glass', type: 'select', options: OPT.yesNo, need: 'recommended' },
-      { key: 'interlayer', label: 'Interlayer Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => k(s).laminated },
       { key: 'cavityFilling', label: 'Cavity Filling', type: 'select', options: OPT.cavityFilling, need: 'optional', when: (s) => k(s).multiPane },
       { key: 'glassCoating', label: 'Glass Coating', type: 'select', options: OPT.glassCoating, need: 'recommended' },
       { key: 'heatTreatment', label: 'Heat Treatment', type: 'select', options: OPT.heatTreatment, need: 'recommended' },
-      { key: 'spacer', label: 'Spacer Type', type: 'select', options: OPT.spacer, need: 'optional', when: (s) => k(s).multiPane },
-      { key: 'glassMake', label: 'Glass Manufacturer', type: 'text', need: 'optional' },
+    ],
+  },
+  {
+    id: 'B1L',
+    title: 'B · Laminated Glass',
+    when: (s) => k(s).glazed,
+    fields: [
+      { key: 'laminated', label: 'Laminated Glass', type: 'select', options: OPT.yesNo, need: 'recommended' },
+      { key: 'interlayerType', label: 'Interlayer', type: 'select', options: OPT.interlayer, need: 'conditional', when: (s) => k(s).laminated },
+      { key: 'interlayer', label: 'Interlayer Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => k(s).laminated },
+    ],
+  },
+  {
+    id: 'B1R',
+    title: 'B · Curved Glass Railing',
+    fields: [
+      { key: 'railCurved', label: 'Railing has curved glass', type: 'select', options: OPT.yesNo, need: 'optional' },
+      { key: 'railOuterGlass', label: 'Outer Glass Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => s.railCurved === 'Yes' },
+      { key: 'railInnerGlass', label: 'Inner Glass Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => s.railCurved === 'Yes' },
+      { key: 'railInterlayer', label: 'Interlayer Thickness', type: 'number', unit: 'mm', need: 'conditional', when: (s) => s.railCurved === 'Yes' },
+      { key: 'railInterlayerType', label: 'Interlayer (PVB / SGP)', type: 'select', options: OPT.interlayer, need: 'conditional', when: (s) => s.railCurved === 'Yes' },
     ],
   },
   {
@@ -252,24 +276,12 @@ export const SECTIONS: FSection[] = [
       { key: 'curtainWallArea', label: 'Curtain Wall Area', type: 'number', unit: 'sq ft', need: 'recommended', when: (s) => k(s).curtainWall || isOther(s) },
       { key: 'railingLength', label: 'Balcony Railing Quantity / Length', type: 'number', unit: 'rmt', need: 'optional' },
       { key: 'panels', label: 'Number of Windows / Panels', type: 'number', unit: 'nos', need: 'optional' },
-      { key: 'aluWeight', label: 'Total Aluminium Weight', type: 'number', unit: 'MT', need: 'optional', when: (s) => k(s).aluminium },
-      { key: 'glassWeight', label: 'Total Glass Weight', type: 'number', unit: 'MT', need: 'optional', when: (s) => k(s).glazed },
     ],
   },
   {
     id: 'D',
-    title: 'D · Façade Cost & Commercials',
-    fields: [
-      { key: 'costTotal', label: 'Total Façade Package Cost', type: 'number', unit: 'Rs. Cr', need: 'recommended' },
-      { key: 'costAluminium', label: 'Aluminium System Cost', type: 'number', unit: 'Rs. Cr', need: 'optional', when: (s) => k(s).aluminium },
-      { key: 'costGlass', label: 'Glass Cost', type: 'number', unit: 'Rs. Cr', need: 'optional', when: (s) => k(s).glazed },
-      { key: 'costCladding', label: 'Cladding Cost', type: 'number', unit: 'Rs. Cr', need: 'optional', when: (s) => k(s).cladding },
-      { key: 'costRailing', label: 'Railing Cost', type: 'number', unit: 'Rs. Cr', need: 'optional' },
-      { key: 'costShading', label: 'Shading System Cost', type: 'number', unit: 'Rs. Cr', need: 'optional' },
-      { key: 'costInstallation', label: 'Installation Cost', type: 'number', unit: 'Rs. Cr', need: 'optional' },
-      { key: 'gst', label: 'GST Inclusion', type: 'select', options: OPT.gst, need: 'recommended' },
-      { key: 'commercialStage', label: 'Commercial Stage', type: 'select', options: OPT.commercialStage, need: 'recommended' },
-    ],
+    title: 'D · Façade Budget',
+    fields: [{ key: 'costTotal', label: 'Budget', type: 'number', unit: 'Rs. Cr', need: 'recommended' }],
   },
   {
     id: 'E',
@@ -342,14 +354,12 @@ export type SystemOutputs = {
   costCr: number | null
   costPerSqftFacade: number | null
   costPerSqftSaleable: number | null
-  glassCostPerSqft: number | null
 }
 export function systemOutputs(s: FacadeSystem, saleable: number | null): SystemOutputs {
   const wall = n(s.wallArea)
   const glazed = kind(s).glazed ? n(s.glazedArea) : null
   const opaque = n(s.opaqueArea)
   const costCr = n(s.costTotal)
-  const glassCr = n(s.costGlass)
   return {
     wall,
     glazed,
@@ -359,7 +369,6 @@ export function systemOutputs(s: FacadeSystem, saleable: number | null): SystemO
     costCr,
     costPerSqftFacade: costCr !== null && wall ? (costCr * CR) / wall : null,
     costPerSqftSaleable: costCr !== null && saleable ? (costCr * CR) / saleable : null,
-    glassCostPerSqft: glassCr !== null && glazed ? (glassCr * CR) / glazed : null,
   }
 }
 
@@ -386,8 +395,6 @@ export type FacadeSummary = {
   costCr: number | null
   costPerSqftFacade: number | null
   costPerSqftSaleable: number | null
-  /** costs entered at different commercial stages / GST bases — the total mixes scopes */
-  mixedScope: string | null
   /** systems' external wall area vs Module 6 Total External Wall Area */
   module6WallArea: number | null
 }
@@ -398,9 +405,6 @@ export function facadeSummary(d: FacadeData, ctx: FacadeContext): FacadeSummary 
   const opaqueArea = sum(sys.map((s) => n(s.opaqueArea)))
   const costCr = sum(sys.map((s) => n(s.costTotal)))
   const shgcW = sys.filter((s) => kind(s).glazed && n(s.glazedArea) !== null && n(s.shgc) !== null)
-  const stages = [...new Set(sys.filter((s) => n(s.costTotal) !== null).map((s) => s.commercialStage || 'stage not given'))]
-  const gst = [...new Set(sys.filter((s) => n(s.costTotal) !== null).map((s) => s.gst || 'GST not given'))]
-  const mixed = [stages.length > 1 ? `stages: ${stages.join(', ')}` : '', gst.length > 1 ? `GST: ${gst.join(', ')}` : ''].filter(Boolean).join('; ')
   return {
     systems: sys.length,
     facadeArea,
@@ -416,7 +420,6 @@ export function facadeSummary(d: FacadeData, ctx: FacadeContext): FacadeSummary 
     costCr,
     costPerSqftFacade: costCr !== null && facadeArea ? (costCr * CR) / facadeArea : null,
     costPerSqftSaleable: costCr !== null && ctx.saleable ? (costCr * CR) / ctx.saleable : null,
-    mixedScope: mixed || null,
     module6WallArea: ctx.externalWallArea ?? null,
   }
 }

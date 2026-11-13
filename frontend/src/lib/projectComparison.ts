@@ -340,10 +340,11 @@ const FIXED_DEFS: Def[] = [
   d('facade', 'Total Façade Area', (_f, x) => fsum(x).facadeArea, { unit: 'sq ft', dp: 0 }),
   d('facade', 'Total Glazed Area', (_f, x) => fsum(x).glazedArea, { unit: 'sq ft', dp: 0 }),
   d('facade', 'SHGC-Weighted Glazed Area', (_f, x) => fsum(x).shgcWeightedArea, { unit: 'sq ft', dp: 0 }),
-  d('facade', 'Façade Cost', (_f, x) => fsum(x).costCr, { unit: 'Rs. Cr', dp: 2 }),
-  d('facade', 'Façade Cost per sq ft of Façade Area', (_f, x) => fsum(x).costPerSqftFacade, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
-  d('facade', 'Façade Cost per sq ft of Saleable Area', (_f, x) => fsum(x).costPerSqftSaleable, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
-  d('facade', 'Commercial Stage', (_f, x) => fjoin(x, (sy) => sy.commercialStage), { text: true }),
+  d('facade', 'Façade Budget', (_f, x) => fsum(x).costCr, { unit: 'Rs. Cr', dp: 2 }),
+  d('facade', 'Budget per sq ft of Façade Area', (_f, x) => fsum(x).costPerSqftFacade, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  d('facade', 'Budget per sq ft of Saleable Area', (_f, x) => fsum(x).costPerSqftSaleable, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  d('facade', 'Laminated Glass', (_f, x) => fjoin(x, (sy) => (facadeKind(sy).glazed && sy.laminated === 'Yes' ? `Yes${sy.interlayerType ? ` (${sy.interlayerType})` : ''}` : facadeKind(sy).glazed ? sy.laminated : undefined)), { text: true }),
+  d('facade', 'Curved Glass Railing', (_f, x) => fjoin(x, (sy) => (sy.railCurved === 'Yes' ? `Yes${sy.railInterlayerType ? ` (${sy.railInterlayerType})` : ''}` : sy.railCurved)), { text: true }),
   d('facade', 'Design Stage', (_f, x) => fjoin(x, (sy) => sy.designStage), { text: true }),
   d('facade', 'Approvals', (_f, x) => facadeApprovals(x), { text: true }),
 
@@ -411,7 +412,7 @@ function facadeTypeDefs(inputs: CompareInput[]): Def[] {
     d('facadeTypes', `${t} — U-Value (centre)`, (_f, x) => wavg(of(x, t), 'uCentre'), { unit: 'W/m²K', better: 'lower', dp: 2 }),
     d('facadeTypes', `${t} — SHGC`, (_f, x) => wavg(of(x, t), 'shgc'), { better: 'lower', dp: 2 }),
     d('facadeTypes', `${t} — VLT`, (_f, x) => wavg(of(x, t), 'vlt'), { unit: '%', dp: 0 }),
-    d('facadeTypes', `${t} — Cost per sq ft of Wall Area`, (_f, x) => {
+    d('facadeTypes', `${t} — Budget per sq ft of Wall Area`, (_f, x) => {
       const sys = of(x, t)
       const cost = sumOf(sys.map((sy) => fnum(sy.costTotal)))
       const area = sumOf(sys.map((sy) => fnum(sy.wallArea)))

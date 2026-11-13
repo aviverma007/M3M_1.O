@@ -4,14 +4,13 @@
  */
 import { Fragment, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { AlertTriangle, ChevronDown, ChevronLeft, Copy, FileUp, Info, Layers, LoaderCircle, Paperclip, Plus, Trash2, X } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ChevronLeft, Copy, Info, Layers, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import PageLoader from '@/components/common/PageLoader'
 import { SaveProjectFooter } from '@/components/design-chapters-b/PageChrome'
-import FileLink from '@/components/design-brief/FileLink'
-import { errorMessage, saveSummary, uploadFile, useSummaryLoader } from '@/api/chapters-b'
+import { errorMessage, saveSummary, useSummaryLoader } from '@/api/chapters-b'
 import { fmtNum } from '@/lib/projectComparison'
 import {
   SECTIONS,
@@ -180,22 +179,16 @@ export default function FacadeForm() {
                 <Out label="Average SHGC" v={dash(sum.avgShgc, 2)} unit="" note="weighted by glazed area; shown when every glazed system has an SHGC" />
                 <Out label="Glass U-Value (centre of glass)" v={dash(sum.avgUCentre, 2)} unit="W/m²K" note="weighted by glazed area" />
                 <Out label="SHGC-Weighted Glazed Area" v={dash(sum.shgcWeightedArea, 0)} unit="sq ft" note="glazed area × SHGC" />
-                <Out label="Façade Cost" v={dash(sum.costCr, 2)} unit="Rs. Cr" />
-                <Out label="Façade Cost per sq ft of Façade Area" v={dash(sum.costPerSqftFacade, 0)} unit="Rs./sq ft" />
+                <Out label="Façade Budget" v={dash(sum.costCr, 2)} unit="Rs. Cr" note="sum of the systems’ budgets" />
+                <Out label="Budget per sq ft of Façade Area" v={dash(sum.costPerSqftFacade, 0)} unit="Rs./sq ft" />
                 <Out
-                  label="Façade Cost per sq ft of Saleable Area"
+                  label="Budget per sq ft of Saleable Area"
                   v={dash(sum.costPerSqftSaleable, 0)}
                   unit="Rs./sq ft"
                   note={ctx.saleable ? `saleable ${fmtNum(ctx.saleable, 0)} sq ft (Module 6)` : 'needs Module 6 Saleable Area'}
                 />
               </tbody>
             </table>
-            {sum.mixedScope && (
-              <p className="flex gap-2 text-[11px] text-amber-800 bg-amber-50 p-4 border-t border-amber-100">
-                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                Costs are entered on different bases ({sum.mixedScope}). Use the same commercial stage and GST basis for a fair total and comparison.
-              </p>
-            )}
             {sum.module6WallArea && sum.facadeArea && sum.facadeArea > sum.module6WallArea * 1.02 && (
               <p className="flex gap-2 text-[11px] text-amber-800 bg-amber-50 p-4 border-t border-amber-100">
                 <AlertTriangle size={14} className="shrink-0 mt-0.5" />
@@ -254,7 +247,7 @@ function SystemCard({
         <span className="text-[11px] text-blue-100 whitespace-nowrap">
           {o.wall !== null ? `${fmtNum(o.wall, 0)} sq ft` : ''}
           {o.wwr !== null ? ` · WWR ${fmtNum(o.wwr, 1)}%` : ''}
-          {o.costCr !== null ? ` · Rs. ${fmtNum(o.costCr, 2)} Cr` : ''}
+          {o.costCr !== null ? ` · Budget Rs. ${fmtNum(o.costCr, 2)} Cr` : ''}
         </span>
         {showErrors && missing.length > 0 && <span className="text-[10px] font-bold bg-red-500 rounded-full px-2 py-0.5">{missing.length} mandatory missing</span>}
         <button onClick={onDuplicate} className="p-1.5 rounded hover:bg-white/15" title="Duplicate this system">
@@ -319,12 +312,8 @@ function SystemCard({
                       <span>
                         Rs./sq ft saleable <b className="text-[#1A3566]">{dash(o.costPerSqftSaleable, 0)}</b>
                       </span>
-                      <span>
-                        Glass Rs./sq ft glazed <b className="text-[#1A3566]">{dash(o.glassCostPerSqft, 0)}</b>
-                      </span>
                     </div>
                   )}
-                  {sec.id === 'E' && <Documents s={s} onChange={onChange} />}
                 </div>
               )}
             </div>
@@ -424,49 +413,6 @@ function Field({ f, s, onChange, error, sysId }: { f: FField; s: FacadeSystem; o
   )
 }
 
-function Documents({ s, onChange }: { s: FacadeSystem; onChange: (p: Partial<FacadeSystem>) => void }) {
-  const [busy, setBusy] = useState(false)
-  const docs = s.documents ?? []
-  const pick = async (files: FileList | null) => {
-    if (!files?.length) return
-    setBusy(true)
-    try {
-      const added = []
-      for (const f of Array.from(files)) {
-        const url = await uploadFile(f)
-        if (url) added.push({ name: f.name, url })
-      }
-      onChange({ documents: [...docs, ...added] })
-      if (added.length) toast.success(`${added.length} file${added.length === 1 ? '' : 's'} attached`)
-    } catch (e) {
-      toast.error(errorMessage(e, 'Upload failed'))
-    } finally {
-      setBusy(false)
-    }
-  }
-  return (
-    <div className="md:col-span-2 space-y-2">
-      <p className="text-xs font-semibold text-gray-600">Supporting documents &amp; drawings</p>
-      <div className="flex flex-wrap gap-2">
-        {docs.map((d, i) => (
-          <span key={`${d.url}-${i}`} className="inline-flex items-center gap-1.5 text-[11px] bg-slate-50 border border-slate-200 rounded-full pl-3 pr-1 py-1">
-            <Paperclip size={12} className="text-gray-400" />
-            <FileLink href={d.url} mode="view" className="font-semibold text-[#00509d] hover:underline max-w-[220px] truncate">
-              {d.name}
-            </FileLink>
-            <button onClick={() => onChange({ documents: docs.filter((_, j) => j !== i) })} className="p-0.5 rounded-full hover:bg-slate-200" title="Remove">
-              <X size={12} />
-            </button>
-          </span>
-        ))}
-        <label className={cn('inline-flex items-center gap-1.5 text-[11px] font-bold text-[#00509d] border border-dashed border-blue-300 rounded-full px-3 py-1 cursor-pointer hover:bg-blue-50', busy && 'opacity-60 pointer-events-none')}>
-          {busy ? <LoaderCircle size={12} className="animate-spin" /> : <FileUp size={12} />} Upload
-          <input type="file" multiple className="hidden" onChange={(e) => pick(e.target.files)} />
-        </label>
-      </div>
-    </div>
-  )
-}
 
 /* ------------------------------------------------------------------ consolidated summary table */
 function SummaryTable({ data, saleable }: { data: FacadeData; saleable: number | null }) {
@@ -488,7 +434,7 @@ function SummaryTable({ data, saleable }: { data: FacadeData; saleable: number |
               <th className={cn(th, 'text-right')}>Glazed</th>
               <th className={cn(th, 'text-right')}>WWR %</th>
               <th className={cn(th, 'text-right')}>U / SHGC / VLT</th>
-              <th className={cn(th, 'text-right')}>Cost Cr</th>
+              <th className={cn(th, 'text-right')}>Budget Cr</th>
               <th className={cn(th, 'text-right')}>Rs./sq ft</th>
               <th className={th}>Stage</th>
             </tr>

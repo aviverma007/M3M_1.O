@@ -13,6 +13,8 @@
  *              keyRatio?: {...}, compareProjectNames?: [..] }
  * Options: --url http://127.0.0.1:5000/api/v1   --project <id> (import into this existing project instead)
  *          --overwrite true  (required when the project already exists)
+ *          --replace "<old project name>"  (replace that project: its record is renamed and gets the new data;
+ *                                            history, saved comparisons and links stay; e.g. --replace "THE SANCTUARY")
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -56,6 +58,10 @@ if (!dataDirs.length) {
   console.error('Usage: node scripts/import-project.mjs --data <folder> [--email admin@m3m.com] [--project <id>] [--overwrite true]')
   process.exit(1)
 }
+if ((args.project || args.replace) && dataDirs.length > 1) {
+  console.error('--project / --replace can only be used with a single project folder.')
+  process.exit(1)
+}
 if (args.project && dataDirs.length > 1) {
   console.error('--project can only be used with a single project folder.')
   process.exit(1)
@@ -97,6 +103,7 @@ const step = (s) => console.log(`- ${s}`)
 /* projects renamed in the original application after other reports referenced them (old name -> current name) */
 const NAME_ALIASES = {
   "gic pocket c -nature's court": "GIC Nature's Court- Manesar",
+  'the sanctuary': 'Nivara',
 }
 
 /* Old reports store parking as free-text types ("2 BHK + STUDY" = 1). The app now wants one row per Module 5 unit type
@@ -216,7 +223,24 @@ async function importOne(dataDir) {
   /* ---------- project */
   let project
   if (args.project) project = await api('GET', `/project/${Number(args.project)}`)
-  else {
+  else if (args.replace) {
+    // exact old name (no alias lookup), and the new name must not be taken by another project
+    const d = await api('GET', `/project?search=${encodeURIComponent(args.replace)}&page=1&limit=100`)
+    const old = (d?.rows ?? []).filter((p) => String(p.name).trim().toLowerCase() === String(args.replace).trim().toLowerCase())
+    if (!old.length) {
+      const already = (await findProjectsByName(data.project.name))[0]
+      if (!already) throw new Error(`No project called "${args.replace}" to replace.`)
+      project = already // already replaced earlier: update it again
+      step(`"${args.replace}" was already replaced by "${already.name}" (id ${already.id}); updating it`)
+    } else {
+      if (old.length > 1) throw new Error(`Several projects are called "${args.replace}" — use --project <id> --overwrite true instead.`)
+      const clash = (await findProjectsByName(data.project.name)).filter((p) => p.id !== old[0].id && String(p.name).trim().toLowerCase() === String(data.project.name).trim().toLowerCase())
+      if (clash.length) throw new Error(`A project called "${data.project.name}" already exists (id ${clash[0].id}). Delete it first or use --project.`)
+      project = old[0]
+      step(`Replacing "${project.name}" (id ${project.id}) with "${data.project.name}"`)
+    }
+    args.overwrite = 'true'
+  } else {
     const same = (await findProjectsByName(data.project.name)).filter(
       (p) => !data.project.locationCategory || String(p.locationCategory ?? '') === String(data.project.locationCategory),
     )
@@ -287,7 +311,7 @@ async function importOne(dataDir) {
     step('Key Ratio saved')
   }
 
-  console.log(`  Done: project ${projectId} "${project.name}".`)
+  console.log(`  Done: project ${projectId} "${data.project.name ?? project.name}".`)
   return { projectId, name: project.name, missingCompare, summary }
 
 }

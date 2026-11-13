@@ -6,7 +6,7 @@
 import { comparisonRatios } from '@/components/design-chapters/project-level/calc'
 import { SERVICE_DESIGN } from '@/components/design-chapters-b/serviceCatalogue'
 import { parkingRequired } from '@/lib/parkingRequired'
-import { facadeContextOf, facadeOutputs, facadeText, type FacadeData } from '@/lib/facade'
+import { facadeContextOf, facadeSummary, kind as facadeKind, n as fnum, normalizeFacade, type FacadeSystem } from '@/lib/facade'
 import { servicesContextOf, servicesOutputs } from '@/lib/services'
 import { amenityOutputsOf } from '@/lib/amenities'
 import { consultantFees, contractBudgets } from '@/lib/fees'
@@ -210,8 +210,16 @@ type Facts = ReturnType<typeof projectFacts>
 type Def = { section: string; title: string; label: string; get: (f: Facts, x: CompareInput) => unknown; sane?: (v: number) => boolean } & RowOpts
 
 const sd = (x: CompareInput) => obj(obj(x.summary).serviceDesignData)
-const fd = (x: CompareInput) => obj(x.summary).facadeData as FacadeData | undefined
-const fo = (x: CompareInput) => facadeOutputs(fd(x), facadeContextOf(x.summary, x.mep))
+const fd = (x: CompareInput) => normalizeFacade(obj(x.summary).facadeData)
+const fsum = (x: CompareInput) => facadeSummary(fd(x), facadeContextOf(x.summary))
+/** distinct values of one field over a project's façade systems ("DGU; SGU") */
+const fjoin = (x: CompareInput, get: (s: FacadeSystem) => string | undefined) => [...new Set(fd(x).systems.map(get).filter((v): v is string => !!v && !!v.trim()))].join('; ')
+const APPROVAL_KEYS = ['apprStructural', 'apprShop', 'apprMaterial', 'mockup', 'testingStatus'] as const
+/** "3 of 5 approved" over the approval fields that are set (not "Not Applicable") */
+function facadeApprovals(x: CompareInput) {
+  const v = fd(x).systems.flatMap((s) => APPROVAL_KEYS.map((k) => s[k])).filter((a): a is string => !!a && a !== 'Not Applicable')
+  return v.length ? `${v.filter((a) => /^Approved/.test(a)).length} of ${v.length} approved` : ''
+}
 const so = (x: CompareInput) => servicesOutputs(sd(x), servicesContextOf(x.summary))
 const ao = (x: CompareInput) => amenityOutputsOf(x.summary)
 const cf = (x: CompareInput) => consultantFees(x.summary)
@@ -233,6 +241,7 @@ const SECTIONS: [string, string][] = [
   ['structure', 'Structure'],
   ['mep', 'MEP'],
   ['facade', 'Façade & Envelope'],
+  ['facadeTypes', 'Façade Systems — by type'],
   ['services', 'Services Sizing'],
   ['club', 'Club & Amenities'],
   ['amenities', 'Landscape, Amenities & Services'],
@@ -243,7 +252,7 @@ const T = Object.fromEntries(SECTIONS)
 const ALWAYS: Record<string, string> = {
   consultants: 'No consultant fees yet. In Consultant Strategy (Module 16), mark consultants Appointed and enter their Order Value; Module 6 Built Up Area gives the Rs. per sq ft.',
   contracts: 'No package budgets yet. Enter a Budget for each element in Contracting Strategy (Module 15).',
-  facade: 'No façade details yet. Fill in Façade & Envelope (Module 14; commercial Module 10).',
+  facade: 'No façade systems yet. Add them in Façade & Envelope (Module 14; commercial Module 10).',
   services: 'No services sizing yet. Fill in the new sections of Service Design Consideration (Module 13).',
 }
 const d = (section: string, label: string, get: Def['get'], opts: RowOpts & { sane?: Def['sane'] } = {}): Def => ({ section, title: T[section], label, get, ...opts })
@@ -320,17 +329,23 @@ const FIXED_DEFS: Def[] = [
   d('mep', 'Cooling Efficiency (Apartment)', (f) => f.mp.efficiencyApartment, { unit: 'sq ft/TR' }),
 
   // Façade & Envelope (module 14 / commercial 10)
-  d('facade', 'Façade System', (_f, x) => facadeText(fd(x), 'facadeSystem'), { text: true }),
-  d('facade', 'Glass Type', (_f, x) => facadeText(fd(x), 'glassType'), { text: true }),
-  d('facade', 'SHGC', (_f, x) => fd(x)?.shgc, { better: 'lower', dp: 2, sane: (v) => v >= 0 && v <= 1 }),
-  d('facade', 'U-Value', (_f, x) => fd(x)?.uValue, { unit: 'W/m²K', better: 'lower', dp: 2 }),
-  d('facade', 'Glazing %', (_f, x) => fo(x).glazingPct, { unit: '%', dp: 1 }),
-  d('facade', 'Façade Cost per sq ft (façade)', (_f, x) => fd(x)?.facadeCostPerSqft, { unit: 'Rs./sq ft', dp: 0 }),
-  d('facade', 'Façade Cost per sq ft Saleable', (_f, x) => fo(x).costPerSaleable, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
-  d('facade', 'Heat-Gain Index', (_f, x) => fo(x).heatGainIndex, { unit: 'per 1,000 sq ft saleable', better: 'lower', dp: 1 }),
-  d('facade', 'Glass Load per TR', (_f, x) => fo(x).glassPerTR, { unit: 'sq ft/TR', better: 'lower', dp: 1 }),
-  d('facade', 'Shading Devices', (_f, x) => facadeText(fd(x), 'shadingDevices'), { text: true }),
-  d('facade', 'Façade Cleaning', (_f, x) => facadeText(fd(x), 'cleaningMethod'), { text: true }),
+  d('facade', 'Façade Systems Adopted', (_f, x) => fjoin(x, (sy) => (sy.assembly === 'Other' ? sy.assemblyOther || 'Other' : sy.assembly) + (sy.curtainWallType || sy.windowType ? ` (${sy.curtainWallType || sy.windowType})` : '')), { text: true }),
+  d('facade', 'Aluminium System Classification', (_f, x) => fjoin(x, (sy) => (facadeKind(sy).aluminium ? sy.aluminiumClass : undefined)), { text: true }),
+  d('facade', 'Glazing Configuration', (_f, x) => fjoin(x, (sy) => (facadeKind(sy).glazed ? sy.glazingConfig?.split(' ')[0] : undefined)), { text: true }),
+  d('facade', 'U-Value (Centre of Glass)', (_f, x) => fsum(x).avgUCentre, { unit: 'W/m²K', better: 'lower', dp: 2 }),
+  d('facade', 'U-Value (Whole Window)', (_f, x) => fsum(x).avgUWindow, { unit: 'W/m²K', better: 'lower', dp: 2 }),
+  d('facade', 'SHGC', (_f, x) => fsum(x).avgShgc, { better: 'lower', dp: 2, sane: (v) => v >= 0 && v <= 1 }),
+  d('facade', 'VLT', (_f, x) => fsum(x).avgVlt, { unit: '%', dp: 0 }),
+  d('facade', 'Glazing % / WWR', (_f, x) => fsum(x).wwr, { unit: '%', dp: 1 }),
+  d('facade', 'Total Façade Area', (_f, x) => fsum(x).facadeArea, { unit: 'sq ft', dp: 0 }),
+  d('facade', 'Total Glazed Area', (_f, x) => fsum(x).glazedArea, { unit: 'sq ft', dp: 0 }),
+  d('facade', 'SHGC-Weighted Glazed Area', (_f, x) => fsum(x).shgcWeightedArea, { unit: 'sq ft', dp: 0 }),
+  d('facade', 'Façade Cost', (_f, x) => fsum(x).costCr, { unit: 'Rs. Cr', dp: 2 }),
+  d('facade', 'Façade Cost per sq ft of Façade Area', (_f, x) => fsum(x).costPerSqftFacade, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  d('facade', 'Façade Cost per sq ft of Saleable Area', (_f, x) => fsum(x).costPerSqftSaleable, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  d('facade', 'Commercial Stage', (_f, x) => fjoin(x, (sy) => sy.commercialStage), { text: true }),
+  d('facade', 'Design Stage', (_f, x) => fjoin(x, (sy) => sy.designStage), { text: true }),
+  d('facade', 'Approvals', (_f, x) => facadeApprovals(x), { text: true }),
 
   // Services sizing (module 13)
   d('services', 'Connected Load per Unit', (_f, x) => so(x).kvaPerUnit, { unit: 'kVA', dp: 2 }),
@@ -376,6 +391,35 @@ const FIXED_DEFS: Def[] = [
   d('governance', 'Phases', (f) => f.phases || null),
 ]
 
+/** per façade assembly type (curtain wall vs curtain wall, sliding window vs sliding window): area, glass and cost */
+function facadeTypeDefs(inputs: CompareInput[]): Def[] {
+  const label = (sy: FacadeSystem) => (sy.assembly === 'Other' ? sy.assemblyOther || 'Other' : sy.assembly || '')
+  const types: string[] = []
+  for (const x of inputs) for (const sy of fd(x).systems) if (label(sy) && !types.includes(label(sy))) types.push(label(sy))
+  const of = (x: CompareInput, t: string) => fd(x).systems.filter((sy) => label(sy) === t)
+  const sumOf = (xs: (number | null)[]) => (xs.some((v) => v !== null) ? xs.reduce<number>((a, v) => a + (v ?? 0), 0) : null)
+  /** glazed-area-weighted value over this type's systems (null unless all of them have it) */
+  const wavg = (sys: FacadeSystem[], k: 'uCentre' | 'shgc' | 'vlt') => {
+    const g = sys.filter((sy) => (fnum(sy.glazedArea) ?? 0) > 0)
+    if (!g.length || g.some((sy) => fnum(sy[k]) === null)) return null
+    return g.reduce((a, sy) => a + fnum(sy.glazedArea)! * fnum(sy[k])!, 0) / g.reduce((a, sy) => a + fnum(sy.glazedArea)!, 0)
+  }
+  return types.flatMap((t) => [
+    d('facadeTypes', `${t} — Where used`, (_f, x) => of(x, t).map((sy) => sy.name || sy.curtainWallType || sy.windowType || 'yes').join('; '), { text: true }),
+    d('facadeTypes', `${t} — Wall Area`, (_f, x) => sumOf(of(x, t).map((sy) => fnum(sy.wallArea))), { unit: 'sq ft', dp: 0 }),
+    d('facadeTypes', `${t} — Glazing`, (_f, x) => [...new Set(of(x, t).map((sy) => sy.glazingConfig?.split(' ')[0]).filter(Boolean))].join('; '), { text: true }),
+    d('facadeTypes', `${t} — U-Value (centre)`, (_f, x) => wavg(of(x, t), 'uCentre'), { unit: 'W/m²K', better: 'lower', dp: 2 }),
+    d('facadeTypes', `${t} — SHGC`, (_f, x) => wavg(of(x, t), 'shgc'), { better: 'lower', dp: 2 }),
+    d('facadeTypes', `${t} — VLT`, (_f, x) => wavg(of(x, t), 'vlt'), { unit: '%', dp: 0 }),
+    d('facadeTypes', `${t} — Cost per sq ft of Wall Area`, (_f, x) => {
+      const sys = of(x, t)
+      const cost = sumOf(sys.map((sy) => fnum(sy.costTotal)))
+      const area = sumOf(sys.map((sy) => fnum(sy.wallArea)))
+      return cost !== null && area ? (cost * 1e7) / area : null
+    }, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  ])
+}
+
 /** Rs. per sq ft BUA for each consultant type any of the projects has a fee for, then the total */
 function consultantDefs(inputs: CompareInput[]): Def[] {
   const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -406,7 +450,7 @@ function mixDefs(facts: Facts[]): Def[] {
 function defsFor(facts: Facts[], inputs: CompareInput[] = []) {
   const mix = mixDefs(facts)
   // keep the section order: overview, unit mix, then the rest (sections are sorted by SECTIONS afterwards)
-  return [...FIXED_DEFS.filter((x) => x.section === 'overview'), ...mix, ...FIXED_DEFS.filter((x) => x.section !== 'overview'), ...consultantDefs(inputs)]
+  return [...FIXED_DEFS.filter((x) => x.section === 'overview'), ...mix, ...FIXED_DEFS.filter((x) => x.section !== 'overview'), ...consultantDefs(inputs), ...facadeTypeDefs(inputs)]
 }
 
 /* ------------------------------------------------------------------ comparison of 2-5 projects */

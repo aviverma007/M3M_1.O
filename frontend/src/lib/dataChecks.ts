@@ -131,7 +131,7 @@ export function completeness(x: CompareInput) {
     ['Common Area', filled(s.commonAreaData)],
     ['Landscape & Amenities', filled(obj(s.landscapeAmenitiesData).landscapeData) || arr(obj(s.landscapeAmenitiesData).selectedAmenities).length > 0],
     ['Service Design', filled(s.serviceDesignData)],
-    ['Façade & Envelope', filled(obj(s.facadeData).facadeSystem) || filled(obj(s.facadeData).glassType)],
+    ['Façade & Envelope', arr(obj(s.facadeData).systems).some((x) => filled(x.assembly)) || filled(obj(s.facadeData).facadeSystem)],
     ['Contracting Strategy', arr(obj(s.contractingStrategyData).packages).some((p) => arr(p.elements).length > 0)],
     ['Consultant Strategy', arr(s.consultantStrategyData).some((c) => filled(c.name))],
     ['Phasing Plan', arr(s.phasingPlanData).some((p) => filled(p.name) && (filled(p.noOfUnits) || filled(p.siteArea)))],

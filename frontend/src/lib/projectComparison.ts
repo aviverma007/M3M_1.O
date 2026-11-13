@@ -21,30 +21,33 @@ export type CompareInput = {
 /** higher = bigger value wins, lower = smaller value wins, undefined = information only (no winner) */
 export type Better = 'higher' | 'lower'
 
+export type CompareHead = { id: string; name: string; location: string; category: string; projectType: string; portfolio: string; classification: string }
+
 export type CompareRow = {
   label: string
   unit?: string
-  a: string
-  b: string
-  /** numeric values when both sides are numbers (drive the bars and the difference) */
-  an: number | null
-  bn: number | null
   better?: Better
-  winner: 'a' | 'b' | 'tie' | null
-  /** (b - a) / |a| in %, when both numeric and a ≠ 0 */
+  /** display text per project (same order as the projects) */
+  values: string[]
+  /** numbers per project (null = not a number / not entered) */
+  nums: (number | null)[]
+  /** indices of the best project(s) for rows with a direction; empty when equal or not comparable */
+  best: number[]
+  /** all compared projects have the same value (rows with a direction) */
+  tie: boolean
+  /** two projects: (second - first) / |first| in % */
   deltaPct: number | null
 }
 
 export type CompareSection = { key: string; title: string; rows: CompareRow[] }
-
-export type CompareKpi = { label: string; unit?: string; an: number | null; bn: number | null; a: string; b: string }
+export type CompareKpi = { label: string; unit?: string; nums: (number | null)[]; values: string[] }
 
 export type Comparison = {
-  a: { id: string; name: string; location: string; category: string; projectType: string; portfolio: string; classification: string }
-  b: { id: string; name: string; location: string; category: string; projectType: string; portfolio: string; classification: string }
+  heads: CompareHead[]
   kpis: CompareKpi[]
   sections: CompareSection[]
-  score: { a: number; b: number; tie: number; measured: number }
+  /** rows won per project, rows where all are equal, rows with a direction and at least two numbers */
+  score: { wins: number[]; tie: number; measured: number }
 }
 
 /* ------------------------------------------------------------------ helpers */
@@ -64,24 +67,32 @@ export function fmtNum(n: number | null | undefined, dp = 2) {
   return n.toLocaleString('en-IN', { maximumFractionDigits: dp, minimumFractionDigits: 0 })
 }
 
-function row(label: string, av: unknown, bv: unknown, opts: { unit?: string; better?: Better; dp?: number; text?: boolean } = {}): CompareRow | null {
-  const an = opts.text ? null : num(av)
-  const bn = opts.text ? null : num(bv)
-  const a = opts.text || an === null ? yesNo(av) : fmtNum(an, opts.dp)
-  const b = opts.text || bn === null ? yesNo(bv) : fmtNum(bn, opts.dp)
-  if (!a && !b) return null
-  const bothNum = an !== null && bn !== null
-  let winner: CompareRow['winner'] = null
-  if (bothNum && opts.better) winner = an === bn ? 'tie' : (opts.better === 'higher') === an! > bn! ? 'a' : 'b'
-  const deltaPct = bothNum && an !== 0 ? ((bn! - an!) / Math.abs(an!)) * 100 : null
-  return { label, unit: opts.unit, a: a || '-', b: b || '-', an, bn, better: opts.better, winner, deltaPct }
+type RowOpts = { unit?: string; better?: Better; dp?: number; text?: boolean }
+
+function row(label: string, raw: unknown[], opts: RowOpts & { sane?: (v: number) => boolean } = {}): CompareRow | null {
+  const nums = raw.map((v) => (opts.text ? null : num(v)))
+  const values = raw.map((v, i) => (opts.text || nums[i] === null ? yesNo(v) : fmtNum(nums[i], opts.dp)) || '-')
+  if (values.every((v) => v === '-')) return null
+  const present = nums.map((n, i) => ({ n, i })).filter((x): x is { n: number; i: number } => x.n !== null && (!opts.sane || opts.sane(x.n)))
+  let best: number[] = []
+  let tie = false
+  if (opts.better && present.length >= 2) {
+    const target = opts.better === 'higher' ? Math.max(...present.map((x) => x.n)) : Math.min(...present.map((x) => x.n))
+    best = present.filter((x) => x.n === target).map((x) => x.i)
+    if (best.length === present.length) {
+      tie = true
+      best = []
+    }
+  }
+  const deltaPct = nums.length === 2 && nums[0] !== null && nums[1] !== null && nums[0] !== 0 ? ((nums[1] - nums[0]) / Math.abs(nums[0])) * 100 : null
+  return { label, unit: opts.unit, better: opts.better, values, nums, best, tie, deltaPct }
 }
 
 /* ------------------------------------------------------------------ per-project facts */
 type UnitRow = { type?: unknown; count?: unknown; size?: unknown; area?: unknown }
 type Group = { type?: unknown; units?: unknown }
 
-function facts(x: CompareInput) {
+export function projectFacts(x: CompareInput) {
   const p = x.project
   const s = obj(x.summary)
   const pd = obj(s.projectDetailsLayoutData)
@@ -187,11 +198,141 @@ const fmtDate = (s: string) => {
   return s && !isNaN(d.getTime()) ? d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : s
 }
 
-/* ------------------------------------------------------------------ comparison */
-export function buildComparison(A: CompareInput, B: CompareInput): Comparison {
-  const a = facts(A)
-  const b = facts(B)
-  const head = (f: ReturnType<typeof facts>) => ({
+
+/* ------------------------------------------------------------------ row definitions (one list for screen, PDF and portfolio stats) */
+type Facts = ReturnType<typeof projectFacts>
+/** sane: values outside it are data errors (flagged elsewhere) and stay out of the portfolio averages */
+type Def = { section: string; title: string; label: string; get: (f: Facts, x: CompareInput) => unknown; sane?: (v: number) => boolean } & RowOpts
+
+const sd = (x: CompareInput) => obj(obj(x.summary).serviceDesignData)
+const req = (f: Facts) => parkingRequired(f.other.extraParkingReqs, f.pd.tableRows).total || null
+const gsvOf = (f: Facts) => (f.saleable && f.price ? f.saleable * f.price : null)
+const costOf = (f: Facts) => (f.bua && f.cost ? f.bua * f.cost : null)
+const farUtilOf = (f: Facts) => (f.far && f.pfar && f.far / f.pfar < 2 ? (f.far / f.pfar) * 100 : null)
+
+const SECTIONS: [string, string][] = [
+  ['overview', 'Project Overview'],
+  ['mix', 'Unit Mix (Residential)'],
+  ['area', 'Area & FAR'],
+  ['efficiency', 'Design Efficiency'],
+  ['parking', 'Parking & Basements'],
+  ['commercials', 'Commercials'],
+  ['structure', 'Structure'],
+  ['mep', 'MEP'],
+  ['amenities', 'Landscape, Amenities & Services'],
+  ['governance', 'Delivery & Governance'],
+]
+const T = Object.fromEntries(SECTIONS)
+const d = (section: string, label: string, get: Def['get'], opts: RowOpts & { sane?: Def['sane'] } = {}): Def => ({ section, title: T[section], label, get, ...opts })
+
+const FIXED_DEFS: Def[] = [
+  d('overview', 'Location', (f) => f.p.location, { text: true }),
+  d('overview', 'Portfolio', (f) => f.p.locationCategory, { text: true }),
+  d('overview', 'Category', (f) => f.p.category, { text: true }),
+  d('overview', 'Classification', (f) => f.p.projectClassification, { text: true }),
+  d('overview', 'Site Area', (f) => f.p.site_area_acres ?? f.pd.totalArea, { unit: 'Acres', sane: (v) => v > 0 && v <= 200 }),
+  d('overview', 'No. of Towers', (f) => f.pd.noOfTowers),
+  d('overview', 'Building Height', (f) => f.kr.buildingHeight ?? f.pd.towerHeight, { unit: 'm', sane: (v) => v > 0 && v <= 600 }),
+  d('overview', 'Total Units (all types)', (f) => f.totalUnits || null),
+  d('overview', 'Residential Units', (f) => f.resTotalUnits || null),
+  d('overview', 'Residential Saleable Area', (f) => f.resTotalArea || null, { unit: 'sq ft' }),
+  d('overview', 'Avg. Unit Size (Residential)', (f) => (f.resTotalUnits ? f.resTotalArea / f.resTotalUnits : null), { unit: 'sq ft', dp: 0 }),
+  d('overview', 'Units per Acre', (f) => density(f), { unit: 'units/acre', dp: 1 }),
+  d('overview', 'Saleable per Acre', (f) => {
+    const ac = num(f.p.site_area_acres ?? f.pd.totalArea)
+    return ac && f.saleable && ac < 500 ? f.saleable / ac : null
+  }, { unit: 'sq ft/acre', dp: 0 }),
+
+  d('area', 'Saleable Area', (f) => f.saleable, { unit: 'sq ft' }),
+  d('area', 'Carpet Area', (f) => f.kr.carpetArea, { unit: 'sq ft' }),
+  d('area', 'Built Up Area', (f) => f.bua, { unit: 'sq ft' }),
+  d('area', 'FAR Achieved', (f) => f.far, { unit: 'sq ft' }),
+  d('area', 'Permissible FAR', (f) => f.pfar, { unit: 'sq ft', dp: 0 }),
+  d('area', 'FAR Utilisation', (f) => farUtilOf(f), { unit: '%', better: 'higher' }),
+  d('area', 'Balcony Area', (f) => f.kr.balconyArea, { unit: 'sq ft' }),
+  d('area', 'Balcony Area / FAR', (f) => (f.far ? pctOf(num(f.kr.balconyArea) ?? 0, f.far) : null), { unit: '%' }),
+  d('area', 'Total Basement Area', (f) => f.kr.totalBasementArea, { unit: 'sq ft' }),
+
+  d('efficiency', 'Carpet / Saleable', (f) => ratioNum(f.ratios.carpetSaleable), { unit: '%', better: 'higher' , sane: (v) => v > 0 }),
+  d('efficiency', 'Saleable / FAR', (f) => (f.saleable && f.far ? f.saleable / f.far : null), { better: 'higher' , sane: (v) => v > 0 }),
+  d('efficiency', 'BUA / Saleable', (f) => (f.bua && f.saleable ? f.bua / f.saleable : null), { better: 'lower' , sane: (v) => v > 0 }),
+  d('efficiency', 'BUA / FAR', (f) => (f.bua && f.far ? f.bua / f.far : null), { better: 'lower' , sane: (v) => v > 0 }),
+  d('efficiency', 'Core Efficiency (Shaft / FAR)', (f) => ratioNum(f.ratios.coreEfficiency), { unit: '%', better: 'lower' , sane: (v) => v > 0 }),
+  d('efficiency', 'Loading Factor', (f) => ratioNum(f.ratios.loadingFactor), { sane: (v) => v > 0 }),
+  d('efficiency', 'Unit Carpet Efficiency (weighted)', (f) => f.uldEff, { unit: '%', better: 'higher', dp: 1 , sane: (v) => v > 0 }),
+  d('efficiency', 'Floor to Floor Height (Apt)', (f) => {
+    const h = num(f.kr.floorToFloorHeightApt)
+    return h !== null && h > 20 ? null : f.kr.floorToFloorHeightApt // millimetre entries are flagged as data errors
+  }, { unit: 'm' }),
+
+  d('parking', 'Car Parks Provided', (f) => f.cars),
+  d('parking', 'Car Parks Required', (f) => req(f), { unit: 'ECS' }),
+  d('parking', 'Parking Surplus / (Deficit)', (f) => (f.cars !== null && req(f) ? f.cars - req(f)! : null), { better: 'higher' }),
+  d('parking', 'Car Parks per Unit', (f) => (f.cars && f.units ? f.cars / f.units : null), { better: 'higher' , sane: (v) => v > 0 }),
+  d('parking', 'Parking Efficiency', (f) => ratioNum(f.ratios.parkingEfficiency), { unit: 'sq ft/car', better: 'lower' , sane: (v) => v > 0 }),
+  d('parking', 'No. of Basements', (f) => f.kr.noOfBasements),
+  d('parking', 'Driveway Width (Basement)', (f) => f.kr.drivewayWidthBasement, { unit: 'm' }),
+
+  d('commercials', 'Sales Price', (f) => f.price, { unit: 'Rs./sq ft' }),
+  d('commercials', 'Construction Cost on BUA', (f) => f.cost, { unit: 'Rs./sq ft', better: 'lower' }),
+  d('commercials', 'Construction Cost per sq ft Saleable', (f) => (costOf(f) && f.saleable ? costOf(f)! / f.saleable : null), { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  d('commercials', 'Gross Sales Value', (f) => (gsvOf(f) ? gsvOf(f)! / 1e7 : null), { unit: 'Rs. Cr' }),
+  d('commercials', 'Construction Cost', (f) => (costOf(f) ? costOf(f)! / 1e7 : null), { unit: 'Rs. Cr' }),
+  d('commercials', 'Construction Cost / Sales Value', (f) => (gsvOf(f) && costOf(f) ? (costOf(f)! / gsvOf(f)!) * 100 : null), { unit: '%', better: 'lower', dp: 1 , sane: (v) => v > 0 }),
+
+  d('structure', 'Structural System', (f) => f.st.structuralSystem, { text: true }),
+  d('structure', 'Type of Construction', (f) => f.st.typeOfConstruction, { text: true }),
+  d('structure', 'Max. Grade of Concrete', (f) => f.st.maxGradeOfConcrete, { text: true }),
+  d('structure', 'Steel Consumption Coefficient', (f) => f.st.steelConsumptionCoefficient, { unit: 'Kg/sqft', better: 'lower' }),
+  d('structure', 'Concrete Consumption Coefficient', (f) => f.st.concreteConsumptionCoefficient, { unit: 'cum/sqft', better: 'lower', dp: 3 }),
+  d('structure', 'Total Steel Consumption', (f) => f.st.totalSteelConsumption, { unit: 'Kg', dp: 0 }),
+  d('structure', 'Total Concrete Consumption', (f) => f.st.totalConcreteConsumption, { unit: 'cu. m', dp: 0 }),
+
+  d('mep', 'Passenger Lifts per Tower', (f) => f.mp.passengerLiftsNo, { better: 'higher' }),
+  d('mep', 'Passenger Lift Speed', (f) => f.mp.passengerLiftsSpeed, { unit: 'm/sec' }),
+  d('mep', 'Avg. Waiting Time (Passenger)', (f) => f.mp.passengerAverageWait, { unit: 'sec', better: 'lower' }),
+  d('mep', 'Service Lifts', (f) => f.mp.serviceLiftsNo),
+  d('mep', 'AC Provision in Units', (f) => f.mp.acProvisionUnits, { text: true }),
+  d('mep', 'Tonnage per Apartment', (f) => f.mp.tonnageApartment),
+  d('mep', 'Cooling Efficiency (Apartment)', (f) => f.mp.efficiencyApartment, { unit: 'sq ft/TR' }),
+
+  d('amenities', 'Total Landscape Area', (f) => f.ld.totalLandscapeArea, { unit: 'sq m', better: 'higher' }),
+  d('amenities', 'Amenities Provided', (f) => f.amenities || null, { better: 'higher' }),
+  d('amenities', 'Landscape Zoning', (f) => f.ld.landscapeZoning, { text: true }),
+  d('amenities', 'Green Belt Width', (f) => f.ld.greenBeltWidth, { unit: 'm' }),
+  d('amenities', 'Service Design within Benchmark', (f) => (f.sdFilled ? (f.sdOk / f.sdFilled) * 100 : null), { unit: '%', better: 'higher', dp: 0 }),
+  d('amenities', 'STP Technology', (_f, x) => sd(x).stpTechnology, { text: true }),
+  d('amenities', 'EV Charging Provision', (_f, x) => sd(x).evCharging, { text: true }),
+
+  d('governance', 'Consultants Appointed', (f) => (f.cons ? (f.appointed / f.cons) * 100 : null), { unit: '%', better: 'higher', dp: 0 }),
+  d('governance', 'Approvals Received', (f) => (f.apprTotal ? (f.received / f.apprTotal) * 100 : null), { unit: '%', better: 'higher', dp: 0 }),
+  d('governance', 'RERA', (f) => (f.rera ? (str(f.rera.actualApproval) ? 'Approved' : 'Pending') : ''), { text: true }),
+  d('governance', 'Construction Start', (f) => fmtDate(f.start), { text: true }),
+  d('governance', 'Construction Finish', (f) => fmtDate(f.end), { text: true }),
+  d('governance', 'Construction Duration', (f) => f.months || null, { unit: 'months', better: 'lower', dp: 1 }),
+  d('governance', 'Contract Packages', (f) => f.packages || null),
+  d('governance', 'Phases', (f) => f.phases || null),
+]
+
+/** unit-mix rows for the bedroom types any of the projects has */
+function mixDefs(facts: Facts[]): Def[] {
+  const keys = [...new Set(facts.flatMap((f) => [...f.mix.keys()]))].sort((x, y) => order(x) - order(y))
+  return keys.flatMap((k) => [
+    d('mix', `${k} — Units`, (f) => f.mix.get(k)?.units ?? null),
+    d('mix', `${k} — Share of Units`, (f) => (f.mix.get(k) && f.resTotalUnits ? (f.mix.get(k)!.units / f.resTotalUnits) * 100 : null), { unit: '%', dp: 1 }),
+    d('mix', `${k} — Avg. Size`, (f) => (f.mix.get(k)?.units ? f.mix.get(k)!.area / f.mix.get(k)!.units : null), { unit: 'sq ft', dp: 0 }),
+  ])
+}
+function defsFor(facts: Facts[]) {
+  const mix = mixDefs(facts)
+  // keep the section order: overview, unit mix, then the rest
+  return [...FIXED_DEFS.filter((x) => x.section === 'overview'), ...mix, ...FIXED_DEFS.filter((x) => x.section !== 'overview')]
+}
+
+/* ------------------------------------------------------------------ comparison of 2-5 projects */
+export function buildComparison(...inputs: CompareInput[]): Comparison {
+  const facts = inputs.map(projectFacts)
+  const heads = facts.map((f) => ({
     id: str(f.p.id),
     name: str(f.p.name),
     location: str(f.p.location),
@@ -199,157 +340,59 @@ export function buildComparison(A: CompareInput, B: CompareInput): Comparison {
     projectType: str(f.p.projectType),
     portfolio: str(f.p.locationCategory),
     classification: str(f.p.projectClassification),
-  })
-
-  const S: CompareSection[] = []
-  const add = (key: string, title: string, rows: (CompareRow | null)[]) => {
-    const r = rows.filter((x): x is CompareRow => !!x)
-    if (r.length) S.push({ key, title, rows: r })
+  }))
+  const sections: CompareSection[] = []
+  for (const def of defsFor(facts)) {
+    const r = row(def.label, facts.map((f, i) => def.get(f, inputs[i])), def)
+    if (!r) continue
+    let sec = sections.find((x) => x.key === def.section)
+    if (!sec) sections.push((sec = { key: def.section, title: def.title, rows: [] }))
+    sec.rows.push(r)
   }
+  sections.sort((a, b) => SECTIONS.findIndex((x) => x[0] === a.key) - SECTIONS.findIndex((x) => x[0] === b.key))
 
-  add('overview', 'Project Overview', [
-    row('Location', a.p.location, b.p.location, { text: true }),
-    row('Portfolio', a.p.locationCategory, b.p.locationCategory, { text: true }),
-    row('Category', a.p.category, b.p.category, { text: true }),
-    row('Classification', a.p.projectClassification, b.p.projectClassification, { text: true }),
-    row('Site Area', a.p.site_area_acres ?? a.pd.totalArea, b.p.site_area_acres ?? b.pd.totalArea, { unit: 'Acres' }),
-    row('No. of Towers', a.pd.noOfTowers, b.pd.noOfTowers),
-    row('Building Height', a.kr.buildingHeight ?? a.pd.towerHeight, b.kr.buildingHeight ?? b.pd.towerHeight, { unit: 'm' }),
-    row('Total Units (all types)', a.totalUnits || null, b.totalUnits || null),
-    row('Residential Units', a.resTotalUnits || null, b.resTotalUnits || null),
-    row('Residential Saleable Area', a.resTotalArea || null, b.resTotalArea || null, { unit: 'sq ft' }),
-    row('Avg. Unit Size (Residential)', a.resTotalUnits ? a.resTotalArea / a.resTotalUnits : null, b.resTotalUnits ? b.resTotalArea / b.resTotalUnits : null, { unit: 'sq ft', dp: 0 }),
-    row('Units per Acre', density(a), density(b), { unit: 'units/acre', dp: 1 }),
-  ])
-
-  const keys = [...new Set([...a.mix.keys(), ...b.mix.keys()])].sort((x, y) => order(x) - order(y))
-  add(
-    'mix',
-    'Unit Mix (Residential)',
-    keys.flatMap((k) => {
-      const ma = a.mix.get(k)
-      const mb = b.mix.get(k)
-      return [
-        row(`${k} — Units`, ma?.units ?? null, mb?.units ?? null),
-        row(`${k} — Share of Units`, ma && a.resTotalUnits ? (ma.units / a.resTotalUnits) * 100 : null, mb && b.resTotalUnits ? (mb.units / b.resTotalUnits) * 100 : null, { unit: '%', dp: 1 }),
-        row(`${k} — Avg. Size`, ma?.units ? ma.area / ma.units : null, mb?.units ? mb.area / mb.units : null, { unit: 'sq ft', dp: 0 }),
-      ]
-    }),
-  )
-
-  add('area', 'Area & FAR', [
-    row('Saleable Area', a.saleable, b.saleable, { unit: 'sq ft' }),
-    row('Carpet Area', a.kr.carpetArea, b.kr.carpetArea, { unit: 'sq ft' }),
-    row('Built Up Area', a.bua, b.bua, { unit: 'sq ft' }),
-    row('FAR Achieved', a.far, b.far, { unit: 'sq ft' }),
-    row('Permissible FAR', a.pfar, b.pfar, { unit: 'sq ft', dp: 0 }),
-    row('FAR Utilisation', a.far && a.pfar ? (a.far / a.pfar) * 100 : null, b.far && b.pfar ? (b.far / b.pfar) * 100 : null, { unit: '%', better: 'higher' }),
-    row('Balcony Area', a.kr.balconyArea, b.kr.balconyArea, { unit: 'sq ft' }),
-    row('Balcony Area / FAR', a.far ? pctOf(num(a.kr.balconyArea) ?? 0, a.far) : null, b.far ? pctOf(num(b.kr.balconyArea) ?? 0, b.far) : null, { unit: '%' }),
-    row('Total Basement Area', a.kr.totalBasementArea, b.kr.totalBasementArea, { unit: 'sq ft' }),
-  ])
-
-  add('efficiency', 'Design Efficiency', [
-    row('Carpet / Saleable', ratioNum(a.ratios.carpetSaleable), ratioNum(b.ratios.carpetSaleable), { unit: '%', better: 'higher' }),
-    row('Saleable / FAR', a.saleable && a.far ? a.saleable / a.far : null, b.saleable && b.far ? b.saleable / b.far : null, { better: 'higher' }),
-    row('BUA / Saleable', a.bua && a.saleable ? a.bua / a.saleable : null, b.bua && b.saleable ? b.bua / b.saleable : null, { better: 'lower' }),
-    row('BUA / FAR', a.bua && a.far ? a.bua / a.far : null, b.bua && b.far ? b.bua / b.far : null, { better: 'lower' }),
-    row('Core Efficiency (Shaft / FAR)', ratioNum(a.ratios.coreEfficiency), ratioNum(b.ratios.coreEfficiency), { unit: '%', better: 'lower' }),
-    row('Loading Factor', ratioNum(a.ratios.loadingFactor), ratioNum(b.ratios.loadingFactor)),
-    row('Unit Carpet Efficiency (weighted)', a.uldEff, b.uldEff, { unit: '%', better: 'higher', dp: 1 }),
-    row('Floor to Floor Height (Apt)', a.kr.floorToFloorHeightApt, b.kr.floorToFloorHeightApt, { unit: 'm' }),
-  ])
-
-  const reqA = parkingRequired(a.other.extraParkingReqs, a.pd.tableRows).total || null
-  const reqB = parkingRequired(b.other.extraParkingReqs, b.pd.tableRows).total || null
-  add('parking', 'Parking & Basements', [
-    row('Car Parks Provided', a.cars, b.cars),
-    row('Car Parks Required', reqA, reqB, { unit: 'ECS' }),
-    row('Parking Surplus / (Deficit)', a.cars !== null && reqA ? a.cars - reqA : null, b.cars !== null && reqB ? b.cars - reqB : null, { better: 'higher' }),
-    row('Car Parks per Unit', a.cars && a.units ? a.cars / a.units : null, b.cars && b.units ? b.cars / b.units : null, { better: 'higher' }),
-    row('Parking Efficiency', ratioNum(a.ratios.parkingEfficiency), ratioNum(b.ratios.parkingEfficiency), { unit: 'sq ft/car', better: 'lower' }),
-    row('No. of Basements', a.kr.noOfBasements, b.kr.noOfBasements),
-    row('Driveway Width (Basement)', a.kr.drivewayWidthBasement, b.kr.drivewayWidthBasement, { unit: 'm' }),
-  ])
-
-  const revA = a.saleable && a.price ? a.saleable * a.price : null
-  const revB = b.saleable && b.price ? b.saleable * b.price : null
-  const costA = a.bua && a.cost ? a.bua * a.cost : null
-  const costB = b.bua && b.cost ? b.bua * b.cost : null
-  add('commercials', 'Commercials', [
-    row('Sales Price', a.price, b.price, { unit: 'Rs./sq ft' }),
-    row('Construction Cost on BUA', a.cost, b.cost, { unit: 'Rs./sq ft', better: 'lower' }),
-    row('Gross Sales Value', revA ? revA / 1e7 : null, revB ? revB / 1e7 : null, { unit: 'Rs. Cr' }),
-    row('Construction Cost', costA ? costA / 1e7 : null, costB ? costB / 1e7 : null, { unit: 'Rs. Cr', better: 'lower' }),
-    row('Construction Cost / Sales Value', revA && costA ? (costA / revA) * 100 : null, revB && costB ? (costB / revB) * 100 : null, { unit: '%', better: 'lower', dp: 1 }),
-  ])
-
-  add('structure', 'Structure', [
-    row('Structural System', a.st.structuralSystem, b.st.structuralSystem, { text: true }),
-    row('Type of Construction', a.st.typeOfConstruction, b.st.typeOfConstruction, { text: true }),
-    row('Max. Grade of Concrete', a.st.maxGradeOfConcrete, b.st.maxGradeOfConcrete, { text: true }),
-    row('Steel Consumption Coefficient', a.st.steelConsumptionCoefficient, b.st.steelConsumptionCoefficient, { unit: 'Kg/sqft', better: 'lower' }),
-    row('Concrete Consumption Coefficient', a.st.concreteConsumptionCoefficient, b.st.concreteConsumptionCoefficient, { unit: 'cum/sqft', better: 'lower', dp: 3 }),
-    row('Total Steel Consumption', a.st.totalSteelConsumption, b.st.totalSteelConsumption, { unit: 'Kg', dp: 0 }),
-    row('Total Concrete Consumption', a.st.totalConcreteConsumption, b.st.totalConcreteConsumption, { unit: 'cu. m', dp: 0 }),
-  ])
-
-  add('mep', 'MEP', [
-    row('Passenger Lifts per Tower', a.mp.passengerLiftsNo, b.mp.passengerLiftsNo, { better: 'higher' }),
-    row('Passenger Lift Speed', a.mp.passengerLiftsSpeed, b.mp.passengerLiftsSpeed, { unit: 'm/sec' }),
-    row('Avg. Waiting Time (Passenger)', a.mp.passengerAverageWait, b.mp.passengerAverageWait, { unit: 'sec', better: 'lower' }),
-    row('Service Lifts', a.mp.serviceLiftsNo, b.mp.serviceLiftsNo),
-    row('AC Provision in Units', a.mp.acProvisionUnits, b.mp.acProvisionUnits, { text: true }),
-    row('Tonnage per Apartment', a.mp.tonnageApartment, b.mp.tonnageApartment),
-    row('Cooling Efficiency (Apartment)', a.mp.efficiencyApartment, b.mp.efficiencyApartment, { unit: 'sq ft/TR' }),
-  ])
-
-  add('amenities', 'Landscape, Amenities & Services', [
-    row('Total Landscape Area', a.ld.totalLandscapeArea, b.ld.totalLandscapeArea, { unit: 'sq m', better: 'higher' }),
-    row('Amenities Provided', a.amenities || null, b.amenities || null, { better: 'higher' }),
-    row('Landscape Zoning', a.ld.landscapeZoning, b.ld.landscapeZoning, { text: true }),
-    row('Green Belt Width', a.ld.greenBeltWidth, b.ld.greenBeltWidth, { unit: 'm' }),
-    row('Service Design within Benchmark', a.sdFilled ? (a.sdOk / a.sdFilled) * 100 : null, b.sdFilled ? (b.sdOk / b.sdFilled) * 100 : null, { unit: '%', better: 'higher', dp: 0 }),
-    row('STP Technology', obj(obj(A.summary).serviceDesignData).stpTechnology, obj(obj(B.summary).serviceDesignData).stpTechnology, { text: true }),
-    row('EV Charging Provision', obj(obj(A.summary).serviceDesignData).evCharging, obj(obj(B.summary).serviceDesignData).evCharging, { text: true }),
-  ])
-
-  add('governance', 'Delivery & Governance', [
-    row('Consultants Appointed', a.cons ? (a.appointed / a.cons) * 100 : null, b.cons ? (b.appointed / b.cons) * 100 : null, { unit: '%', better: 'higher', dp: 0 }),
-    row('Approvals Received', a.apprTotal ? (a.received / a.apprTotal) * 100 : null, b.apprTotal ? (b.received / b.apprTotal) * 100 : null, { unit: '%', better: 'higher', dp: 0 }),
-    row('RERA', a.rera ? (str(a.rera.actualApproval) ? 'Approved' : 'Pending') : '', b.rera ? (str(b.rera.actualApproval) ? 'Approved' : 'Pending') : '', { text: true }),
-    row('Construction Start', fmtDate(a.start), fmtDate(b.start), { text: true }),
-    row('Construction Finish', fmtDate(a.end), fmtDate(b.end), { text: true }),
-    row('Construction Duration', a.months || null, b.months || null, { unit: 'months', better: 'lower', dp: 1 }),
-    row('Contract Packages', a.packages || null, b.packages || null),
-    row('Phases', a.phases || null, b.phases || null),
-  ])
-
+  const kpi = (label: string, get: (f: Facts) => number | null, unit?: string): CompareKpi => {
+    const nums = facts.map(get)
+    return { label, unit, nums, values: nums.map((n) => fmtNum(n, 2)) }
+  }
   const kpis: CompareKpi[] = [
-    kpi('Total Units', a.totalUnits || null, b.totalUnits || null),
-    kpi('Saleable Area', a.saleable, b.saleable, 'sq ft'),
-    kpi('Site Area', num(a.p.site_area_acres ?? a.pd.totalArea), num(b.p.site_area_acres ?? b.pd.totalArea), 'Acres'),
-    kpi('Towers', num(a.pd.noOfTowers), num(b.pd.noOfTowers)),
-    kpi('Building Height', num(a.kr.buildingHeight ?? a.pd.towerHeight), num(b.kr.buildingHeight ?? b.pd.towerHeight), 'm'),
-    kpi('Car Parks', a.cars, b.cars),
+    kpi('Total Units', (f) => f.totalUnits || null),
+    kpi('Saleable Area', (f) => f.saleable, 'sq ft'),
+    kpi('Site Area', (f) => num(f.p.site_area_acres ?? f.pd.totalArea), 'Acres'),
+    kpi('Towers', (f) => num(f.pd.noOfTowers)),
+    kpi('Building Height', (f) => num(f.kr.buildingHeight ?? f.pd.towerHeight), 'm'),
+    kpi('Car Parks', (f) => f.cars),
   ]
 
-  const all = S.flatMap((s) => s.rows).filter((r) => r.winner)
+  const scored = sections.flatMap((s) => s.rows).filter((r) => r.best.length || r.tie)
   const score = {
-    a: all.filter((r) => r.winner === 'a').length,
-    b: all.filter((r) => r.winner === 'b').length,
-    tie: all.filter((r) => r.winner === 'tie').length,
-    measured: all.length,
+    wins: inputs.map((_, i) => scored.filter((r) => r.best.includes(i)).length),
+    tie: scored.filter((r) => r.tie).length,
+    measured: scored.length,
   }
-  return { a: head(a), b: head(b), kpis, sections: S, score }
+  return { heads, kpis, sections, score }
 }
 
-function kpi(label: string, an: number | null, bn: number | null, unit?: string): CompareKpi {
-  return { label, unit, an, bn, a: fmtNum(an, 2), b: fmtNum(bn, 2) }
+/** portfolio reference per row (average, best and lowest project) over many projects — "portfolio avg 49.1%; best 55.2% (Sanctuary)" */
+export type RowStat = { avg: number; best: { name: string; v: number }; low: { name: string; v: number }; n: number; unit?: string; better?: Better }
+export function portfolioRowStats(inputs: CompareInput[]): Record<string, RowStat> {
+  const facts = inputs.map(projectFacts)
+  const out: Record<string, RowStat> = {}
+  for (const def of defsFor(facts)) {
+    if (def.text) continue
+    const vals = facts
+      .map((f, i) => ({ name: str(f.p.name), v: num(def.get(f, inputs[i])) }))
+      .filter((x): x is { name: string; v: number } => x.v !== null && Number.isFinite(x.v) && (!def.sane || def.sane(x.v)))
+    if (vals.length < 2) continue
+    const sorted = [...vals].sort((a, b) => (def.better === 'lower' ? a.v - b.v : b.v - a.v))
+    out[def.label] = { avg: vals.reduce((s, x) => s + x.v, 0) / vals.length, best: sorted[0], low: sorted[sorted.length - 1], n: vals.length, unit: def.unit, better: def.better }
+  }
+  return out
 }
-function density(f: ReturnType<typeof facts>) {
+
+function density(f: Facts) {
   const ac = num(f.p.site_area_acres ?? f.pd.totalArea)
-  return ac && f.resTotalUnits ? f.resTotalUnits / ac : null
+  return ac && f.resTotalUnits && ac < 500 ? f.resTotalUnits / ac : null
 }
 function order(k: string) {
   if (k === 'Studio') return 0
@@ -358,8 +401,13 @@ function order(k: string) {
   return k === 'Penthouse' ? 20 : 30
 }
 
-/** share of the larger of the two values (0..1) — bar lengths */
+/** each value's share of the largest one (0..1) — bar lengths */
+export function barShares(nums: (number | null)[]) {
+  const max = Math.max(0, ...nums.map((n) => Math.abs(n ?? 0)))
+  return nums.map((n) => (max > 0 && n !== null ? Math.abs(n) / max : 0))
+}
+/** two-value form kept for callers comparing a pair */
 export function barShare(an: number | null, bn: number | null) {
-  const max = Math.max(Math.abs(an ?? 0), Math.abs(bn ?? 0))
-  return { a: max > 0 && an !== null ? Math.abs(an) / max : 0, b: max > 0 && bn !== null ? Math.abs(bn) / max : 0 }
+  const [a, b] = barShares([an, bn])
+  return { a, b }
 }

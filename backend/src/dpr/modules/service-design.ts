@@ -2,6 +2,7 @@
 import { SERVICE_DESIGN, serviceDetailText } from '@/components/design-chapters-b/serviceCatalogue'
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
+import type { DprInput } from '../index.js'
 import { isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
 
 const TITLE = 'Service Design Considerations'
@@ -40,7 +41,8 @@ const RULES: Record<string, { label?: string; req?: string; ok?: (v: unknown) =>
   serviceFacilitiesLocation: {},
 }
 
-const serviceDesign: ModuleRenderer = (ctx, input) => {
+/** rows of this report section (shared with the portfolio health checks) */
+export function serviceDesignSections(input: DprInput): ParamSection[] {
   const data = ((input.summary ?? {}) as Record<string, unknown>).serviceDesignData as Record<string, unknown> | undefined
   const sections: ParamSection[] = SERVICE_DESIGN.map((cat) => ({
     title: cat.category,
@@ -60,6 +62,11 @@ const serviceDesign: ModuleRenderer = (ctx, input) => {
         return { label: rule.label ?? p.label, value, unit, req: rule.req, ok: rule.req === undefined ? undefined : rule.ok?.(v) ?? undefined }
       }),
   }))
+  return sections
+}
+
+const serviceDesign: ModuleRenderer = (ctx, input) => {
+  const sections = serviceDesignSections(input)
   if (!sections.some((s) => s.rows.length)) {
     contentPage(ctx, TITLE)
     emptyMessage(ctx, 'No service design specifications configured.')

@@ -24,7 +24,7 @@ function normalizeKey(label: unknown) {
     .trim()
 }
 
-function isDeviation(value: unknown, b?: Benchmark | null) {
+export function isDeviation(value: unknown, b?: Benchmark | null) {
   if (!b) return false
   const v = String(value ?? '').trim()
   if (!v || v === '-' || /^not\s+(stated|found|provided|applicable)$/i.test(v)) return true
@@ -74,7 +74,7 @@ function isDeviation(value: unknown, b?: Benchmark | null) {
   return false
 }
 
-function getBenchmark(label: unknown, map: BenchmarkMap | null | undefined) {
+export function getBenchmark(label: unknown, map: BenchmarkMap | null | undefined) {
   if (!map || !label) return null
   const key = normalizeKey(label)
   let hit: Benchmark | null = null
@@ -88,7 +88,7 @@ function getBenchmark(label: unknown, map: BenchmarkMap | null | undefined) {
   return map[key] ?? hit
 }
 
-function formatBenchmark(b: Benchmark | null | undefined) {
+export function formatBenchmark(b: Benchmark | null | undefined) {
   if (!b) return null
   const raw = String(b.benchmarkValue || '').trim()
   if (!raw || /^not\s+(stated|found|explicitly)/i.test(raw)) return null
@@ -821,3 +821,24 @@ const projectLevel: ModuleRenderer = (ctx, input) => {
   comparisonPage(ctx, input, { ...d, keyRatioInputs: l }, display)
 }
 export default projectLevel
+
+/** Module 6 benchmark checks exactly as the DPR shows them (parameters + key ratios), for the portfolio health score */
+export function projectLevelChecks(input: DprInput) {
+  const s = (input.summary ?? {}) as Record<string, unknown>
+  const d = (s.projectLevelDesignData && typeof s.projectLevelDesignData === 'object' ? s.projectLevelDesignData : {}) as ProjectLevelDesignData & {
+    dprDisplay?: Record<string, string>
+  }
+  const l: KeyRatioInputs = { ...(d.keyRatioInputs ?? {}) }
+  const out: { label: string; value: string; unit: string; req: string; ok: boolean }[] = []
+  for (const r of parameterRows(l, d.additionalElements2, (s.projectDetailsLayoutData as { tableRows?: unknown } | undefined)?.tableRows)) {
+    if (r.kind !== 'row' || r.lines || r.cols) continue
+    const b = bench(r.benchLabels ?? [r.label], r.value, input.benchmarks)
+    if (b) out.push({ label: r.label, value: r.value, unit: r.unit, req: b.req.replace(/^Req:\s*/, ''), ok: !b.dev })
+  }
+  for (const g of keyRatioGroups(l, d.additionalElements2, d.dprDisplay ?? {}))
+    for (const r of g.rows) {
+      const b = r.value === '-' ? null : bench(r.bench ?? [r.label], r.value, input.benchmarks)
+      if (b && !out.some((x) => x.label === r.label)) out.push({ label: r.label, value: r.value, unit: r.unit, req: b.req.replace(/^Req:\s*/, ''), ok: !b.dev })
+    }
+  return out
+}

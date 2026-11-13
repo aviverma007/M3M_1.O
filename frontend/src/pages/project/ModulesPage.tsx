@@ -7,6 +7,7 @@ import { LoadingButton } from '@/components/common'
 import { useProject, useProjectModules } from '@/api/projects'
 import ModuleCard from '@/components/projects/modules/ModuleCard'
 import { setModulePreview } from '@/components/module-workspace/preview'
+import ProjectHealthStrip from '@/components/portfolio/ProjectHealthStrip'
 
 type ModuleRowExtras = { projectModule: { moApprovedDocUrl?: string | null } | null }
 
@@ -33,6 +34,7 @@ export default function ModulesPage() {
 
   return (
     <div className="m-auto overflow-hidden space-y-4">
+      {projectId && <ProjectHealthStrip projectId={projectId} />}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6 pt-0 auto-rows-fr items-stretch">
         {rows.map((m, i) => (
           <ModuleCard

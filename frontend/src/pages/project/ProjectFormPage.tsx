@@ -4,6 +4,7 @@
  * Original: page-DRwRdHoZ. Save & Next saves then opens /dashboard/project/:id/modules.
  */
 import { useEffect, useState, type MouseEvent } from 'react'
+import { siteAreaIssue } from '@/lib/dataChecks'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
@@ -101,6 +102,12 @@ function ProjectForm() {
     if (!Number.isNaN(n) && n > 0) form.setValue('site_area', parseFloat((n * 4046.856).toFixed(2)), { shouldValidate: false })
     else if (!acres) form.setValue('site_area', '', { shouldValidate: false })
   }, [acres, form])
+
+  /** FAR permissible typed as a ratio (2.5) instead of an area in sq m */
+  const farRatio = (v: unknown) => {
+    const n = parseFloat(String(v ?? ''))
+    return Number.isFinite(n) && n > 0 && n < 50
+  }
 
   const goBack = (e: MouseEvent) => {
     e.preventDefault()
@@ -232,6 +239,11 @@ function ProjectForm() {
             inputUnit="Sq m"
             isDisabled={readOnly}
           />
+          {!readOnly && farRatio(form.watch('far_permissible')) && (
+            <div className="lg:ml-[25%] -mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              FAR Permissible {String(form.watch('far_permissible'))} looks like a FAR ratio. Enter the permissible FAR area in square metres (e.g. site area × FAR).
+            </div>
+          )}
           <ProjectField
             type="input"
             name="site_area_acres"
@@ -245,6 +257,18 @@ function ProjectForm() {
             isDisabled={readOnly}
             maxDecimals={2}
           />
+          {!readOnly && siteAreaIssue(acres) && (
+            <div className="lg:ml-[25%] -mt-1 flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              <span className="flex-1 min-w-[240px]">{siteAreaIssue(acres)!.message}</span>
+              <button
+                type="button"
+                onClick={() => form.setValue('site_area_acres', String(Math.round((parseFloat(String(acres)) / 4046.86) * 100) / 100), { shouldDirty: true })}
+                className="rounded-md bg-white border border-red-200 px-2.5 py-1 font-bold hover:bg-red-100"
+              >
+                Convert to acres
+              </button>
+            </div>
+          )}
           <ProjectField
             type="input"
             name="site_area"

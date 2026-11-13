@@ -1,6 +1,7 @@
 /* Design Considerations — Structural Parameters (Structure department record, customFields). */
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
+import type { DprInput } from '../index.js'
 import { checkBenchmark, customLabel, inRange, isEmpty, num, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
 
 const TITLE = 'Design Considerations — Structural Parameters'
@@ -43,7 +44,8 @@ const SECTIONS: { title: string; fields: Def[] }[] = [
 
 type DynamicInput = { group?: string; name?: string; benchmark?: string; value?: unknown }
 
-const structure: ModuleRenderer = (ctx, input) => {
+/** rows of this report section (shared with the portfolio health checks) */
+export function structureSections(input: DprInput): ParamSection[] {
   const rec = (input.structure ?? {}) as Record<string, unknown>
   const cf = { ...((rec.fields as Record<string, unknown>) ?? {}), ...((rec.customFields as Record<string, unknown>) ?? {}) }
   const values: Record<string, unknown> = { ...cf }
@@ -72,6 +74,11 @@ const structure: ModuleRenderer = (ctx, input) => {
   }
   groups.forEach((rows, title) => sections.push({ title, rows }))
 
+  return sections
+}
+
+const structure: ModuleRenderer = (ctx, input) => {
+  const sections = structureSections(input)
   if (!sections.some((s) => s.rows.length)) {
     contentPage(ctx, 'Design Considerations — Structural')
     emptyMessage(ctx, 'No structural parameters submitted yet.')

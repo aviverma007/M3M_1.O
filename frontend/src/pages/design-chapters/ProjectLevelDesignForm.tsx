@@ -1,5 +1,5 @@
 /* Project Level Design: /dashboard/project/:projectId/design-chapters/project-level-design (original ProjectLevelDesignForm). */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChevronLeft, Save, X } from 'lucide-react'
@@ -8,11 +8,15 @@ import PageLoader from '@/components/common/PageLoader'
 import { useBenchmarks } from '@/lib/benchmark'
 import { errorMessage, getProject, getProjectOptions, getSummary, saveSummary, updateProject } from '@/api/chapters-a'
 import { residentialTotals } from '@/lib/residentialTotals'
+import DataCheckBanner from '@/components/portfolio/DataCheckBanner'
+import type { CompareInput } from '@/lib/projectComparison'
 import InputPanel from '@/components/design-chapters/project-level/InputPanel'
 import OutputPanel from '@/components/design-chapters/project-level/OutputPanel'
 import CompareSection, { type Compared, type ProjectLite } from '@/components/design-chapters/project-level/CompareSection'
 import { ADDITIONAL_DEFAULTS, AREA_STATEMENT_DEFAULTS, KEY_RATIO_DEFAULTS, comparisonRatios, newCluster } from '@/components/design-chapters/project-level/calc'
 import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioInputs, ParkingReq } from '@/types/chapters-a'
+
+const LIVE_MODULES = ['Project Level Design']
 
 const SCROLLBAR_CSS = `
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -36,6 +40,7 @@ export default function ProjectLevelDesignForm() {
   const [clusters, setClusters] = useState<ClusterConfig[]>([newCluster()])
   const [module5Rows, setModule5Rows] = useState<unknown>([])
   const [loadedPermFAR, setLoadedPermFAR] = useState('')
+  const [base, setBase] = useState<{ project: Record<string, unknown>; summary: Record<string, unknown> } | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -45,6 +50,7 @@ export default function ProjectLevelDesignForm() {
         const permSqft = farPerm ? Math.round(farPerm * 10.7639) : null
         setLoadedPermFAR(permSqft ? String(permSqft) : '')
         const [summary, list] = await Promise.allSettled([getSummary(projectId!), getProjectOptions()])
+        setBase({ project: (p ?? {}) as Record<string, unknown>, summary: (summary.status === 'fulfilled' ? summary.value ?? {} : {}) as Record<string, unknown> })
         if (summary.status === 'fulfilled') {
           const s = summary.value
           setModule5Rows(s?.projectDetailsLayoutData?.tableRows ?? [])
@@ -106,6 +112,18 @@ export default function ProjectLevelDesignForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, projects])
 
+  // live data checks on what is on screen (Module 5 rows + these inputs)
+  const liveInput = useMemo<CompareInput | null>(() => {
+    if (!base) return null
+    const pl = (base.summary.projectLevelDesignData ?? {}) as Record<string, unknown>
+    return {
+      project: base.project,
+      summary: { ...base.summary, projectLevelDesignData: { ...pl, keyRatioInputs: keyRatio, additionalElements2: extra } },
+      structure: null,
+      mep: null,
+    }
+  }, [base, keyRatio, extra])
+
   const save = async () => {
     setSaving(true)
     try {
@@ -138,6 +156,7 @@ export default function ProjectLevelDesignForm() {
         <p className="text-sm text-gray-500 mt-1">Configure project parameters and view calculations</p>
       </div>
 
+      <DataCheckBanner input={liveInput} modules={LIVE_MODULES} className="max-w-[1500px] mx-auto mb-6" />
       <div className="max-w-[1500px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
           <InputPanel

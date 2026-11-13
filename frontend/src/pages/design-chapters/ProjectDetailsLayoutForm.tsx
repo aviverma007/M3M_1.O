@@ -1,5 +1,5 @@
 /* Project Details & Layout: /dashboard/project/:projectId/design-chapters/project-details (original ProjectDetailsLayoutForm). */
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChevronLeft, CircleCheck, FileText, GripVertical, LoaderCircle, Plus, Save, Trash2, Upload, X } from 'lucide-react'
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import PageLoader from '@/components/common/PageLoader'
+import DataCheckBanner from '@/components/portfolio/DataCheckBanner'
+import type { CompareInput } from '@/lib/projectComparison'
 import { errorMessage, getProject, getSummary, saveSummary, updateProject, uploadFile } from '@/api/chapters-a'
 import { groupTotals, isResidentialGroup, residentialTotals } from '@/lib/residentialTotals'
 import type { CustomField, LayoutFile, ProjectLayout, TypeRow } from '@/types/chapters-a'
@@ -74,6 +76,7 @@ export default function ProjectDetailsLayoutForm() {
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [fallbackSaleable, setFallbackSaleable] = useState<number | null>(null)
   const [rows, setRows] = useState<TypeRow[]>(DEFAULT_ROWS)
+  const [base, setBase] = useState<{ project: Record<string, unknown>; summary: Record<string, unknown> } | null>(null)
   const [adding, setAdding] = useState(false)
   const [newLayout, setNewLayout] = useState('')
   const [manageOpen, setManageOpen] = useState(false)
@@ -92,6 +95,7 @@ export default function ProjectDetailsLayoutForm() {
         let savedArea: string | null = null
         try {
           const s = await getSummary(projectId!)
+          setBase({ project: (p ?? {}) as Record<string, unknown>, summary: (s ?? {}) as Record<string, unknown> })
           const d = s?.projectDetailsLayoutData
           if (d) {
             towers = d.noOfTowers || ''
@@ -274,8 +278,21 @@ export default function ProjectDetailsLayoutForm() {
   const shownTotal = grand > 0 ? grand : fallbackSaleable
   const categories = details.projectType === 'residential' ? CAT_RES : details.projectType === 'commercial' || details.projectType === 'retail' ? CAT_COM : [...CAT_RES, ...CAT_COM]
 
+  // live data checks on what is on screen (site area, unit rows vs Module 6)
+  const liveInput = useMemo<CompareInput | null>(() => {
+    if (!base) return null
+    const pd = (base.summary.projectDetailsLayoutData ?? {}) as Record<string, unknown>
+    return {
+      project: { ...base.project, site_area_acres: details.totalArea, site_area: '' },
+      summary: { ...base.summary, projectDetailsLayoutData: { ...pd, tableRows: rows, totalArea: details.totalArea, noOfTowers: details.noOfTowers, towerHeight: details.towerHeight } },
+      structure: null,
+      mep: null,
+    }
+  }, [base, rows, details])
+
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-6">
+      <DataCheckBanner input={liveInput} modules={['Project Details', 'Project Info']} className="max-w-[1400px] mx-auto mb-6" />
       <div className="max-w-[1400px] mx-auto mb-6">
         <button onClick={() => navigate(-1)} className="flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors mb-4">
           <ChevronLeft size={20} />

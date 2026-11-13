@@ -19,6 +19,7 @@ const P = {
   Chapter: lazy(() => import('@/pages/project/chapter/ChapterPage')),
   Compare: lazy(() => import('@/pages/compare/ComparePage')),
   Comparison: lazy(() => import('@/pages/comparison/ComparisonPage')),
+  Portfolio: lazy(() => import('@/pages/portfolio/PortfolioPage')),
   DesignBriefLanding: lazy(() => import('@/pages/design-brief/DesignBriefLandingPage')),
   DesignBriefLayout: lazy(() => import('@/pages/design-brief/DesignBriefLayout')),
   Liaison: lazy(() => import('@/pages/design-brief/LiaisonForm')),
@@ -132,6 +133,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="compare" element={L(P.Compare)} />
+          <Route path="portfolio" element={L(P.Portfolio)} />
           <Route path="roles-access-control" element={L(P.RolesAccess)} />
           <Route path="audit-logs" element={L(P.AuditLogs)} />
           <Route path="*" element={<NotFound />} />

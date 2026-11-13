@@ -218,6 +218,7 @@ export default function Header() {
     ...(isContributor
       ? []
       : [
+          { name: 'Portfolio', path: '/dashboard/portfolio' },
           { name: 'Project Governance', path: '/project-governance', isActiveMatch: (p: string) => p.includes('/project/') },
           { name: 'Role and Access Control', path: '/dashboard/roles-access-control' },
           { name: 'Audit Logs', path: '/dashboard/audit-logs' },

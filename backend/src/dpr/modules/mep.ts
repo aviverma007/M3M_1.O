@@ -1,6 +1,7 @@
 /* Design Considerations — MEP Parameters (MEP department record). */
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
+import type { DprInput } from '../index.js'
 import { customLabel, inRange, isEmpty, oneOf, renderParamTable, show, type ParamRow, type ParamSection } from './param-table.js'
 
 const TITLE = 'Design Considerations — MEP Parameters'
@@ -38,7 +39,8 @@ const SECTIONS: { title: string; fields: Def[] }[] = [
   },
 ]
 
-const mep: ModuleRenderer = (ctx, input) => {
+/** rows of this report section (shared with the portfolio health checks) */
+export function mepSections(input: DprInput): ParamSection[] {
   const rec = (input.mep ?? {}) as Record<string, unknown>
   const custom = (rec.customFields && typeof rec.customFields === 'object' ? rec.customFields : {}) as Record<string, unknown>
   const spill = (rec.fields && typeof rec.fields === 'object' ? rec.fields : {}) as Record<string, unknown>
@@ -60,6 +62,11 @@ const mep: ModuleRenderer = (ctx, input) => {
     .map(([k, v]): ParamRow => ({ label: customLabel(k), value: show(v) }))
   if (extra.length) sections.push({ title: '', rows: extra })
 
+  return sections
+}
+
+const mep: ModuleRenderer = (ctx, input) => {
+  const sections = mepSections(input)
   if (!sections.some((s) => s.rows.length)) {
     contentPage(ctx, 'Design Considerations — MEP')
     emptyMessage(ctx, 'No MEP parameters submitted yet.')

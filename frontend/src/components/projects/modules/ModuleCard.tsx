@@ -172,11 +172,12 @@ export default function ModuleCard({
     setDownloading(true)
     try {
       if (isComparison) {
-        // PDF of the last comparison made from this project; otherwise open the page to choose Project B
-        const b = lastCompared(projectId)
-        if (!b) return open()
-        const blob = await downloadComparisonPdf(projectId, b)
-        downloadBlob(blob, `Comparison_${projectId}_vs_${b}.pdf`)
+        // PDF of the last comparison made from this project; otherwise open the page to choose the projects
+        const ids = lastCompared(projectId)
+        const all = ids.includes(projectId) ? ids : [projectId, ...ids]
+        if (all.length < 2) return open()
+        const blob = await downloadComparisonPdf(all)
+        downloadBlob(blob, `Comparison_${all.join('_')}.pdf`)
       } else if (isDesignBrief) {
         const blob = await http.get<Blob>(`/project/${projectId}/design-brief/download?type=mo`, { responseType: 'blob' })
         downloadBlob(blob, `Design_Brief_MO_Report_${projectId}.pdf`)

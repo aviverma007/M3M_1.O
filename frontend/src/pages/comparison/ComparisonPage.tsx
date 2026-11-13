@@ -30,7 +30,7 @@ import {
 } from '@/api/comparison'
 import { getProjectHealth, type PortfolioProject } from '@/api/portfolio'
 import { HealthRing, StatusPill } from '@/components/portfolio/HealthBits'
-import KeyRatioCard from '@/components/comparison/KeyRatioCard'
+import KeyRatioTable from '@/components/comparison/KeyRatioTable'
 
 /** one colour per project slot (same as the PDF) */
 const SLOT = ['#1A3566', '#5B8FC7', '#0E7490', '#B45309', '#7C3AED']
@@ -104,7 +104,6 @@ export default function ComparisonPage() {
   const [active, setActive] = useState('')
   const [saveName, setSaveName] = useState<string | null>(null)
   const [keyRatios, setKeyRatios] = useState<Record<string, ProjectKeyRatios>>({})
-  const [krOpen, setKrOpen] = useState<Record<string, boolean>>({})
 
   const valid = ids.filter((x, i) => x && ids.indexOf(x) === i)
 
@@ -294,25 +293,18 @@ export default function ComparisonPage() {
 
       {cmp && (
         <div className={cn('space-y-6 transition-opacity duration-300', loading && 'opacity-60')}>
-          {/* hero cards with health, and each project's key ratios as a drop card underneath */}
-          <div className="grid gap-4 items-start" style={{ gridTemplateColumns: `repeat(${cmp.heads.length}, minmax(0, 1fr))` }}>
+          {/* hero cards with health */}
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cmp.heads.length}, minmax(0, 1fr))` }}>
             {cmp.heads.map((h, i) => (
-              <div key={i} className="space-y-3 min-w-0">
-                <Hero p={h} tag={`Project ${String.fromCharCode(65 + i)}`} color={SLOT[i]} health={health[h.id]} compact={cmp.heads.length > 3} />
-                <KeyRatioCard data={keyRatios[h.id]} color={SLOT[i]} open={!!krOpen[h.id]} onToggle={() => setKrOpen((o) => ({ ...o, [h.id]: !o[h.id] }))} />
-              </div>
+              <Hero key={i} p={h} tag={`Project ${String.fromCharCode(65 + i)}`} color={SLOT[i]} health={health[h.id]} compact={cmp.heads.length > 3} />
             ))}
           </div>
-          <div className="flex justify-end -mt-3">
-            <button
-              onClick={() => {
-                const all = cmp.heads.every((h) => krOpen[h.id])
-                setKrOpen(Object.fromEntries(cmp.heads.map((h) => [h.id, !all])))
-              }}
-              className="text-[11px] font-bold text-[#00509d] hover:underline"
-            >
-              {cmp.heads.every((h) => krOpen[h.id]) ? 'Close all key ratios' : 'Open all key ratios'}
-            </button>
+
+          {/* key ratios: parameters down the left, one column per project */}
+          <div className="overflow-x-auto -mx-1 px-1">
+            <div style={{ minWidth: cmp.heads.length > 3 ? 1100 : undefined }}>
+              <KeyRatioTable heads={cmp.heads.map((h) => ({ id: h.id, name: h.name }))} colors={SLOT} data={keyRatios} />
+            </div>
           </div>
 
           {/* key figures + radar */}

@@ -56,12 +56,15 @@ function Group({ label, first = false }: { label: string; first?: boolean }) {
 const ratio = (a: number, b: number) => (b > 0 ? (a / b).toFixed(2) : '-')
 
 function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioInputs; extra: AdditionalElements2; benchmarks: BenchmarkMap | null; landscapeSelected?: unknown }) {
+  const am = amenityOutputs(extra.other as Record<string, unknown>, n2(l.noOfUnits) || null, landscapeSelected)
+  const f = (v: number | null, dp: number) => (v === null ? '-' : fmtNum(v, dp))
   const efficiency: Param[] = [
     { param: 'BUA/Saleable', val: keyRatioFormula(4, l), unit: 'Ratio' },
     { param: 'Saleable/FAR', val: keyRatioFormula(5, l), unit: 'Ratio' },
     { param: 'BUA/FAR', val: ratio(n2(l.builtUpArea), n2(l.far)), unit: 'Ratio' },
     { param: 'Balcony area/FAR (%)', val: n2(l.far) > 0 ? ((n2(l.balconyArea) / n2(l.far)) * 100).toFixed(2) : '-', unit: '%' },
     { param: 'FAR Utilization', val: keyRatioFormula(27, l), unit: '%' },
+    { param: 'Club Area / Unit', val: f(am.clubPerUnit, 1), unit: 'sq ft/unit', subVal: am.clubArea !== null ? `Clubhouse ${fmtNum(am.clubArea, 0)} sq ft` : undefined },
     { param: 'FAR per EWS (sqft)', val: ratio(n2(l.ewsFAR), n2(l.noOfEWSUnit)), unit: 'sqft' },
   ]
   const apt: Param[] = [
@@ -83,10 +86,7 @@ function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioI
     { param: 'Parking bay size', val: String((extra.other as Record<string, string>).totalParkingBaySize || '-'), unit: 'sq m' },
     { param: 'No. of Basements', val: l.noOfBasements || '', unit: '#' },
   ]
-  const am = amenityOutputs(extra.other as Record<string, unknown>, n2(l.noOfUnits) || null, landscapeSelected)
-  const f = (v: number | null, dp: number) => (v === null ? '-' : fmtNum(v, dp))
   const club: Param[] = [
-    { param: 'Club Area / Unit', val: f(am.clubPerUnit, 1), unit: 'sq ft/unit', subVal: am.clubArea !== null ? `Clubhouse ${fmtNum(am.clubArea, 0)} sq ft` : undefined },
     { param: 'Pool Area / Unit', val: f(am.poolPerUnit, 2), unit: 'sq ft/unit' },
     { param: 'Amenities per 100 Units', val: f(am.amenitiesPer100, 1), unit: '#', subVal: am.amenityCount ? `${am.amenityCount} amenities` : undefined },
     { param: 'Sports Courts', val: f(am.courts, 0), unit: '#' },

@@ -592,6 +592,7 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
         { label: 'BUA/FAR', value: clean(ratio(num(l.builtUpArea), num(l.far))), unit: '' },
         { label: 'Saleable/FAR', value: clean(str(keyRatioFormula(5, l))), unit: '' },
         { label: 'FAR Utilization', value: farUtilization(l), unit: '' },
+        { label: 'Club Area / Unit', value: clubPerUnit(l, extra, landscapeSelected), unit: 'sq ft/unit' },
         { label: 'FAR per EWS', value: clean(ratio(num(l.ewsFAR), num(l.noOfEWSUnit))), unit: 'sqft', bench: ['FAR per EWS (sqft)'] },
       ],
     },
@@ -631,14 +632,19 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
   return groups.map((g) => ({ ...g, rows: g.rows.map((r) => (display[r.label] !== undefined ? { ...r, value: display[r.label] } : r)).filter((r) => r.value !== '-') }))
 }
 
-/** Club & Amenities (measured in Module 6): club / pool area per unit, amenities per 100 units */
+/** Module 6 club area per unit (shown under FAR Utilization) */
+function clubPerUnit(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, landscapeSelected: unknown) {
+  const a = amenityOutputs((extra?.other ?? {}) as Record<string, unknown>, num(l.noOfUnits) || null, landscapeSelected)
+  return a.clubPerUnit === null ? '-' : fmtIN(a.clubPerUnit, 1)
+}
+
+/** Club & Amenities (measured in Module 6): clubhouse / pool area, amenities per 100 units */
 function clubGroup(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, landscapeSelected: unknown): { name: string; rows: KRow[] } {
   const a = amenityOutputs((extra?.other ?? {}) as Record<string, unknown>, num(l.noOfUnits) || null, landscapeSelected)
   const f = (x: number | null, dp: number) => (x === null ? '-' : fmtIN(x, dp))
   return {
     name: 'Club & Amenities',
     rows: [
-      { label: 'Club Area / Unit', value: f(a.clubPerUnit, 1), unit: 'sq ft/unit' },
       { label: 'Clubhouse Area', value: f(a.clubArea, 0), unit: 'sq ft' },
       { label: 'Pool Area / Unit', value: f(a.poolPerUnit, 2), unit: 'sq ft/unit' },
       { label: 'Amenities per 100 Units', value: f(a.amenitiesPer100, 1), unit: '' },

@@ -35,3 +35,25 @@ export async function fetchAuditLogs(params: Record<string, string>): Promise<Au
 
 export const exportAuditLogs = (params: Record<string, string>) =>
   http.get<BlobPart>(`/audit-logs/export?${new URLSearchParams(params).toString()}`, { responseType: 'blob' })
+
+/* field-level change history (who changed which value, old -> new) */
+export type FieldChange = {
+  id: number
+  projectId: number | null
+  projectName: string | null
+  module: string
+  label: string
+  path: string
+  oldValue: string | null
+  newValue: string | null
+  action: 'create' | 'update' | 'delete'
+  userName: string | null
+  createdAt: string
+}
+export type FieldChangesPage = { rows: FieldChange[]; total: number; totalPages: number; currentPage: number; modules: string[] }
+export async function fetchFieldChanges(params: Record<string, string>): Promise<FieldChangesPage> {
+  const res = await http.get<ApiEnvelope<FieldChangesPage>>(`/field-changes?${new URLSearchParams(params).toString()}`)
+  return res.data
+}
+export const exportFieldChanges = (params: Record<string, string>) =>
+  http.get<BlobPart>(`/field-changes/export?${new URLSearchParams(params).toString()}`, { responseType: 'blob' })

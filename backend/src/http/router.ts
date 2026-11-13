@@ -4,6 +4,7 @@
  * Handlers return either { status, body } (via ok/created/fail) or plain data (wrapped as ok()).
  * A body that is a Blob/Buffer is sent as a file; a string body is sent as text.
  */
+import { withActor } from '../audit/changes.js'
 import { Router, type Request, type Response, type NextFunction } from 'express'
 import { authenticate, type AuthUser } from './auth.js'
 
@@ -86,7 +87,8 @@ export function buildRouter() {
         if (e.auth && !user) return send(res, fail(401, 'Unauthorized', 'UNAUTHORIZED'))
         const query: Record<string, string> = {}
         for (const [k, v] of Object.entries(req.query)) query[k] = Array.isArray(v) ? String(v[v.length - 1]) : String(v ?? '')
-        const out = await e.handler({
+        const out = await withActor(user, () =>
+          e.handler({
           params: req.params as Record<string, string>,
           query,
           body: req.body,
@@ -95,7 +97,8 @@ export function buildRouter() {
           url: req.path,
           req,
           res,
-        })
+          }),
+        )
         if (res.headersSent) return
         await send(res, isResult(out) ? out : ok(out))
       } catch (err) {

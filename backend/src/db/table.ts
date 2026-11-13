@@ -13,6 +13,7 @@
  * Filters are plain objects: { projectId: 1, status: 'active', id: [1,2,3] (IN), assignedTo: null (IS NULL) }.
  */
 import { query, type Params } from './pool.js'
+import { isTracked, trackRowChange } from '../audit/changes.js'
 
 export type Row = { id: number; [k: string]: any } // eslint-disable-line @typescript-eslint/no-explicit-any
 export type Filter = Record<string, unknown>
@@ -183,11 +184,14 @@ export class Table<T extends Row = Row> {
       ? `INSERT INTO dbo.${q(this.name)} (${keys.map(q).join(', ')}) OUTPUT INSERTED.* VALUES (${keys.map((_, i) => `@v${i}`).join(', ')})`
       : `INSERT INTO dbo.${q(this.name)} OUTPUT INSERTED.* DEFAULT VALUES`
     const [r] = await query(sqlText, params)
-    return this.fromDb(m, r)
+    const out = this.fromDb(m, r)
+    if (isTracked(this.name)) await trackRowChange(this.name, null, out)
+    return out
   }
 
   async update(id: number | string, patch: Partial<T> & Record<string, unknown>): Promise<T | undefined> {
     const m = await meta(this.name)
+    const before = isTracked(this.name) ? await this.find(id) : undefined
     const { cols, extra } = this.toDb(m, patch)
     if (this.spill && Object.keys(extra).length) {
       const current = await query<Record<string, unknown>>(`SELECT ${q(this.spill)} AS s FROM dbo.${q(this.name)} WHERE id = @id`, { id: Number(id) })
@@ -211,7 +215,9 @@ export class Table<T extends Row = Row> {
       `UPDATE dbo.${q(this.name)} SET ${set} OUTPUT INSERTED.* ${scopeWhere ? `${scopeWhere} AND` : 'WHERE'} id = @id`,
       params,
     )
-    return r ? this.fromDb(m, r) : undefined
+    const out = r ? this.fromDb(m, r) : undefined
+    if (out && before) await trackRowChange(this.name, before, out)
+    return out
   }
 
   /** update the first row matching `filter`, or insert `row` (+ filter values) */
@@ -222,9 +228,11 @@ export class Table<T extends Row = Row> {
 
   async remove(id: number | string) {
     const m = await meta(this.name)
+    const before = isTracked(this.name) ? await this.find(id) : undefined
     const params: Params = { id: Number(id) }
     const w = this.whereClause(m, {}, params)
     await query(`DELETE FROM dbo.${q(this.name)} ${w ? `${w} AND` : 'WHERE'} id = @id`, params)
+    if (before) await trackRowChange(this.name, before, null)
   }
 
   async removeWhere(filter: Filter) {
@@ -232,7 +240,9 @@ export class Table<T extends Row = Row> {
     const params: Params = {}
     const w = this.whereClause(m, filter, params)
     if (!w) throw new Error(`Refusing to delete every row of ${this.name} without a filter`)
+    const before = isTracked(this.name) ? await this.where(filter) : []
     await query(`DELETE FROM dbo.${q(this.name)} ${w}`, params)
+    for (const b of before) await trackRowChange(this.name, b, null)
   }
 }
 

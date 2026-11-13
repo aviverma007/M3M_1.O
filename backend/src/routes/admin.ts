@@ -5,6 +5,7 @@ import { query, type Params } from '../db/pool.js'
 import { created, fail, file, ok, route, type Ctx } from '../http/router.js'
 import { hashPassword, publicUser } from '../http/auth.js'
 import { audit } from '../http/helpers.js'
+import { changesReady } from '../audit/changes.js'
 
 const users = () => db.table<Row>('users')
 const roles = () => db.table<Row>('accessRoles')
@@ -237,4 +238,86 @@ route('GET', '/audit-logs/export', async ({ query: q, user }) => {
   const lines = [['S.No', 'User', 'Date & Time', 'Task Type', 'Task Description'].join(',')]
   rows.forEach((r, i) => lines.push([i + 1, r.creatorName ?? 'System', iso(r.createdAt), r.taskType, r.description].map(esc).join(',')))
   return file(lines.join('\n'), 'text/csv; charset=utf-8', 'audit-logs.csv')
+})
+
+/* ---------------- field-level change history ----------------
+ * GET /field-changes?page&limit&projectId&search&module&userId&fromDate&toDate&path
+ *   -> { rows[{ id, projectId, projectName, module, label, oldValue, newValue, action, userName, createdAt }], total, totalPages, currentPage, modules[] }
+ * GET /field-changes/export?(same filters) -> text/csv
+ */
+function changeFilter(q: Record<string, string>) {
+  const parts: string[] = []
+  const params: Params = {}
+  if (q.projectId && /^\d+$/.test(q.projectId)) {
+    params.pid = Number(q.projectId)
+    parts.push('c.projectId = @pid')
+  }
+  if (q.userId && /^\d+$/.test(q.userId)) {
+    params.uid = Number(q.userId)
+    parts.push('c.userId = @uid')
+  }
+  if (q.module && q.module !== 'all') {
+    params.mod = q.module
+    parts.push('c.module = @mod')
+  }
+  if (q.path) {
+    params.path = q.path
+    parts.push('c.path = @path')
+  }
+  if (q.search) {
+    params.search = `%${q.search.replace(/[[\]%_]/g, '[$&]')}%`
+    parts.push(`CONCAT(c.label, N' ', ISNULL(c.userName, N''), N' ', ISNULL(c.oldValue, N''), N' ', ISNULL(c.newValue, N''), N' ', ISNULL(p.name, N'')) LIKE @search`)
+  }
+  const from = dayStart(q.fromDate || '')
+  const to = dayStart(q.toDate || '')
+  if (from) {
+    params.from = from
+    parts.push('c.createdAt >= @from')
+  }
+  if (to) {
+    params.to = new Date(to.getTime() + 86400000)
+    parts.push('c.createdAt < @to')
+  }
+  return { where: parts.length ? `WHERE ${parts.join(' AND ')}` : '', params }
+}
+const CHANGE_FROM = 'FROM dbo.fieldChanges c LEFT JOIN dbo.projects p ON p.id = c.projectId'
+const CHANGES_MISSING = 'Change history is not set up yet: run database/09_field_changes.sql on the server.'
+type ChangeRow = { id: number; projectId: number | null; projectName: string | null; module: string; label: string; path: string; oldValue: string | null; newValue: string | null; action: string; userName: string | null; createdAt: Date | string }
+
+route('GET', '/field-changes', async ({ query: q, user }) => {
+  if (!canReadLogs(user)) return forbidden()
+  if (!(await changesReady())) return fail(503, CHANGES_MISSING)
+  const page = Math.max(1, Math.trunc(Number(q.page)) || 1)
+  const limit = Math.min(Math.max(1, Math.trunc(Number(q.limit)) || 25), 500)
+  const { where, params } = changeFilter(q)
+  const [{ n }] = await query<{ n: number }>(`SELECT COUNT(*) AS n ${CHANGE_FROM} ${where}`, params)
+  const rows = await query<ChangeRow>(
+    `SELECT c.id, c.projectId, p.name AS projectName, c.module, c.label, c.path, c.oldValue, c.newValue, c.action, c.userName, c.createdAt
+       ${CHANGE_FROM} ${where} ORDER BY c.createdAt DESC, c.id DESC OFFSET @off ROWS FETCH NEXT @lim ROWS ONLY`,
+    { ...params, off: (page - 1) * limit, lim: limit },
+  )
+  // module list for the filter (within the chosen project, if any)
+  const mods = await query<{ module: string }>(
+    `SELECT DISTINCT module FROM dbo.fieldChanges ${params.pid ? 'WHERE projectId = @pid' : ''} ORDER BY module`,
+    params.pid ? { pid: params.pid } : {},
+  )
+  return ok({ rows: rows.map((r) => ({ ...r, createdAt: iso(r.createdAt) })), total: n, totalPages: Math.ceil(n / limit), currentPage: page, modules: mods.map((m) => m.module) })
+})
+
+route('GET', '/field-changes/export', async ({ query: q, user }) => {
+  if (!canReadLogs(user)) return forbidden()
+  if (!(await changesReady())) return fail(503, CHANGES_MISSING)
+  const esc = (v: unknown) => {
+    const s = String(v ?? '')
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const { where, params } = changeFilter(q)
+  const rows = await query<ChangeRow>(
+    `SELECT TOP 100000 c.id, c.projectId, p.name AS projectName, c.module, c.label, c.path, c.oldValue, c.newValue, c.action, c.userName, c.createdAt
+       ${CHANGE_FROM} ${where} ORDER BY c.createdAt DESC, c.id DESC`,
+    params,
+  )
+  const lines = [['Date & Time (UTC)', 'User', 'Project', 'Module', 'Field', 'Old Value', 'New Value', 'Action'].join(',')]
+  rows.forEach((r) => lines.push([iso(r.createdAt), r.userName ?? 'System', r.projectName ?? '', r.module, r.label, r.oldValue ?? '', r.newValue ?? '', r.action].map(esc).join(',')))
+  return file(lines.join('\n'), 'text/csv; charset=utf-8', 'field-changes.csv')
 })

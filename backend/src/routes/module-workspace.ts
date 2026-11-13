@@ -12,6 +12,7 @@
  * database/03_reference_data.sql. Every write recomputes the project's projectModules progress row.
  */
 import { db } from '../db/table.js'
+import { diffRows, recordFieldChanges, type Change } from '../audit/changes.js'
 import { query } from '../db/pool.js'
 import { fail, ok, paginate, route } from '../http/router.js'
 import { audit, readText } from '../http/helpers.js'
@@ -278,6 +279,11 @@ async function saveAnswers(projectId: number, moduleId: number, fields: Map<numb
     })
   }
   if (!rows.size) return 0
+  const before = await query<{ sectionFieldId: number; answer: string | null }>(
+    `SELECT sectionFieldId, answer FROM dbo.chapterFieldValues
+      WHERE projectId = @projectId AND sectionFieldId IN (SELECT value FROM OPENJSON(@ids))`,
+    { projectId, ids: JSON.stringify([...rows.keys()]) },
+  )
   await query(
     `MERGE dbo.chapterFieldValues WITH (HOLDLOCK) AS t
      USING (SELECT chapterId, sectionId, sectionFieldId, answer
@@ -288,7 +294,41 @@ async function saveAnswers(projectId: number, moduleId: number, fields: Map<numb
           VALUES (@projectId, @moduleId, s.chapterId, s.sectionId, s.sectionFieldId, s.answer);`,
     { projectId, moduleId, rows: JSON.stringify([...rows.values()]) },
   )
+  await logAnswerChanges(projectId, moduleId, fields, before, rows)
   return rows.size
+}
+
+/** field-level history for chapter answers (value, remark, "any other" text) */
+async function logAnswerChanges(
+  projectId: number,
+  moduleId: number,
+  fields: Map<number, FieldRow>,
+  before: { sectionFieldId: number; answer: string | null }[],
+  rows: Map<number, { chapterId: number; answer: SavedValue }>,
+) {
+  try {
+    const old = new Map(before.map((b) => [b.sectionFieldId, (() => { try { return JSON.parse(b.answer ?? 'null') } catch { return null } })()]))
+    const chapterIds = [...new Set([...rows.values()].map((r) => r.chapterId))]
+    const [mod] = await query<{ name: string }>('SELECT name FROM dbo.modules WHERE id = @moduleId', { moduleId })
+    const chapters = new Map(
+      (await query<{ id: number; chapterNumber: number; title: string }>('SELECT id, chapterNumber, title FROM dbo.chapters WHERE id IN (SELECT value FROM OPENJSON(@ids))', { ids: JSON.stringify(chapterIds) })).map((c) => [c.id, c]),
+    )
+    const changes: Change[] = []
+    for (const [fieldId, r] of rows) {
+      const field = fields.get(fieldId)
+      const ch = chapters.get(r.chapterId)
+      const label = `${ch ? `Ch ${ch.chapterNumber}: ${ch.title} › ` : ''}${field?.fieldName ?? `Field ${fieldId}`}`
+      const prev = old.get(fieldId) as Partial<SavedValue> | null | undefined
+      for (const [key, suffix] of [['answer', ''], ['remark', ' (remark)'], ['anyOtherAnswer', ' (other)']] as const) {
+        const d = diffRows('chapterAnswers', prev ? { v: prev[key] } : null, { v: r.answer[key] })
+        for (const c of d)
+          changes.push({ ...c, projectId, entity: 'chapterFieldValues', entityId: fieldId, module: mod?.name ?? `Module ${moduleId}`, path: `field:${fieldId}${suffix ? `.${key}` : ''}`, label: label + suffix, action: prev ? 'update' : 'create' })
+      }
+    }
+    await recordFieldChanges(changes)
+  } catch (e) {
+    console.error('[changes] chapter answers', (e as Error)?.message ?? e)
+  }
 }
 
 async function markCompleted(projectId: number, moduleId: number, chapterId: number) {

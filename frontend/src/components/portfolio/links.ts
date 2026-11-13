@@ -27,4 +27,4 @@ export function moduleLink(projectId: number | string, module: string, focus?: s
 }
 
 export const projectModulesLink = (projectId: number | string) => `/dashboard/project/${projectId}/modules`
-export const auditLink = (projectId: number | string, name: string) => `/dashboard/audit-logs?projectId=${projectId}&project=${encodeURIComponent(name)}`
+export const auditLink = (projectId: number | string, name: string) => `/dashboard/audit-logs?tab=changes&projectId=${projectId}&project=${encodeURIComponent(name)}`

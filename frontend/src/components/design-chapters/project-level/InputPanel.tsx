@@ -1,4 +1,4 @@
-/* Left "TYPE" panel of Project Level Design: Key Ratio / Area Statement / Cluster level Parameters / Club & Amenities accordions. */
+/* Left "TYPE" panel of Project Level Design: Key Ratio / Area Statement / Cluster level Parameters accordions. */
 import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -7,7 +7,6 @@ import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioI
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui'
 import { newCluster } from './calc'
 import { fmtNum, module5Units, parkingRequired } from '@/lib/parkingRequired'
-import { AMENITY_FIELDS } from '@/lib/amenities'
 
 type F = { label: string; key: string; unit: string }
 
@@ -255,6 +254,8 @@ export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea,
             <div className="space-y-4">
               <h3 className={H3}>EFFICIENCY</h3>
               {kr(EFFICIENCY)}
+              {/* clubhouse area (stored with the other Module 6 extras) -> Club Area / Unit under FAR Utilization */}
+              <PlainInput f={{ label: 'Clubhouse Area', key: 'clubhouseArea', unit: 'sq ft' }} value={String(other.clubhouseArea ?? '')} pr="pr-14" onChange={(v) => setOther('clubhouseArea', v)} />
             </div>
             <div className="space-y-4 border-t pt-6">
               <h3 className={H3}>APT CONFIGURATIONS</h3>
@@ -293,7 +294,7 @@ export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea,
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="elements-2" className="border-b">
+        <AccordionItem value="elements-2" className="border-0">
           <AccordionTrigger className="px-6 py-4 hover:no-underline font-bold text-blue-900 bg-blue-50/30">Cluster level Parameters</AccordionTrigger>
           <AccordionContent className="px-6 py-6 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
             <div className="space-y-4 pt-4 border-t">
@@ -395,32 +396,6 @@ export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea,
                 <ParkingRequired reqs={reqs} setReqs={setReqs} module5Rows={module5Rows} />
               </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="club-amenities" className="border-0">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline font-bold text-blue-900 bg-blue-50/30">Club &amp; Amenities</AccordionTrigger>
-          <AccordionContent className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-            <h3 className={H3}>MEASURED AMENITIES</h3>
-            <div className="grid grid-cols-1 gap-4">
-              {AMENITY_FIELDS.map((f) =>
-                f.kind === 'number' ? (
-                  <PlainInput key={f.key} f={{ label: f.label, key: f.key, unit: f.unit ?? '' }} value={String(other[f.key] ?? '')} pr="pr-14" onChange={(v) => setOther(f.key, v)} />
-                ) : (
-                  <OtherSelect
-                    key={f.key}
-                    label={f.label}
-                    value={String(other[f.key] ?? '')}
-                    onChange={(v) => setOther(f.key, v)}
-                    options={[
-                      ['Yes', 'Yes'],
-                      ['No', 'No'],
-                    ]}
-                  />
-                ),
-              )}
-            </div>
-            <p className="text-[11px] text-gray-400">Entrance lobby height is the &quot;Ground Floor Entrance Lobby&quot; choice under Cluster level Parameters.</p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

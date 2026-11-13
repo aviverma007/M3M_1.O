@@ -87,9 +87,7 @@ function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioI
     { param: 'No. of Basements', val: l.noOfBasements || '', unit: '#' },
   ]
   const club: Param[] = [
-    { param: 'Pool Area / Unit', val: f(am.poolPerUnit, 2), unit: 'sq ft/unit' },
     { param: 'Amenities per 100 Units', val: f(am.amenitiesPer100, 1), unit: '#', subVal: am.amenityCount ? `${am.amenityCount} amenities` : undefined },
-    { param: 'Sports Courts', val: f(am.courts, 0), unit: '#' },
     { param: 'Entrance Lobby', val: am.lobby || '-', unit: '' },
   ]
   return (

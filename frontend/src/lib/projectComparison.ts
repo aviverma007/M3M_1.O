@@ -351,9 +351,7 @@ const FIXED_DEFS: Def[] = [
   // Club & Amenities (module 6)
   d('club', 'Clubhouse Area', (_f, x) => ao(x).clubArea, { unit: 'sq ft', dp: 0 }),
   d('club', 'Club Area / Unit', (_f, x) => ao(x).clubPerUnit, { unit: 'sq ft/unit', better: 'higher', dp: 1 }),
-  d('club', 'Pool Area / Unit', (_f, x) => ao(x).poolPerUnit, { unit: 'sq ft/unit', better: 'higher', dp: 2 }),
   d('club', 'Amenities per 100 Units', (_f, x) => ao(x).amenitiesPer100, { better: 'higher', dp: 1 }),
-  d('club', 'Sports Courts', (_f, x) => ao(x).courts, { better: 'higher', dp: 0 }),
   d('club', 'Entrance Lobby', (_f, x) => ao(x).lobby, { text: true }),
 
   // Contract package budgets (module 15 Contracting Strategy)

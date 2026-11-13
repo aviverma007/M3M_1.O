@@ -646,9 +646,7 @@ function clubGroup(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, la
     name: 'Club & Amenities',
     rows: [
       { label: 'Clubhouse Area', value: f(a.clubArea, 0), unit: 'sq ft' },
-      { label: 'Pool Area / Unit', value: f(a.poolPerUnit, 2), unit: 'sq ft/unit' },
       { label: 'Amenities per 100 Units', value: f(a.amenitiesPer100, 1), unit: '' },
-      { label: 'Sports Courts', value: f(a.courts, 0), unit: '' },
       { label: 'Entrance Lobby', value: a.lobby || '-', unit: '' },
     ],
   }

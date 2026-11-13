@@ -1,5 +1,6 @@
 /*
- * Module 6 "Club & Amenities" — measured amenities (stored in projectLevelDesignData.additionalElements2.other).
+ * Module 6 club figures (stored in projectLevelDesignData.additionalElements2.other). Only Clubhouse Area is entered
+ * (Key Ratio › Efficiency, under EWS FAR); the other fields below are read if present in older data.
  *
  *   Club area per unit       = clubhouse area ÷ units
  *   Pool area per unit       = pool area ÷ units

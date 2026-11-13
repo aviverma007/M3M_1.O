@@ -1,9 +1,9 @@
 /* Notifications, roles & access control, users, audit logs — port of frontend/src/mock/handlers/admin.ts
  * (+ GET /auth/users from mock auth.ts, with the ?assigneesFor=<dept> filter used by the design-brief / MEP assignee pickers). */
-import { db, type Row } from '../db/table.js'
+import { db, resetMeta, type Row } from '../db/table.js'
 import { query, type Params } from '../db/pool.js'
 import { created, fail, file, ok, route, type Ctx } from '../http/router.js'
-import { hashPassword, publicUser } from '../http/auth.js'
+import { checkPassword, hashPassword, publicUser } from '../http/auth.js'
 import { audit } from '../http/helpers.js'
 import { changesReady } from '../audit/changes.js'
 
@@ -91,7 +91,29 @@ route('DELETE', '/roles/:id', async ({ params, user }) => {
 })
 
 /* ---------------- users ---------------- */
-const USER_FIELDS = ['name', 'email', 'phone', 'company', 'department', 'role'] as const
+const USER_FIELDS = ['name', 'email', 'phone', 'company', 'department', 'role', 'avatar'] as const
+
+/* users.avatar (an emoji). Added here if the database login may; otherwise run database/10_user_avatar.sql. */
+let avatarReady: Promise<boolean> | null = null
+export function ensureAvatarColumn() {
+  avatarReady ??= query(`IF COL_LENGTH(N'dbo.users', N'avatar') IS NULL ALTER TABLE dbo.users ADD avatar NVARCHAR(32) NULL`)
+    .then(() => (resetMeta('users'), true))
+    .catch(async (e) => {
+      const [r] = await query<{ n: number | null }>(`SELECT COL_LENGTH(N'dbo.users', N'avatar') AS n`).catch(() => [{ n: null }])
+      if (r?.n) return true
+      console.error('[users] avatar column missing and could not be added — run database/10_user_avatar.sql', e?.message ?? e)
+      avatarReady = null // try again next time
+      return false
+    })
+  return avatarReady
+}
+void ensureAvatarColumn().catch(() => undefined)
+/** an emoji (a few code points), or null for "use initials" */
+const cleanAvatar = (v: unknown) => {
+  const s = String(v ?? '').trim()
+  return s && s.length <= 16 && !/[<>"'`\\]/.test(s) ? s : null
+}
+const AVATAR_MISSING = 'Avatars are not set up yet: run database/10_user_avatar.sql on the server, then restart the backend.'
 
 /** normalise a department / department path for comparison: 'business-development' == 'business_development' == 'businessdevelopment' */
 const normDept = (v: unknown) => String(v ?? '').toLowerCase().replace(/[-_\s]/g, '')
@@ -117,6 +139,7 @@ async function createUser({ body, user }: Ctx) {
     role: body.role || 'general_contributor',
     department: body.department || null,
     company: body.company || null,
+    ...((await ensureAvatarColumn()) ? { avatar: cleanAvatar(body.avatar) } : {}),
     status: 'active',
     passwordHash: await hashPassword(String(body.password || 'Password@123')),
     failedAttempts: 0,
@@ -140,6 +163,10 @@ async function updateUser({ params, body, user }: Ctx) {
     patch.email = email
   }
   if (patch.role === null) delete patch.role // role is NOT NULL
+  if ('avatar' in patch) {
+    if (await ensureAvatarColumn()) patch.avatar = cleanAvatar(patch.avatar)
+    else delete patch.avatar
+  }
   if (body?.password) patch.passwordHash = await hashPassword(String(body.password))
   const u = Object.keys(patch).length ? await users().update(existing.id, patch) : existing
   if (!u) return fail(404, 'User not found')
@@ -156,6 +183,48 @@ async function deleteUser({ params, user }: Ctx) {
   await audit(user, 'User Deleted', `${user!.name} removed user "${u.name}".`)
   return ok(null, 'User deleted successfully')
 }
+/** PUT /auth/me/avatar { avatar } — anyone may change their own avatar */
+route('PUT', '/auth/me/avatar', async ({ body, user }) => {
+  if (!(await ensureAvatarColumn())) return fail(503, AVATAR_MISSING)
+  const u = await users().update(user!.id, { avatar: cleanAvatar(body?.avatar) })
+  if (!u) return fail(404, 'User not found')
+  return ok(publicUser(u), 'Avatar updated')
+})
+/** PUT /auth/users/:id/password { password } — super admin sets a user's password (also unlocks the account) */
+route('PUT', '/auth/users/:id/password', async ({ params, body, user }) => {
+  if (!isSuperAdmin(user)) return forbidden()
+  const id = toId(params.id)
+  const u = id ? await users().find(id) : undefined
+  if (!u) return fail(404, 'User not found')
+  const password = String(body?.password ?? '')
+  const weak = passwordProblem(password)
+  if (weak) return fail(400, weak)
+  await users().update(u.id, { passwordHash: await hashPassword(password), failedAttempts: 0, lockUntil: null })
+  await audit(user, 'Password Reset', `${user!.name} changed the password of "${u.name}".`)
+  return ok(null, `Password changed for ${u.name}`)
+})
+
+/** PUT /auth/me/password { currentPassword, password } — anyone changes their own password */
+route('PUT', '/auth/me/password', async ({ body, user }) => {
+  const u = await users().find(user!.id)
+  if (!u) return fail(404, 'User not found')
+  if (!(await checkPassword(String(body?.currentPassword ?? ''), u.passwordHash))) return fail(400, 'Your current password is not correct')
+  const password = String(body?.password ?? '')
+  const weak = passwordProblem(password)
+  if (weak) return fail(400, weak)
+  if (await checkPassword(password, u.passwordHash)) return fail(400, 'The new password must be different from the current one')
+  await users().update(u.id, { passwordHash: await hashPassword(password), failedAttempts: 0, lockUntil: null })
+  await audit(user, 'Password Reset', `${u.name} changed their own password.`)
+  return ok(null, 'Password changed')
+})
+
+/** minimum rule (same 8 characters as reset-password) plus a letter and a digit */
+function passwordProblem(p: string) {
+  if (p.length < 8) return 'Password must be at least 8 characters long'
+  if (!/[A-Za-z]/.test(p) || !/[0-9]/.test(p)) return 'Password must contain at least one letter and one number'
+  return null
+}
+
 route('GET', '/auth/users', listUsers)
 route('POST', '/auth/users', createUser)
 route('PUT', '/auth/users/:id', updateUser)

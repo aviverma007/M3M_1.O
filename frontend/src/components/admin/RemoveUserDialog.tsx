@@ -1,7 +1,7 @@
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/overlays'
-import avatar from '@/assets/images/user-avatar.png'
+import UserAvatar from '@/components/user/UserAvatar'
 import type { AdminUser } from '@/types/admin'
 
 type Props = { isOpen: boolean; onClose: () => void; userData?: AdminUser | null; onConfirm: (u: AdminUser) => void }
@@ -27,7 +27,7 @@ export function RemoveUserDialog({ isOpen, onClose, userData = null, onConfirm }
         </DialogTitle>
         {userData && (
           <div className="flex items-center gap-3 mb-8 text-left bg-white">
-            <img src={avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover bg-gray-100" />
+            <UserAvatar name={userData.name} avatar={userData.avatar} size={40} />
             <div className="flex flex-col flex-1">
               <span className="text-[13px] font-bold text-[#1a1a1a]">{userData.name || 'Unknown'}</span>
               <span className="text-[12px] text-gray-500 font-medium">{userData.email || 'No email'}</span>

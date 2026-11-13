@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/overlays'
 import { useAuth } from '@/auth/AuthContext'
 import type { AdminUser, UserFormValues } from '@/types/admin'
 import { DESIGN_DEPARTMENTS } from './constants'
+import UserAvatar from '@/components/user/UserAvatar'
+import EmojiPicker from '@/components/user/EmojiPicker'
 
 type Mode = 'add' | 'edit'
 type Props = {
@@ -81,6 +83,8 @@ export function UserDialog({ isOpen, onClose, mode = 'add', userData = null, onS
   const [department, setDepartment] = useState('')
   const [role, setRole] = useState('')
   const [password, setPassword] = useState('')
+  const [avatar, setAvatar] = useState<string | null>(null)
+  const [picking, setPicking] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -92,22 +96,65 @@ export function UserDialog({ isOpen, onClose, mode = 'add', userData = null, onS
     setDepartment(u?.department || '')
     setRole(u?.role || '')
     setPassword('')
+    setAvatar(u?.avatar || null)
+    setPicking(false)
   }, [isOpen, mode, userData])
 
   const save = () => {
-    onSave({ name, email, phone, company, department, role, password: password || undefined }, mode)
+    onSave(
+      {
+        name,
+        email,
+        phone,
+        company,
+        department,
+        role,
+        password: password || undefined,
+        avatar,
+      },
+      mode,
+    )
     onClose()
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] p-8 overflow-visible bg-white gap-0 rounded-2xl border-0 shadow-xl" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-[480px] p-8 max-h-[92vh] overflow-y-auto bg-white gap-0 rounded-2xl border-0 shadow-xl" aria-describedby={undefined}>
         <DialogTitle className="text-xl font-bold text-[#1a1a1a] mb-6">{mode === 'add' ? 'Add New User' : 'Edit user'}</DialogTitle>
         <div className="space-y-5">
-          <div className="space-y-1.5">
-            <label className={labelCls}>Full Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" className={inputCls} />
+          <div className="flex items-end gap-4">
+            <div className="space-y-1.5">
+              <label className={labelCls}>Avatar</label>
+              <button
+                type="button"
+                onClick={() => setPicking((p) => !p)}
+                className="block rounded-full ring-offset-2 hover:ring-2 hover:ring-blue-300 transition"
+                title="Choose an emoji"
+              >
+                <UserAvatar name={name} avatar={avatar} size={44} />
+              </button>
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <label className={labelCls}>Full Name</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" className={inputCls} />
+            </div>
           </div>
+          {picking ? (
+            <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+              <EmojiPicker
+                value={avatar}
+                name={name}
+                onChange={(v) => {
+                  setAvatar(v)
+                  setPicking(false)
+                }}
+              />
+            </div>
+          ) : (
+            <button type="button" onClick={() => setPicking(true)} className="-mt-3 text-[11px] font-semibold text-[#005baa] hover:underline">
+              {avatar ? 'Change emoji' : 'Choose an emoji'}
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className={labelCls}>Email</label>

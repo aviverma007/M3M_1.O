@@ -246,6 +246,9 @@ export class Table<T extends Row = Row> {
   }
 }
 
+/** forget a table's cached columns (after a column was added at runtime) */
+export const resetMeta = (table: string) => void metaCache.delete(table)
+
 /** Startup check: JSON-column detection needs VIEW DEFINITION on the database. */
 export async function verifySchemaAccess() {
   const m = await meta('accessRoles')

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
-import { Bell, ChevronDown, Clock, LogOut, MapPin } from 'lucide-react'
+import { Bell, ChevronDown, Clock, KeyRound, LogOut, MapPin, Smile } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth, useRole } from '@/auth/AuthContext'
 import { http, type ApiEnvelope } from '@/api/http'
@@ -16,7 +16,11 @@ import {
 import { PORTFOLIO_OPTIONS, getPortfolio, switchPortfolio } from '@/state/portfolio'
 import type { Notification } from '@/types'
 import logo from '@/assets/images/m3m-logo.png'
-import userIcon from '@/assets/images/user-avatar.png'
+import { toast } from 'sonner'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/overlays'
+import UserAvatar from '@/components/user/UserAvatar'
+import EmojiPicker from '@/components/user/EmojiPicker'
+import PasswordDialog from '@/components/user/PasswordDialog'
 
 /* ---------------- Portfolio switcher ---------------- */
 function PortfolioSwitcher() {
@@ -39,7 +43,11 @@ function PortfolioSwitcher() {
         <DropdownMenuLabel>Switch Portfolio</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {PORTFOLIO_OPTIONS.map((p) => (
-          <DropdownMenuItem key={p.id} onClick={() => switchPortfolio(p.id)} className={current === p.id ? 'bg-blue-50 text-blue-700 font-semibold' : ''}>
+          <DropdownMenuItem
+            key={p.id}
+            onClick={() => switchPortfolio(p.id)}
+            className={current === p.id ? 'bg-blue-50 text-blue-700 font-semibold' : ''}
+          >
             {p.name}
           </DropdownMenuItem>
         ))}
@@ -95,7 +103,10 @@ function Notifications() {
               {unread > 0 && <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-full">{unread} NEW</span>}
             </div>
             {unread > 0 && (
-              <button onClick={() => markAll.mutate()} className="text-xs text-blue-600 hover:text-blue-700 font-bold transition-colors uppercase tracking-wider">
+              <button
+                onClick={() => markAll.mutate()}
+                className="text-xs text-blue-600 hover:text-blue-700 font-bold transition-colors uppercase tracking-wider"
+              >
                 Mark all as read
               </button>
             )}
@@ -122,14 +133,20 @@ function Notifications() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-1.5">
-                        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${m.isRead ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>
+                        <span
+                          className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${m.isRead ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'}`}
+                        >
                           {m.metadata?.department || m.type.replace(/_/g, ' ')}
                         </span>
                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-                          {formatDistanceToNow(new Date(m.createdAt), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(m.createdAt), {
+                            addSuffix: true,
+                          })}
                         </span>
                       </div>
-                      <p className={`text-[13px] leading-relaxed mb-2.5 ${m.isRead ? 'text-gray-600 font-medium' : 'text-gray-900 font-bold'}`}>{m.message}</p>
+                      <p className={`text-[13px] leading-relaxed mb-2.5 ${m.isRead ? 'text-gray-600 font-medium' : 'text-gray-900 font-bold'}`}>
+                        {m.message}
+                      </p>
                       {(m.metadata?.assignedBy || m.metadata?.deadline) && (
                         <div className="flex flex-wrap gap-x-4 gap-y-2">
                           {m.metadata?.assignedBy && (
@@ -185,26 +202,68 @@ function roleLabel(role: string, department: string | null) {
 }
 
 function UserMenu() {
-  const { user, logout } = useAuth()
+  const { user, logout, refreshUser } = useAuth()
   const display = user?.name || user?.email?.split('@')[0] || 'User'
+  const [picking, setPicking] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [pwOpen, setPwOpen] = useState(false)
+  const choose = async (avatar: string | null) => {
+    setSaving(true)
+    try {
+      await http.put<ApiEnvelope<unknown>>('/auth/me/avatar', { avatar })
+      await refreshUser()
+      setPicking(false)
+      toast.success(avatar ? `Avatar set to ${avatar}` : 'Avatar set to your initials')
+    } catch (e) {
+      toast.error((e as { message?: string })?.message ?? 'Could not save your avatar')
+    } finally {
+      setSaving(false)
+    }
+  }
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-2 cursor-pointer group">
-          <img src={userIcon} alt="User Icon" className="rounded-full w-8 h-8 object-cover border border-gray-200" />
-          <div className="flex flex-col items-start leading-tight">
-            <p className="text-sm font-semibold text-gray-700 capitalize">{display}</p>
-            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{roleLabel(user?.role ?? '', user?.department ?? null)}</span>
+    <>
+      <PasswordDialog
+        open={pwOpen}
+        onClose={() => setPwOpen(false)}
+        target={user ? { id: user.id, name: display, avatar: user.avatar } : null}
+        self
+      />
+      <Dialog open={picking} onOpenChange={setPicking}>
+        <DialogContent className="sm:max-w-[400px] p-6 bg-white rounded-2xl" aria-describedby={undefined}>
+          <DialogTitle className="text-lg font-bold text-[#1a1a1a] flex items-center gap-3">
+            <UserAvatar name={display} avatar={user?.avatar} size={40} /> Choose your avatar
+          </DialogTitle>
+          <div className={saving ? 'opacity-50 pointer-events-none' : ''}>
+            <EmojiPicker value={user?.avatar ?? null} name={display} onChange={choose} />
           </div>
-          <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-full">
-        <DropdownMenuItem onClick={() => logout()}>
-          logout <LogOut />
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DialogContent>
+      </Dialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="flex items-center gap-2 cursor-pointer group">
+            <UserAvatar name={display} avatar={user?.avatar} size={34} className="ring-2 ring-white shadow-sm" />
+            <div className="flex flex-col items-start leading-tight">
+              <p className="text-sm font-semibold text-gray-700 capitalize">{display}</p>
+              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                {roleLabel(user?.role ?? '', user?.department ?? null)}
+              </span>
+            </div>
+            <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-full">
+          <DropdownMenuItem onClick={() => setPicking(true)}>
+            Change avatar <Smile />
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setPwOpen(true)}>
+            Change password <KeyRound />
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => logout()}>
+            logout <LogOut />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   )
 }
 
@@ -214,16 +273,32 @@ export default function Header() {
   const role = useRole()
   const isContributor = role === 'general_contributor'
   const nav = [
-    { name: isContributor ? 'My Tasks' : 'Dashboard', path: '/dashboard', end: true },
+    {
+      name: isContributor ? 'My Tasks' : 'Dashboard',
+      path: '/dashboard',
+      end: true,
+    },
     ...(isContributor
       ? []
       : [
           { name: 'Portfolio', path: '/dashboard/portfolio' },
-          { name: 'Project Governance', path: '/project-governance', isActiveMatch: (p: string) => p.includes('/project/') },
-          { name: 'Role and Access Control', path: '/dashboard/roles-access-control' },
+          {
+            name: 'Project Governance',
+            path: '/project-governance',
+            isActiveMatch: (p: string) => p.includes('/project/'),
+          },
+          {
+            name: 'Role and Access Control',
+            path: '/dashboard/roles-access-control',
+          },
           { name: 'Audit Logs', path: '/dashboard/audit-logs' },
         ]),
-  ] as { name: string; path: string; end?: boolean; isActiveMatch?: (p: string) => boolean }[]
+  ] as {
+    name: string
+    path: string
+    end?: boolean
+    isActiveMatch?: (p: string) => boolean
+  }[]
 
   return (
     <div className="w-full bg-white border-b border-gray-100 flex flex-col sticky top-0 z-50">

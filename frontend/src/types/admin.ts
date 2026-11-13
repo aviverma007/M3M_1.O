@@ -23,6 +23,7 @@ export type AdminUser = {
   department: string | null
   company: string | null
   status?: string
+  avatar?: string | null
   createdAt?: string
 }
 
@@ -35,6 +36,7 @@ export type UserFormValues = {
   department: string
   role: string
   password?: string
+  avatar?: string | null
 }
 
 export type RoleFormValues = {

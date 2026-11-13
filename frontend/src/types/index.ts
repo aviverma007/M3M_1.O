@@ -11,6 +11,7 @@ export type User = {
   status: 'active' | 'inactive' | string
   department: string | null
   company: string | null
+  avatar?: string | null
   createdAt?: string
   updatedAt?: string
 }

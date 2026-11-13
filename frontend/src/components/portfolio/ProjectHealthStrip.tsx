@@ -32,7 +32,7 @@ export default function ProjectHealthStrip({ projectId }: { projectId: string })
       </div>
       <div className="min-w-0">
         <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Top problems</p>
-        <ProblemList problems={h.health.problems} limit={3} compact />
+        <ProblemList problems={h.health.problems} limit={3} compact projectId={projectId} />
       </div>
       <div className="flex flex-col gap-2 items-stretch">
         {when && (

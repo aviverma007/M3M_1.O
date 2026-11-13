@@ -166,7 +166,7 @@ route('PUT', '/users/:id', updateUser)
 route('DELETE', '/users/:id', deleteUser)
 
 /* ---------------- audit logs ----------------
- * GET /audit-logs?page&limit&search&type&fromDate&toDate -> { logs[{..., Creator{name}}], totalLogs, totalPages, currentPage }
+ * GET /audit-logs?page&limit&search&type&fromDate&toDate&projectId -> { logs[{..., Creator{name}}], totalLogs, totalPages, currentPage }
  * GET /audit-logs/export?search&type&fromDate&toDate     -> text/csv
  * fromDate/toDate are calendar days (YYYY-MM-DD) in the app's time zone (APP_TZ_OFFSET, default +05:30 IST);
  * createdAt is stored in UTC, so the day bounds are converted to UTC instants (index-friendly).
@@ -184,6 +184,11 @@ function logFilter(q: Record<string, string>) {
   if (q.search) {
     params.search = `%${q.search.replace(/[[\]%_]/g, '[$&]')}%`
     parts.push(`CONCAT(ISNULL(creatorName, N''), N' ', taskType, N' ', description) LIKE @search`)
+  }
+  // one project's history (linked from the Portfolio page's "last updated")
+  if (q.projectId && /^\d+$/.test(q.projectId)) {
+    params.pid = Number(q.projectId)
+    parts.push('projectId = @pid')
   }
   const type = q.type || q.taskType
   if (type && type !== 'all' && type !== 'All Task Types') {

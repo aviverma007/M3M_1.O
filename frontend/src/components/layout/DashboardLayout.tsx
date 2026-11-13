@@ -2,6 +2,7 @@ import { Fragment, useEffect } from 'react'
 import { Link, Outlet, useLocation, useParams } from 'react-router-dom'
 import { Eye } from 'lucide-react'
 import Header from './Header'
+import FocusFromUrl from '@/components/portfolio/FocusFromUrl'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/data'
 import { ErrorState } from '@/components/common'
 import { useProject } from '@/api/projects'
@@ -96,6 +97,7 @@ export default function DashboardLayout() {
         ) : (
           <div className={isViewOnly ? 'view-only-content' : ''}>
             <Outlet />
+          <FocusFromUrl />
           </div>
         )}
       </div>

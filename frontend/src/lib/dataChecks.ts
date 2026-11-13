@@ -13,6 +13,8 @@ export type DataIssue = {
   /** module the figure belongs to (where to fix it) */
   module: string
   message: string
+  /** label of the field to fix (for links that scroll to it) */
+  field?: string
 }
 
 const SQM_PER_ACRE = 4046.86
@@ -28,6 +30,7 @@ export function siteAreaIssue(acres: unknown): DataIssue | null {
   return {
     level: 'error',
     module: 'Project Info',
+    field: 'Site Area (Acres)',
     message: `Site area ${fmtIN(a)} acres looks like square metres (${fmtIN(a)} sq m = ${fmtIN(a / SQM_PER_ACRE)} acres).`,
   }
 }
@@ -36,14 +39,14 @@ export function siteAreaIssue(acres: unknown): DataIssue | null {
 export function dataChecks(x: CompareInput): DataIssue[] {
   const f = projectFacts(x)
   const out: DataIssue[] = []
-  const push = (level: DataIssue['level'], module: string, message: string) => out.push({ level, module, message })
+  const push = (level: DataIssue['level'], module: string, message: string, field?: string) => out.push({ level, module, message, field })
 
   const site = siteAreaIssue(f.p.site_area_acres ?? f.pd.totalArea)
   if (site) out.push(site)
   const acres = num(f.p.site_area_acres)
   const sqm = num(f.p.site_area)
   if (acres && sqm && Math.abs(pctDiff(acres * SQM_PER_ACRE, sqm)) > 5)
-    push('warning', 'Project Info', `Site area ${fmtIN(acres)} acres and ${fmtIN(sqm)} sq m don't match (${fmtIN(acres * SQM_PER_ACRE)} sq m expected).`)
+    push('warning', 'Project Info', `Site area ${fmtIN(acres)} acres and ${fmtIN(sqm)} sq m don't match (${fmtIN(acres * SQM_PER_ACRE)} sq m expected).`, 'Site Area (Acres)')
 
   // Module 5 vs Module 6
   const m6Sale = num(f.kr.saleableArea)
@@ -52,23 +55,24 @@ export function dataChecks(x: CompareInput): DataIssue[] {
       'warning',
       'Project Level Design',
       `Saleable area ${fmtIN(m6Sale)} sq ft differs from the Module 5 residential total ${fmtIN(f.resTotalArea)} sq ft (${pctDiff(m6Sale, f.resTotalArea) > 0 ? '+' : ''}${pctDiff(m6Sale, f.resTotalArea).toFixed(0)}%).`,
+      'Saleable Area',
     )
   const m6Units = num(f.kr.noOfUnits)
   if (m6Units && f.resTotalUnits && Math.abs(pctDiff(m6Units, f.resTotalUnits)) > 5)
-    push('warning', 'Project Level Design', `No. of units ${fmtIN(m6Units)} differs from the Module 5 residential units ${fmtIN(f.resTotalUnits)}.`)
+    push('warning', 'Project Level Design', `No. of units ${fmtIN(m6Units)} differs from the Module 5 residential units ${fmtIN(f.resTotalUnits)}.`, 'No. Of Units')
 
   // permissible FAR: Module 6 (sq ft) vs project record (sq m)
   const pfar6 = num(f.kr.permissibleFAR)
   const pfarP = num(f.p.far_permissible)
   if (pfar6 && pfarP && Math.abs(pctDiff(pfar6, pfarP * SQFT_PER_SQM)) > 2)
-    push('warning', 'Project Level Design', `Permissible FAR ${fmtIN(pfar6)} sq ft doesn't match the project's ${fmtIN(pfarP)} sq m (= ${fmtIN(pfarP * SQFT_PER_SQM, 0)} sq ft).`)
+    push('warning', 'Project Level Design', `Permissible FAR ${fmtIN(pfar6)} sq ft doesn't match the project's ${fmtIN(pfarP)} sq m (= ${fmtIN(pfarP * SQFT_PER_SQM, 0)} sq ft).`, 'Permissible FAR')
 
   // area relationships that can't be true
   const carpet = num(f.kr.carpetArea)
   const bua = f.bua
   const far = f.far
-  if (carpet && f.saleable && carpet > f.saleable) push('error', 'Project Level Design', `Carpet area ${fmtIN(carpet)} is larger than saleable area ${fmtIN(f.saleable)}.`)
-  if (bua && far && bua < far * 0.95) push('error', 'Project Level Design', `Built-up area ${fmtIN(bua)} is smaller than FAR ${fmtIN(far)}.`)
+  if (carpet && f.saleable && carpet > f.saleable) push('error', 'Project Level Design', `Carpet area ${fmtIN(carpet)} is larger than saleable area ${fmtIN(f.saleable)}.`, 'Carpet Area')
+  if (bua && far && bua < far * 0.95) push('error', 'Project Level Design', `Built-up area ${fmtIN(bua)} is smaller than FAR ${fmtIN(far)}.`, 'Built Up Area')
 
   // ratios outside a sane range (usually a typo or a unit mix-up)
   const ratio = (label: string, v: number | null, lo: number, hi: number, unit = '') => {
@@ -79,15 +83,15 @@ export function dataChecks(x: CompareInput): DataIssue[] {
   if (bua && f.saleable) ratio('BUA / Saleable', bua / f.saleable, 0.8, 2.5)
   if (f.saleable && far) ratio('Saleable / FAR', f.saleable / far, 0.8, 3)
   if (far && f.pfar && far / f.pfar >= 2)
-    push('error', 'Project Level Design', `Permissible FAR ${fmtIN(f.pfar)} sq ft is far below the FAR achieved (${fmtIN(far)} sq ft); it looks like a FAR ratio, not an area.`)
+    push('error', 'Project Level Design', `Permissible FAR ${fmtIN(f.pfar)} sq ft is far below the FAR achieved (${fmtIN(far)} sq ft); it looks like a FAR ratio, not an area.`, 'Permissible FAR')
   else if (far && f.pfar) ratio('FAR utilisation', (far / f.pfar) * 100, 50, 110, '%')
 
   // heights typed in millimetres (3450 instead of 3.45 m)
   const mm = Object.entries(f.kr).filter(([k, v]) => /height/i.test(k) && k !== 'buildingHeight' && (num(v) ?? 0) > 20)
   if (mm.length)
-    push('error', 'Project Level Design', `${mm.length} floor height(s) look like millimetres, e.g. ${fmtIN(num(mm[0][1]))} m (${mm[0][0].replace(/([A-Z])/g, ' $1').toLowerCase()}); enter metres (${fmtIN((num(mm[0][1]) ?? 0) / 1000)} m).`)
+    push('error', 'Project Level Design', `${mm.length} floor height(s) look like millimetres, e.g. ${fmtIN(num(mm[0][1]))} m (${mm[0][0].replace(/([A-Z])/g, ' $1').toLowerCase()}); enter metres (${fmtIN((num(mm[0][1]) ?? 0) / 1000)} m).`, mm[0][0].replace(/([A-Z])/g, ' $1'))
   const bh = num(f.kr.buildingHeight ?? f.pd.towerHeight)
-  if (bh !== null && bh > 600) push('error', 'Project Level Design', `Building height ${fmtIN(bh)} m looks like millimetres or feet.`)
+  if (bh !== null && bh > 600) push('error', 'Project Level Design', `Building height ${fmtIN(bh)} m looks like millimetres or feet.`, 'Building Height')
 
   // Module 5 rows with half the numbers
   const half = arr(f.pd.tableRows)

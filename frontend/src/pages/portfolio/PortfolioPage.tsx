@@ -4,14 +4,15 @@
  * projects behind it; project table with health score, top problems and data quality.
  */
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowDownUp, ChevronDown, ChevronRight, Columns3, ExternalLink, LoaderCircle, RefreshCw, Search, X } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowDownUp, ArrowUpRight, ChevronDown, ChevronRight, Columns3, ExternalLink, FileText, History, LoaderCircle, RefreshCw, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { fmtArea, fmtCr, fmtIN, fmtPct } from '@/lib/format'
 import { getPortfolio as getSelectedPortfolio } from '@/state/portfolio'
 import { getPortfolio, isTestProject, STATUS_META, type HealthStatus, type Portfolio, type PortfolioProject } from '@/api/portfolio'
+import { auditLink, moduleLink, projectModulesLink } from '@/components/portfolio/links'
 import { CompletenessBadge, HealthBreakdown, HealthRing, ProblemList, StatusPill } from '@/components/portfolio/HealthBits'
 
 type Focus = { key: string; label: string; test: (p: PortfolioProject) => boolean } | null
@@ -96,6 +97,15 @@ export default function PortfolioPage() {
     setFocus(focus?.key === key ? null : { key, label, test })
     setTimeout(() => document.getElementById('pf-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
+  /** open a project's row in the table (from a name elsewhere on the page) */
+  const openProject = (name: string) => {
+    const p = scope.find((x) => x.name === name)
+    if (!p) return
+    setFocus(null)
+    setQ('')
+    setOpen(p.id)
+    setTimeout(() => document.getElementById(`pf-row-${p.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80)
+  }
   const sortBy = (key: SortKey) => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : key === 'name' ? 1 : -1 }))
   const togglePick = (id: number) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= 5 ? (toast.error('Compare up to 5 projects'), p) : [...p, id]))
   const compare = () => {
@@ -145,8 +155,14 @@ export default function PortfolioPage() {
 
       {/* totals */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <Kpi label="Projects" value={fmtIN(scope.length)} sub={`${k.byStatus['on-track']} on track · ${k.byStatus['at-risk']} at risk`} onClick={() => setFocus(null)} />
-        <Kpi label="Total units" value={fmtIN(k.units, 0)} sub={`${fmtIN(k.resUnits, 0)} residential`} onClick={() => drill('units', 'Projects with units', (p) => !!p.metrics.totalUnits)} />
+        <Kpi
+          label="Projects"
+          value={fmtIN(scope.length)}
+          sub={`${k.byStatus['on-track']} on track · ${k.byStatus['at-risk']} at risk`}
+          onClick={() => setFocus(null)}
+          onSubClick={() => drill('at-risk', STATUS_META['at-risk'].label, (p) => p.health.status === 'at-risk')}
+        />
+        <Kpi label="Total units" value={fmtIN(k.units, 0)} sub={`${fmtIN(k.resUnits, 0)} residential`} onClick={() => drill('units', 'Projects with units', (p) => !!p.metrics.totalUnits)} onSubClick={() => drill('nounits', 'No unit table yet (Module 5)', (p) => !p.metrics.totalUnits)} />
         <Kpi label="Saleable area" value={k.saleable >= 1e5 ? `${fmtIN(k.saleable / 1e5, 2)} lakh` : fmtArea(k.saleable)} sub={`sq ft · ${k.withSaleable} projects`} onClick={() => drill('saleable', 'Projects with saleable area', (p) => !!p.metrics.saleable)} />
         <Kpi
           label="Gross sales value"
@@ -154,6 +170,7 @@ export default function PortfolioPage() {
           sub={k.priced ? `${k.priced} of ${scope.length} projects have a sales price` : 'No sales price entered yet'}
           warn={k.priced < scope.length}
           onClick={() => drill('priced', 'Projects with a sales price', (p) => p.metrics.gsv !== null)}
+          onSubClick={k.priced < scope.length ? () => drill('unpriced', 'No sales price entered (Module 6)', (p) => p.metrics.gsv === null) : undefined}
         />
         <Kpi
           label="Construction cost"
@@ -161,6 +178,7 @@ export default function PortfolioPage() {
           sub={k.costPct !== null ? `${fmtPct(k.costPct)} of sales value` : `${k.costed} projects with cost on BUA`}
           warn={k.costed < scope.length}
           onClick={() => drill('costed', 'Projects with construction cost', (p) => p.metrics.cost !== null)}
+          onSubClick={k.costed < scope.length ? () => drill('uncosted', 'No construction cost entered (Module 6)', (p) => p.metrics.cost === null) : undefined}
         />
         <Kpi label="Average health" value={k.health === null ? '—' : `${Math.round(k.health)}/100`} sub="weighted score, see table" onClick={() => setSort({ key: 'health', dir: 1 })} />
       </div>
@@ -169,10 +187,10 @@ export default function PortfolioPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Panel title="Average efficiency" hint="Simple average of projects that have the figure; best and worst project shown">
           <div className="grid grid-cols-2 gap-3">
-            <Eff label="Carpet / Saleable" unit="%" target="55–60%" stat={k.eff.carpet} better="higher" onPick={drill} metric="carpet" />
-            <Eff label="Saleable / FAR" unit="" target="1.4–1.6" stat={k.eff.saFar} better="higher" onPick={drill} metric="saFar" />
-            <Eff label="FAR utilisation" unit="%" target="up to 100%" stat={k.eff.farUtil} better="higher" onPick={drill} metric="farUtil" />
-            <Eff label="Car parks per unit" unit="" target="" stat={k.eff.cars} better="higher" onPick={drill} metric="cars" />
+            <Eff label="Carpet / Saleable" unit="%" target="55–60%" stat={k.eff.carpet} better="higher" onPick={drill} metric="carpet" onProject={openProject} />
+            <Eff label="Saleable / FAR" unit="" target="1.4–1.6" stat={k.eff.saFar} better="higher" onPick={drill} metric="saFar" onProject={openProject} />
+            <Eff label="FAR utilisation" unit="%" target="up to 100%" stat={k.eff.farUtil} better="higher" onPick={drill} metric="farUtil" onProject={openProject} />
+            <Eff label="Car parks per unit" unit="" target="" stat={k.eff.cars} better="higher" onPick={drill} metric="cars" onProject={openProject} />
           </div>
         </Panel>
         <Panel title="Status" hint="Click a number to list those projects">
@@ -270,7 +288,7 @@ export default function PortfolioPage() {
             <tbody className="divide-y divide-gray-100">
               {rows.map((p) => (
                 <Fragment key={p.id}>
-                  <tr className={cn('hover:bg-slate-50 cursor-pointer transition-colors', open === p.id && 'bg-blue-50/40')} onClick={() => setOpen(open === p.id ? null : p.id)}>
+                  <tr id={`pf-row-${p.id}`} className={cn('hover:bg-slate-50 cursor-pointer transition-colors scroll-mt-24', open === p.id && 'bg-blue-50/40')} onClick={() => setOpen(open === p.id ? null : p.id)}>
                     <td className="pl-3" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={picked.includes(p.id)} onChange={() => togglePick(p.id)} className="accent-[#00509d]" title="Select to compare" />
                     </td>
@@ -283,19 +301,45 @@ export default function PortfolioPage() {
                     <td className="px-3 py-3 min-w-[200px]">
                       <div className="flex items-center gap-1.5">
                         {open === p.id ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
-                        <span className="font-bold text-gray-800">{p.name}</span>
+                        <Link to={projectModulesLink(p.id)} onClick={(e) => e.stopPropagation()} className="font-bold text-gray-800 hover:text-[#00509d] hover:underline" title="Open the project's modules">
+                          {p.name}
+                        </Link>
                       </div>
                       <div className="text-[11px] text-gray-400 pl-5">
-                        {p.location} · {p.portfolio}
+                        {p.location} ·{' '}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPortfolio(p.portfolio)
+                          }}
+                          className="hover:text-[#00509d] hover:underline"
+                          title={`Show only ${p.portfolio}`}
+                        >
+                          {p.portfolio}
+                        </button>
                         {p.category ? ` · ${p.category}` : ''}
                       </div>
                     </td>
-                    <Td>{fmtIN(p.metrics.totalUnits, 0)}</Td>
-                    <Td>{fmtIN(p.metrics.saleable, 0)}</Td>
-                    <Td>{p.metrics.gsv ? fmtCr(p.metrics.gsv, 0) : '—'}</Td>
-                    <Td tone={tone(p.metrics.carpetSaleable, 55, 60)}>{fmtPct(p.metrics.carpetSaleable)}</Td>
-                    <Td tone={p.metrics.farUtil === null ? undefined : p.metrics.farUtil > 100.5 ? 'bad' : p.metrics.farUtil >= 95 ? 'good' : 'warn'}>{fmtPct(p.metrics.farUtil)}</Td>
-                    <Td>
+                    <Td to={moduleLink(p.id, 'Project Details')} hint="Unit table (Module 5)">
+                      {fmtIN(p.metrics.totalUnits, 0)}
+                    </Td>
+                    <Td to={moduleLink(p.id, 'Project Details')} hint="Unit table (Module 5)">
+                      {fmtIN(p.metrics.saleable, 0)}
+                    </Td>
+                    <Td to={moduleLink(p.id, 'Project Level Design', 'Sales Price')} hint={p.metrics.gsv ? 'Sales price (Module 6)' : 'Enter the sales price (Module 6)'}>
+                      {p.metrics.gsv ? fmtCr(p.metrics.gsv, 0) : '—'}
+                    </Td>
+                    <Td to={moduleLink(p.id, 'Project Level Design', 'Carpet Area')} hint="Carpet and saleable area (Module 6)" tone={tone(p.metrics.carpetSaleable, 55, 60)}>
+                      {fmtPct(p.metrics.carpetSaleable)}
+                    </Td>
+                    <Td
+                      to={moduleLink(p.id, 'Project Level Design', 'Permissible FAR')}
+                      hint="FAR and permissible FAR (Module 6)"
+                      tone={p.metrics.farUtil === null ? undefined : p.metrics.farUtil > 100.5 ? 'bad' : p.metrics.farUtil >= 95 ? 'good' : 'warn'}
+                    >
+                      {fmtPct(p.metrics.farUtil)}
+                    </Td>
+                    <Td to={moduleLink(p.id, 'Approvals')} hint="Approvals">
                       {p.approvals.listed ? (
                         <span className={cn('font-semibold', p.approvals.overdue ? 'text-red-600' : 'text-gray-700')}>
                           {p.approvals.received}/{p.approvals.listed}
@@ -305,21 +349,34 @@ export default function PortfolioPage() {
                         '—'
                       )}
                     </Td>
-                    <Td>
+                    <Td onClick={() => setOpen(p.id)} hint="What's missing">
                       <span className={cn('font-bold', p.completeness.pct >= 80 ? 'text-green-700' : p.completeness.pct >= 50 ? 'text-amber-600' : 'text-red-600')}>{p.completeness.pct}%</span>
                     </Td>
                     <td className="px-3 py-3 max-w-[320px] text-xs text-gray-600">
-                      <span className="line-clamp-2">{p.health.problems[0] ? `${p.health.problems[0].module}: ${p.health.problems[0].text}` : '—'}</span>
+                      {p.health.problems[0] ? (
+                        <Link
+                          to={moduleLink(p.id, p.health.problems[0].module, p.health.problems[0].field)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="line-clamp-2 hover:text-[#00509d] hover:underline"
+                          title="Open where this is fixed"
+                        >
+                          {p.health.problems[0].module}: {p.health.problems[0].text}
+                        </Link>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td className="px-3 py-3 text-[11px] text-gray-500 whitespace-nowrap text-center">
-                      {when(p.lastUpdate.at)}
-                      {p.lastUpdate.by && <div className="text-gray-400">by {p.lastUpdate.by}</div>}
+                      <Link to={auditLink(p.id, p.name)} onClick={(e) => e.stopPropagation()} className="hover:text-[#00509d] hover:underline" title="Change history (audit log)">
+                        {when(p.lastUpdate.at)}
+                        {p.lastUpdate.by && <div className="text-gray-400">by {p.lastUpdate.by}</div>}
+                      </Link>
                     </td>
                   </tr>
                   {open === p.id && (
                     <tr className="bg-slate-50/70">
                       <td colSpan={12} className="px-6 py-5">
-                        <ProjectDetail p={p} weights={data!.weights} onOpen={() => navigate(`/dashboard/project/${p.id}/modules`)} />
+                        <ProjectDetail p={p} weights={data!.weights} />
                       </td>
                     </tr>
                   )}
@@ -387,17 +444,30 @@ function kpis(list: PortfolioProject[]) {
 const tone = (v: number | null, lo: number, hi: number): 'good' | 'warn' | undefined => (v === null ? undefined : v >= lo && v <= hi + 0.5 ? 'good' : 'warn')
 
 /* ------------------------------------------------------------------ pieces */
-function Kpi({ label, value, sub, onClick, warn }: { label: string; value: string; sub: string; onClick?: () => void; warn?: boolean }) {
+function Kpi({ label, value, sub, onClick, onSubClick, warn }: { label: string; value: string; sub: string; onClick?: () => void; onSubClick?: () => void; warn?: boolean }) {
   return (
-    <button onClick={onClick} className="text-left bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cmp-rise">
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={(e) => e.key === 'Enter' && onClick?.()} className="text-left bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cmp-rise cursor-pointer">
       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</p>
       <p className="text-2xl font-black text-[#1A3566] mt-1.5 truncate" title={value}>
         {value}
       </p>
-      <p className={cn('text-[11px] mt-1 truncate', warn ? 'text-amber-600 font-semibold' : 'text-gray-500')} title={sub}>
-        {sub}
-      </p>
-    </button>
+      {onSubClick ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onSubClick()
+          }}
+          className={cn('text-[11px] mt-1 truncate block max-w-full text-left underline decoration-dotted underline-offset-2 hover:text-[#00509d]', warn ? 'text-amber-600 font-semibold' : 'text-gray-500')}
+          title={`${sub} — click to list`}
+        >
+          {sub}
+        </button>
+      ) : (
+        <p className={cn('text-[11px] mt-1 truncate', warn ? 'text-amber-600 font-semibold' : 'text-gray-500')} title={sub}>
+          {sub}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -413,11 +483,42 @@ function Panel({ title, hint, children }: { title: string; hint: string; childre
   )
 }
 
-function Eff({ label, unit, target, stat: s, onPick, metric }: { label: string; unit: string; target: string; stat: Stat; better: 'higher' | 'lower'; onPick: (k: string, l: string, t: (p: PortfolioProject) => boolean) => void; metric: string }) {
+function Eff({
+  label,
+  unit,
+  target,
+  stat: s,
+  onPick,
+  metric,
+  onProject,
+}: {
+  label: string
+  unit: string
+  target: string
+  stat: Stat
+  better: 'higher' | 'lower'
+  onPick: (k: string, l: string, t: (p: PortfolioProject) => boolean) => void
+  metric: string
+  onProject: (name: string) => void
+}) {
+  const name = (n: string) => (
+    <span
+      role="link"
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation()
+        onProject(n)
+      }}
+      className="underline decoration-dotted underline-offset-2 hover:text-[#00509d]"
+      title={`Open ${n} in the table`}
+    >
+      {n}
+    </span>
+  )
   const f = (v: number | null) => (v === null ? '—' : `${fmtIN(v, 2)}${unit}`)
   const field = { carpet: 'carpetSaleable', saFar: 'saleableFar', farUtil: 'farUtil', cars: 'carsPerUnit' }[metric] as keyof PortfolioProject['metrics']
   return (
-    <button onClick={() => onPick(`eff-${metric}`, `${label} entered`, (p) => p.metrics[field] !== null)} className="text-left rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 hover:bg-blue-50/50 transition-colors">
+    <div role="button" tabIndex={0} onClick={() => onPick(`eff-${metric}`, `${label} entered`, (p) => p.metrics[field] !== null)} className="text-left rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 hover:bg-blue-50/50 transition-colors cursor-pointer">
       <div className="flex justify-between items-baseline">
         <span className="text-[11px] font-bold text-gray-500">{label}</span>
         {target && <span className="text-[10px] text-gray-400">target {target}</span>}
@@ -426,14 +527,14 @@ function Eff({ label, unit, target, stat: s, onPick, metric }: { label: string; 
       <p className="text-[10px] text-gray-500 mt-1 truncate">
         {s.best ? (
           <>
-            Best <b className="text-green-700">{f(s.best.v)}</b> {s.best.name} · lowest <b className="text-red-600">{f(s.worst!.v)}</b> {s.worst!.name}
+            Best <b className="text-green-700">{f(s.best.v)}</b> {name(s.best.name)} · lowest <b className="text-red-600">{f(s.worst!.v)}</b> {name(s.worst!.name)}
           </>
         ) : (
           'No project has this yet'
         )}
       </p>
       <p className="text-[10px] text-gray-400">{s.n} projects</p>
-    </button>
+    </div>
   )
 }
 
@@ -474,56 +575,159 @@ function Th({ children, onClick, active, left }: { children: React.ReactNode; on
   )
 }
 
-function Td({ children, tone: t }: { children: React.ReactNode; tone?: 'good' | 'warn' | 'bad' }) {
-  return <td className={cn('px-3 py-3 text-center whitespace-nowrap font-semibold', t === 'good' ? 'text-green-700' : t === 'warn' ? 'text-amber-600' : t === 'bad' ? 'text-red-600' : 'text-gray-700')}>{children}</td>
+function Td({ children, tone: t, to, onClick, hint }: { children: React.ReactNode; tone?: 'good' | 'warn' | 'bad'; to?: string; onClick?: () => void; hint?: string }) {
+  const cls = cn('px-3 py-3 text-center whitespace-nowrap font-semibold', t === 'good' ? 'text-green-700' : t === 'warn' ? 'text-amber-600' : t === 'bad' ? 'text-red-600' : 'text-gray-700')
+  const link = 'rounded-md px-1.5 py-0.5 -mx-1.5 hover:bg-blue-50 hover:underline underline-offset-2 decoration-dotted'
+  if (to)
+    return (
+      <td className={cls}>
+        <Link to={to} onClick={(e) => e.stopPropagation()} className={link} title={hint}>
+          {children}
+        </Link>
+      </td>
+    )
+  if (onClick)
+    return (
+      <td className={cls}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onClick()
+          }}
+          className={link}
+          title={hint}
+        >
+          {children}
+        </button>
+      </td>
+    )
+  return <td className={cls}>{children}</td>
 }
 
-function ProjectDetail({ p, weights, onOpen }: { p: PortfolioProject; weights: Record<string, number>; onOpen: () => void }) {
+function ProjectDetail({ p, weights }: { p: PortfolioProject; weights: Record<string, number> }) {
+  const navigate = useNavigate()
+  const [allProblems, setAllProblems] = useState(false)
+  const [checks, setChecks] = useState(false)
+  const onPart = (part: string) => {
+    if (part === 'benchmarks') setChecks((c) => !c)
+    else if (part === 'completeness') navigate(projectModulesLink(p.id))
+    else navigate(moduleLink(p.id, 'Approvals'))
+  }
+  const chip = 'inline-flex items-center gap-1 text-[11px] font-semibold rounded-md px-2 py-1 bg-slate-50 border border-slate-200 hover:bg-blue-50 hover:border-blue-200 hover:text-[#00509d] transition-colors'
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 cmp-rise">
-      <div className="flex gap-4">
-        <HealthRing score={p.health.score} status={p.health.status} size={84} stroke={8} />
-        <div className="flex-1 min-w-0">
-          <StatusPill status={p.health.status} />
-          <div className="mt-3">
-            <HealthBreakdown parts={p.health.parts} weights={weights} />
+    <div className="space-y-5 cmp-rise">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex gap-4">
+          <button onClick={() => navigate(projectModulesLink(p.id))} title="Open the project" className="self-start rounded-full hover:ring-4 hover:ring-blue-100 transition">
+            <HealthRing score={p.health.score} status={p.health.status} size={84} stroke={8} />
+          </button>
+          <div className="flex-1 min-w-0">
+            <StatusPill status={p.health.status} />
+            <div className="mt-3">
+              <HealthBreakdown parts={p.health.parts} weights={weights} onPart={onPart} />
+            </div>
+            <button onClick={() => setChecks((c) => !c)} className="text-[11px] text-[#00509d] font-semibold mt-2 hover:underline text-left">
+              {p.checks.ok} of {p.checks.total} benchmarked parameters within benchmark · {checks ? 'hide' : 'show'} the {p.checks.failed.length} outside
+            </button>
+            {p.approvals.due > 0 && (
+              <Link to={moduleLink(p.id, 'Approvals')} className="block text-[11px] text-[#00509d] font-semibold mt-1 hover:underline">
+                {p.approvals.onTime} of {p.approvals.due} due milestones on time
+              </Link>
+            )}
           </div>
-          <p className="text-[11px] text-gray-500 mt-3">
-            {p.checks.ok} of {p.checks.total} benchmarked parameters within benchmark
-            {p.approvals.due ? ` · ${p.approvals.onTime} of ${p.approvals.due} due milestones on time` : ''}
-          </p>
+        </div>
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-wider text-[#1A3566] mb-2">Top problems · click to fix</p>
+          <ProblemList problems={p.health.problems} limit={allProblems ? 50 : 6} projectId={p.id} />
+          {p.health.problems.length > 6 && (
+            <button onClick={() => setAllProblems((v) => !v)} className="text-[11px] text-[#00509d] font-semibold mt-1 hover:underline">
+              {allProblems ? 'Show fewer' : `Show all ${p.health.problems.length}`}
+            </button>
+          )}
+        </div>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <CompletenessBadge pct={p.completeness.pct} missing={p.completeness.missing} onClick={() => navigate(projectModulesLink(p.id))} />
+            {p.approvals.rera !== 'Not listed' && (
+              <Link to={moduleLink(p.id, 'Approvals', 'RERA')} className={chip}>
+                RERA: {p.approvals.rera}
+              </Link>
+            )}
+          </div>
+          {p.completeness.missing.length > 0 && (
+            <div>
+              <p className="text-[11px] font-bold text-gray-600 mb-1">Not entered yet:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {p.completeness.missing.map((m) => (
+                  <Link key={m} to={moduleLink(p.id, m)} className={chip} title={`Open ${m}`}>
+                    {m} <ArrowUpRight size={11} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {p.dataIssues.length > 0 && (
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-wider text-red-700 mb-1">Data to check · click to fix</p>
+              <ul className="space-y-0.5">
+                {p.dataIssues.map((i, n) => (
+                  <li key={n}>
+                    <Link
+                      to={moduleLink(p.id, i.module, i.field)}
+                      className={cn('group flex gap-1.5 text-[11px] leading-snug rounded-md px-1.5 py-1 -mx-1.5 hover:bg-red-50', i.level === 'error' ? 'text-red-700' : 'text-amber-700')}
+                    >
+                      <span className="flex-1">
+                        • <b>{i.module}:</b> {i.message}
+                      </span>
+                      <ArrowUpRight size={12} className="shrink-0 mt-0.5 opacity-40 group-hover:opacity-100" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button onClick={() => navigate(projectModulesLink(p.id))} variant="outline" className="h-8 text-xs font-bold gap-1.5 border-blue-200 text-[#00509d]">
+              Open project <ExternalLink size={12} />
+            </Button>
+            <Button onClick={() => navigate(`/dashboard/project/${p.id}/comparison`)} variant="outline" className="h-8 text-xs font-bold gap-1.5 border-blue-200 text-[#00509d]">
+              Compare <Columns3 size={12} />
+            </Button>
+            <Button onClick={() => navigate(`/dashboard/project/${p.id}/design-chapters/export-configuration`)} variant="outline" className="h-8 text-xs font-bold gap-1.5 border-blue-200 text-[#00509d]">
+              DPR <FileText size={12} />
+            </Button>
+            <Button onClick={() => navigate(auditLink(p.id, p.name))} variant="outline" className="h-8 text-xs font-bold gap-1.5 border-blue-200 text-[#00509d]">
+              History <History size={12} />
+            </Button>
+          </div>
         </div>
       </div>
-      <div>
-        <p className="text-[11px] font-black uppercase tracking-wider text-[#1A3566] mb-2">Top problems</p>
-        <ProblemList problems={p.health.problems} limit={6} />
-      </div>
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <CompletenessBadge pct={p.completeness.pct} missing={p.completeness.missing} />
-          {p.approvals.rera !== 'Not listed' && <span className="text-[11px] font-semibold rounded-md px-2 py-1 bg-slate-50 border border-slate-200">RERA: {p.approvals.rera}</span>}
-        </div>
-        {p.completeness.missing.length > 0 && (
-          <p className="text-[11px] text-gray-500">
-            <b className="text-gray-600">Not entered yet:</b> {p.completeness.missing.join(', ')}
+      {checks && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 cmp-rise">
+          <p className="text-[11px] font-black uppercase tracking-wider text-[#1A3566] mb-2">
+            Parameters outside benchmark ({p.checks.failed.length} of {p.checks.total}) · click to fix
           </p>
-        )}
-        {p.dataIssues.length > 0 && (
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-wider text-red-700 mb-1">Data to check</p>
-            <ul className="space-y-1">
-              {p.dataIssues.map((i, n) => (
-                <li key={n} className={cn('text-[11px] leading-snug', i.level === 'error' ? 'text-red-700' : 'text-amber-700')}>
-                  • <b>{i.module}:</b> {i.message}
-                </li>
+          {p.checks.failed.length ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0.5">
+              {p.checks.failed.map((c, i) => (
+                <Link
+                  key={i}
+                  to={moduleLink(p.id, c.module, c.label.replace(/^[^:]*lifts:\s*/, ''))}
+                  className="group flex items-start gap-2 text-[11px] rounded-md px-1.5 py-1 hover:bg-blue-50/70"
+                >
+                  <span className="text-gray-400 font-semibold shrink-0 w-28 truncate">{c.module}</span>
+                  <span className="flex-1 text-gray-700">
+                    {c.label}: <b className="text-red-600">{c.value}{c.unit && /^[0-9.,-]+$/.test(c.value) ? ` ${c.unit}` : ''}</b> <span className="text-gray-400">vs {c.req}</span>
+                  </span>
+                  <ArrowUpRight size={12} className="shrink-0 mt-0.5 text-gray-300 group-hover:text-[#00509d]" />
+                </Link>
               ))}
-            </ul>
-          </div>
-        )}
-        <Button onClick={onOpen} variant="outline" className="h-8 text-xs font-bold gap-1.5 border-blue-200 text-[#00509d]">
-          Open project <ExternalLink size={12} />
-        </Button>
-      </div>
+            </div>
+          ) : (
+            <p className="text-xs text-green-700 font-semibold">Everything benchmarked is within benchmark.</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

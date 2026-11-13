@@ -3,7 +3,7 @@ import { http } from '@/api/http'
 import type { DataIssue } from '@/lib/dataChecks'
 
 export type HealthStatus = 'on-track' | 'attention' | 'at-risk' | 'no-data'
-export type Problem = { kind: 'benchmark' | 'approval' | 'data'; module: string; text: string; severity: number }
+export type Problem = { kind: 'benchmark' | 'approval' | 'data'; module: string; text: string; severity: number; field?: string }
 export type Check = { module: string; label: string; value: string; unit?: string; req: string; ok: boolean }
 
 export type PortfolioProject = {

@@ -1,5 +1,7 @@
 /* Health score ring, status pill, completeness badge and the ranked problem list (portfolio + project pages). */
-import { AlertTriangle, CalendarClock, Database, Gauge } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, ArrowUpRight, CalendarClock, Database, Gauge } from 'lucide-react'
+import { moduleLink } from '@/components/portfolio/links'
 import { cn } from '@/lib/utils'
 import { STATUS_META, type HealthStatus, type Problem } from '@/api/portfolio'
 
@@ -42,37 +44,58 @@ export function StatusPill({ status, className }: { status: HealthStatus; classN
   )
 }
 
-export function CompletenessBadge({ pct, missing }: { pct: number; missing?: string[] }) {
+export function CompletenessBadge({ pct, missing, onClick }: { pct: number; missing?: string[]; onClick?: () => void }) {
   const color = pct >= 80 ? '#15803D' : pct >= 50 ? '#B45309' : '#B91C1C'
   return (
-    <span
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2 py-1 bg-slate-50 border border-slate-200"
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn('inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2 py-1 bg-slate-50 border border-slate-200', onClick && 'hover:bg-blue-50 hover:border-blue-200 cursor-pointer')}
       title={missing?.length ? `Not filled: ${missing.join(', ')}` : 'All modules filled'}
     >
       <Database size={12} style={{ color }} />
       Data <b style={{ color }}>{pct}%</b>
-    </span>
+    </button>
   )
 }
 
 const KIND_ICON = { benchmark: Gauge, approval: CalendarClock, data: AlertTriangle } as const
 
-export function ProblemList({ problems, limit = 3, compact }: { problems: Problem[]; limit?: number; compact?: boolean }) {
+/** ranked problems; with projectId each one links to the page (and field) where it is fixed */
+export function ProblemList({ problems, limit = 3, compact, projectId }: { problems: Problem[]; limit?: number; compact?: boolean; projectId?: number | string }) {
   if (!problems.length) return <p className="text-xs text-green-700 font-semibold">No problems found.</p>
   return (
-    <ol className="space-y-1.5">
+    <ol className="space-y-1">
       {problems.slice(0, limit).map((p, i) => {
         const Icon = KIND_ICON[p.kind]
         const hot = p.severity >= 0.7
-        return (
-          <li key={i} className={cn('flex items-start gap-2', compact ? 'text-[11px]' : 'text-xs')}>
+        const body = (
+          <>
             <span className={cn('mt-0.5 shrink-0 rounded-md p-1', hot ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600')}>
               <Icon size={12} />
             </span>
-            <span className="text-gray-700 leading-snug">
+            <span className="text-gray-700 leading-snug flex-1">
               <span className="text-gray-400 font-semibold">{p.module}: </span>
               {p.text}
             </span>
+            {projectId !== undefined && <ArrowUpRight size={13} className="mt-0.5 shrink-0 text-gray-300 group-hover:text-[#00509d]" />}
+          </>
+        )
+        return (
+          <li key={i} className={compact ? 'text-[11px]' : 'text-xs'}>
+            {projectId !== undefined ? (
+              <Link
+                to={moduleLink(projectId, p.module, p.field)}
+                onClick={(e) => e.stopPropagation()}
+                title={`Open ${p.module}${p.field ? ` at "${p.field}"` : ''}`}
+                className="group flex items-start gap-2 rounded-md px-1.5 py-1 -mx-1.5 hover:bg-blue-50/70 transition-colors"
+              >
+                {body}
+              </Link>
+            ) : (
+              <div className="flex items-start gap-2 py-1">{body}</div>
+            )}
           </li>
         )
       })}
@@ -81,15 +104,15 @@ export function ProblemList({ problems, limit = 3, compact }: { problems: Proble
 }
 
 /** the four score parts with their weights */
-export function HealthBreakdown({ parts, weights }: { parts: Record<string, number | null>; weights: Record<string, number> }) {
+export function HealthBreakdown({ parts, weights, onPart }: { parts: Record<string, number | null>; weights: Record<string, number>; onPart?: (part: string) => void }) {
   const LABEL: Record<string, string> = { benchmarks: 'Within benchmark', completeness: 'Data completeness', approvals: 'Approvals received', schedule: 'Milestones on time' }
   return (
-    <div className="space-y-2">
+    <div className="space-y-0.5">
       {Object.keys(LABEL).map((k) => {
         const v = parts[k]
         const color = v === null ? '#CBD5E1' : v >= 75 ? '#16A34A' : v >= 50 ? '#F59E0B' : '#DC2626'
         return (
-          <div key={k}>
+          <button type="button" key={k} onClick={() => onPart?.(k)} disabled={!onPart} className={cn('block w-full text-left rounded-md px-1.5 py-1 -mx-1.5', onPart && 'hover:bg-blue-50/70 cursor-pointer')}>
             <div className="flex justify-between text-[11px]">
               <span className="text-gray-600 font-semibold">
                 {LABEL[k]} <span className="text-gray-400 font-normal">· weight {weights[k]}%</span>
@@ -101,7 +124,7 @@ export function HealthBreakdown({ parts, weights }: { parts: Record<string, numb
             <div className="h-1.5 rounded-full bg-slate-100 mt-1 overflow-hidden">
               <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${v ?? 0}%`, background: color }} />
             </div>
-          </div>
+          </button>
         )
       })}
     </div>

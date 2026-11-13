@@ -20,7 +20,8 @@ import { serviceDesignSections } from '../dpr/modules/service-design.js'
 export const WEIGHTS = { benchmarks: 50, completeness: 20, approvals: 15, schedule: 15 } as const
 
 export type Check = { module: string; label: string; value: string; unit?: string; req: string; ok: boolean }
-export type Problem = { kind: 'benchmark' | 'approval' | 'data'; module: string; text: string; severity: number }
+/** field: label of the field to fix (the page scrolls to it) */
+export type Problem = { kind: 'benchmark' | 'approval' | 'data'; module: string; text: string; severity: number; field?: string }
 
 const num = (v: unknown) => {
   const x = parseFloat(String(v ?? '').replace(/,/g, '').replace(/[^0-9.\-]/g, ''))
@@ -140,12 +141,12 @@ export function projectPortfolio(input: DprInput, lastUpdate: { at: string | nul
   const status = score === null ? 'no-data' : score >= 75 ? 'on-track' : score >= 50 ? 'attention' : 'at-risk'
 
   const problems: Problem[] = [
-    ...issues.filter((i) => i.level === 'error').map((i): Problem => ({ kind: 'data', module: i.module, text: i.message, severity: 1.2 })),
-    ...appr.overdue.map((o): Problem => ({ kind: 'approval', module: 'Approvals', text: `${o.type} ${o.stage} overdue by ${o.days} days`, severity: 0.5 + Math.min(0.6, o.days / 365) })),
+    ...issues.filter((i) => i.level === 'error').map((i): Problem => ({ kind: 'data', module: i.module, text: i.message, severity: 1.2, field: i.field })),
+    ...appr.overdue.map((o): Problem => ({ kind: 'approval', module: 'Approvals', text: `${o.type} ${o.stage} overdue by ${o.days} days`, severity: 0.5 + Math.min(0.6, o.days / 365), field: o.type })),
     ...checks
       .filter((c) => !c.ok)
-      .map((c): Problem => ({ kind: 'benchmark', module: c.module, text: `${c.label} ${c.value}${c.unit && /^[0-9.,-]+$/.test(c.value) ? ` ${c.unit}` : ''} vs ${c.req}`, severity: 0.3 + distance(c.value, c.req) * 0.7 })),
-    ...issues.filter((i) => i.level === 'warning').map((i): Problem => ({ kind: 'data', module: i.module, text: i.message, severity: 0.25 })),
+      .map((c): Problem => ({ kind: 'benchmark', module: c.module, field: c.label.replace(/^[^:]*lifts:\s*/, ''), text: `${c.label} ${c.value}${c.unit && /^[0-9.,-]+$/.test(c.value) ? ` ${c.unit}` : ''} vs ${c.req}`, severity: 0.3 + distance(c.value, c.req) * 0.7 })),
+    ...issues.filter((i) => i.level === 'warning').map((i): Problem => ({ kind: 'data', module: i.module, text: i.message, severity: 0.25, field: i.field })),
   ].sort((a, b) => b.severity - a.severity)
 
   const gsv = f.saleable && f.price ? f.saleable * f.price : null

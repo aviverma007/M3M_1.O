@@ -1,5 +1,6 @@
 /* Audit Logs — /dashboard/audit-logs (original AuditLogsPage-CYeZdjaH) */
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { CalendarIcon, ChevronLeft, ChevronRight, Download, RefreshCw, Search } from 'lucide-react'
@@ -84,15 +85,20 @@ export default function AuditLogsPage() {
   const [search, setSearch] = useState('')
   const [taskType, setTaskType] = useState(ALL)
   const [page, setPage] = useState(1)
+  // ?projectId=&project=<name>: one project's history (from the Portfolio page)
+  const [urlParams, setUrlParams] = useSearchParams()
+  const projectFilter = urlParams.get('projectId') ?? ''
+  const projectName = urlParams.get('project') ?? `Project ${projectFilter}`
 
   const filters = useMemo(() => {
     const f: Record<string, string> = {}
+    if (projectFilter) f.projectId = projectFilter
     if (search) f.search = search
     if (taskType !== ALL) f.type = taskType
     if (fromDate) f.fromDate = format(fromDate, 'yyyy-MM-dd')
     if (toDate) f.toDate = format(toDate, 'yyyy-MM-dd')
     return f
-  }, [search, taskType, fromDate, toDate])
+  }, [search, taskType, fromDate, toDate, projectFilter])
 
   const params = { page: String(page), limit: String(PAGE_SIZE), ...filters }
   const { data, isFetching } = useQuery({ queryKey: adminKeys.auditLogs(params), queryFn: () => fetchAuditLogs(params) })
@@ -132,6 +138,16 @@ export default function AuditLogsPage() {
           </Button>
         </div>
 
+        {projectFilter && (
+          <div className="mb-3">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-[#00509d] bg-blue-50 border border-blue-100 rounded-full pl-3 pr-1.5 py-1">
+              Showing changes to: {projectName}
+              <button onClick={() => setUrlParams({})} className="p-0.5 rounded-full hover:bg-blue-100" title="Show all projects">
+                ✕
+              </button>
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="md:col-span-2">
             <label className="text-sm text-slate-700 font-medium mb-1.5 block px-1">Select date range</label>

@@ -171,3 +171,10 @@
 }
 .cmp-radar { animation: cmp-radar-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @media (prefers-reduced-motion: reduce) { .cmp-radar { animation: none; } }
+
+/* field highlighted after a "fix this" link (?focus=) */
+@keyframes focus-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 80, 157, 0); background-color: transparent; }
+  15%, 60% { box-shadow: 0 0 0 3px rgba(0, 80, 157, 0.55); background-color: rgba(254, 243, 199, 0.85); }
+}
+.focus-flash { animation: focus-flash 4s ease-in-out; border-radius: 8px; }

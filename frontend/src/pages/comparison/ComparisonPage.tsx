@@ -399,6 +399,7 @@ export default function ComparisonPage() {
                     {s.rows.map((r) => (
                       <RowView key={r.label} r={r} n={cmp.heads.length} stat={ref?.rows[r.label]} />
                     ))}
+                    {!s.rows.length && s.empty && <p className="px-5 py-5 text-[12px] text-gray-500">{s.empty}</p>}
                   </div>
                 </div>
               ))}

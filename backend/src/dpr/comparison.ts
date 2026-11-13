@@ -159,6 +159,11 @@ function detailPages(ctx: Ctx, cmp: Comparison, ref?: PortfolioRef) {
     doc.rect(X, y, TW, 22).fill(BAND)
     txt(doc, sec.title, X + 10, y + 6, 'B', 10, C.white)
     y += 22
+    if (!sec.rows.length && sec.empty) {
+      doc.rect(X, y, TW, 26).fill(C.white)
+      txt(doc, sec.empty, X + 10, y + 8, 'R', 8.5, C.text, { width: TW - 20, ellipsis: true })
+      y += 26
+    }
     sec.rows.forEach((r, i) => {
       const h = 30
       if (y + h > LIMIT) {

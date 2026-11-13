@@ -43,7 +43,8 @@ export type CompareRow = {
   deltaPct: number | null
 }
 
-export type CompareSection = { key: string; title: string; rows: CompareRow[] }
+/** empty: shown instead of rows when none of the projects has data for an always-shown section */
+export type CompareSection = { key: string; title: string; rows: CompareRow[]; empty?: string }
 export type CompareKpi = { label: string; unit?: string; nums: (number | null)[]; values: string[] }
 
 export type Comparison = {
@@ -238,6 +239,13 @@ const SECTIONS: [string, string][] = [
   ['governance', 'Delivery & Governance'],
 ]
 const T = Object.fromEntries(SECTIONS)
+/** sections shown even when nobody has entered data yet, with where to enter it */
+const ALWAYS: Record<string, string> = {
+  consultants: 'No consultant fees yet. In Consultant Strategy (Module 16), mark consultants Appointed and enter their Order Value; Module 6 Built Up Area gives the Rs. per sq ft.',
+  contracts: 'No package budgets yet. Enter a Budget for each element in Contracting Strategy (Module 15).',
+  facade: 'No façade details yet. Fill in Façade & Envelope (Module 14; commercial Module 10).',
+  services: 'No services sizing yet. Fill in the new sections of Service Design Consideration (Module 13).',
+}
 const d = (section: string, label: string, get: Def['get'], opts: RowOpts & { sane?: Def['sane'] } = {}): Def => ({ section, title: T[section], label, get, ...opts })
 
 const FIXED_DEFS: Def[] = [
@@ -423,6 +431,7 @@ export function buildComparison(...inputs: CompareInput[]): Comparison {
     if (!sec) sections.push((sec = { key: def.section, title: def.title, rows: [] }))
     sec.rows.push(r)
   }
+  for (const [key, empty] of Object.entries(ALWAYS)) if (!sections.some((x) => x.key === key)) sections.push({ key, title: T[key], rows: [], empty })
   sections.sort((a, b) => SECTIONS.findIndex((x) => x[0] === a.key) - SECTIONS.findIndex((x) => x[0] === b.key))
 
   const kpi = (label: string, get: (f: Facts) => number | null, unit?: string): CompareKpi => {

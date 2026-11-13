@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import SelectWithOther from '@/components/shared/SelectWithOther'
 import type { ContractPackage, PackageElement } from '@/types/chapters-b'
-import { contractBudgets, rupees, rupeesShort } from '@/lib/fees'
+import { contractBudgets, crore } from '@/lib/fees'
 import { fmtNum } from '@/lib/projectComparison'
 
 const CONTRACT_TYPES = ['Direct', 'FOC (Free of Cost)', 'Base Rate', 'Client Supply', 'Single Contractor', 'Multiple Contractors']
@@ -125,6 +125,7 @@ export default function PackagesBoard({
   const removeEl = (pkgId: number, key: string) =>
     setPackages((p) => p.map((x) => (x.id === pkgId ? { ...x, elements: x.elements.filter((a) => a.id !== key && a.name !== key) } : x)))
   const addBlankEl = (pkgId: number) => setPackages((p) => p.map((x) => (x.id === pkgId ? { ...x, elements: [...x.elements, newElement()] } : x)))
+  const editBudget = (id: number, budgetCr: string) => setPackages((p) => p.map((x) => (x.id === id ? { ...x, budgetCr } : x)))
   const addPackage = () => setPackages((p) => [...p, { id: Date.now(), name: `Package ${p.length + 1}`, elements: [] }])
 
   return (
@@ -193,28 +194,44 @@ export default function PackagesBoard({
                   <th className="p-3 text-sm font-semibold text-gray-700">Type</th>
                   <th className="p-3 text-sm font-semibold text-gray-700 w-32"># of Contractors</th>
                   <th className="p-3 text-sm font-semibold text-gray-700 w-48">Type of Contractors</th>
-                  <th className="p-3 text-sm font-semibold text-gray-700 w-40 text-right">Budget (Rs.)</th>
-                  <th className="p-3 text-sm font-semibold text-gray-700 w-56">Remarks</th>
+                  <th className="p-3 text-sm font-semibold text-gray-700 w-64">Remarks</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-300">
                 {packages.map((t) => (
                   <Fragment key={t.id}>
                     <tr className="bg-gray-100/80 border-t-2 border-gray-200">
-                      <td colSpan={6} className="p-2 pl-3">
-                        <div className="flex items-center gap-2">
+                      <td colSpan={5} className="p-2 pl-3">
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-[#006080]" />
                           <Input
                             value={t.name}
                             onChange={(e) => editPkg(t.id, e.target.value)}
                             className="h-7 text-sm font-bold text-[#006080] border-transparent hover:border-gray-300 px-2 bg-transparent max-w-[250px] shadow-none"
                           />
+                          <div className="ml-auto flex items-center gap-2">
+                            <label htmlFor={`pkg-budget-${t.id}`} className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                              Package Budget
+                            </label>
+                            <div className="relative">
+                              <Input
+                                id={`pkg-budget-${t.id}`}
+                                value={t.budgetCr ?? ''}
+                                onChange={(e) => editBudget(t.id, e.target.value.replace(/[^0-9.]/g, ''))}
+                                inputMode="decimal"
+                                placeholder="e.g. 45.5"
+                                className="h-8 w-36 text-xs border-gray-300 bg-white shadow-sm text-right pr-12"
+                              />
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold italic text-gray-400">Rs. Cr</span>
+                            </div>
+                            <span className="text-[11px] text-gray-500 w-36 whitespace-nowrap">{perSqft(budgets.packages[packages.indexOf(t)]?.total ?? null).replace(/^ · /, '')}</span>
+                          </div>
                         </div>
                       </td>
                     </tr>
                     {t.elements.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-0 border-b border-dashed border-gray-300">
+                        <td colSpan={5} className="p-0 border-b border-dashed border-gray-300">
                           <div className="py-6 px-6 text-xs text-gray-400 italic text-center min-h-[60px]" onDragOver={(e) => over(e)} onDrop={(e) => dropOn(e, t.id)}>
                             Drag &amp; Drop elements here...
                           </div>
@@ -270,47 +287,15 @@ export default function PackagesBoard({
                               />
                             </td>
                             <td className="p-3">
-                              <Input
-                                value={r.budget ?? ''}
-                                onChange={(e) => editEl(t.id, key, 'budget', e.target.value.replace(/[^0-9.,]/g, ''))}
-                                inputMode="decimal"
-                                placeholder="e.g. 45000000"
-                                className="h-8 text-xs border-gray-300 shadow-sm text-right"
-                              />
-                              {(() => {
-                                const v = parseFloat(String(r.budget ?? '').replace(/,/g, ''))
-                                return Number.isFinite(v) && v > 0 ? <p className="text-[10px] text-gray-400 text-right mt-0.5">Rs. {rupeesShort(v)}</p> : null
-                              })()}
-                            </td>
-                            <td className="p-3">
                               <Input value={r.remarks || ''} onChange={(e) => editEl(t.id, key, 'remarks', e.target.value)} placeholder="Remarks" className="h-8 text-xs border-gray-300 shadow-sm" />
                             </td>
                           </tr>
                         )
                       })
                     )}
-                    {t.elements.length > 0 && (
-                      <tr className="bg-[#e6f4ea]/70">
-                        <td colSpan={4} className="px-3 py-2 pl-8 text-xs font-black text-[#006080]">
-                          Total — {t.name || 'Package'}
-                        </td>
-                        <td className="px-3 py-2 text-right text-xs font-black text-[#006080] whitespace-nowrap">
-                          {(() => {
-                            const tot = budgets.packages[packages.indexOf(t)]?.total ?? null
-                            return tot === null ? <span className="text-gray-400 font-semibold">—</span> : `Rs. ${rupees(tot)}`
-                          })()}
-                        </td>
-                        <td className="px-3 py-2 text-[11px] text-gray-500 whitespace-nowrap">
-                          {(() => {
-                            const tot = budgets.packages[packages.indexOf(t)]?.total ?? null
-                            return tot === null ? '' : `= Rs. ${rupeesShort(tot)}${perSqft(tot)}`
-                          })()}
-                        </td>
-                      </tr>
-                    )}
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={5}
                         className={`border-b border-gray-300 transition-colors ${overPkg === t.id && dragging ? 'bg-blue-50 border-dashed border-[#006080]' : 'bg-white'}`}
                         onDragOver={(e) => over(e, t.id)}
                         onDragLeave={() => setOverPkg((s) => (s === t.id ? null : s))}
@@ -336,16 +321,18 @@ export default function PackagesBoard({
                   </Fragment>
                 ))}
                 <tr className="bg-[#006080] text-white">
-                  <td colSpan={4} className="px-3 py-3 text-sm font-black uppercase tracking-wider">
+                  <td colSpan={3} className="px-3 py-3 text-sm font-black uppercase tracking-wider">
                     Grand Total — all packages
                     {!bua && <span className="block text-[10px] font-semibold normal-case tracking-normal text-white/70">Enter Built Up Area in Module 6 to see Rs. per sq ft</span>}
                   </td>
-                  <td className="px-3 py-3 text-right text-sm font-black whitespace-nowrap">{budgets.total === null ? '—' : `Rs. ${rupees(budgets.total)}`}</td>
-                  <td className="px-3 py-3 text-xs font-semibold whitespace-nowrap">{budgets.total === null ? '' : `= Rs. ${rupeesShort(budgets.total)}${perSqft(budgets.total)}`}</td>
+                  <td colSpan={2} className="px-3 py-3 text-right text-sm font-black whitespace-nowrap">
+                    {budgets.total === null ? '—' : `Rs. ${crore(budgets.total)} Cr`}
+                    {budgets.total !== null && bua ? <span className="block text-[11px] font-semibold text-white/80">{perSqft(budgets.total).replace(/^ · /, '')}</span> : null}
+                  </td>
                 </tr>
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="p-4 border-t border-gray-300 bg-gray-50/50 border-dashed hover:bg-gray-100 transition-colors"
                     onDragOver={(e) => over(e)}
                     onDrop={dropNewPackage}

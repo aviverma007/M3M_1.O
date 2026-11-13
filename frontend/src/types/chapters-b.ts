@@ -15,8 +15,8 @@ export type LandscapeAmenitiesData = {
 
 /* Contracting Strategy */
 export type Contractor = { id: number; name: string; grade: string; benchmark: string; previous: string; remarks: string }
-export type PackageElement = { id: string; name: string; type: string; numberOfContractors: string; typeOfContractors: string; remarks: string; /** budget in Rs. */ budget?: string }
-export type ContractPackage = { id: number; name: string; elements: PackageElement[] }
+export type PackageElement = { id: string; name: string; type: string; numberOfContractors: string; typeOfContractors: string; remarks: string }
+export type ContractPackage = { id: number; name: string; elements: PackageElement[]; /** package budget in Rs. Crore */ budgetCr?: string }
 export type ContractingStrategyData = { contractors?: Contractor[]; packages?: ContractPackage[]; availableElements?: string[] }
 
 /* Consultant Strategy */

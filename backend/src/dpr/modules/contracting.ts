@@ -5,12 +5,12 @@
 import { contentPage, type Ctx } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import { INK, NAVY, RULE, TABLE_LIMIT, ZEBRA, filled, val } from './cs-table.js'
-import { contractBudgets, rupees } from '@/lib/fees'
+import { contractBudgets, crore } from '@/lib/fees'
 import { fmtNum } from '@/lib/projectComparison'
 
 type Contractor = { name?: string; grade?: string; benchmark?: string; previous?: string; remarks?: string }
-type Element = { name?: string; type?: string; numberOfContractors?: string; typeOfContractors?: string; remarks?: string; budget?: string }
-type Pkg = { name?: string; contractType?: string; elements?: Element[] }
+type Element = { name?: string; type?: string; numberOfContractors?: string; typeOfContractors?: string; remarks?: string }
+type Pkg = { name?: string; contractType?: string; budgetCr?: string; elements?: Element[] }
 
 const PLACEHOLDER = /^Element \d+$/i
 const X0 = 35
@@ -96,12 +96,12 @@ function groupedTable(ctx: Ctx, title: string, cols: GCol[], nGroup: number, gro
 }
 
 const PKG_COLS: GCol[] = [
-  { label: 'Package Name', width: 120 },
-  { label: 'Contract Type', width: 95 },
-  { label: 'Element Name', width: 160 },
-  { label: 'No. of Contractors', width: 75 },
-  { label: 'Budget (Rs.)', width: 100 },
-  { label: 'Remarks', width: 151 },
+  { label: 'Package Name', width: 115 },
+  { label: 'Contract Type', width: 90 },
+  { label: 'Budget (Rs. Cr)', width: 95 },
+  { label: 'Element Name', width: 165 },
+  { label: 'No. of Contractors', width: 80 },
+  { label: 'Remarks', width: 156 },
 ]
 const CONTRACTOR_COLS: GCol[] = [
   { label: 'Grade', width: 90 },
@@ -128,14 +128,16 @@ const contracting: ModuleRenderer = (ctx, input) => {
   if (packages.length) {
     const b = contractBudgets(input.summary, packages)
     const sq = (v: number | null) => (v !== null && b.bua ? `Rs. ${fmtNum(v / b.bua, 2)}/sq ft BUA` : '')
-    const groups = packages.map((p, i) => {
-      const rows = p.elements.map((e) => [val(e.name), val(e.numberOfContractors), e.budget && parseFloat(String(e.budget).replace(/,/g, '')) ? rupees(parseFloat(String(e.budget).replace(/,/g, ''))) : '-', val(e.remarks)])
-      const tot = b.packages[i]?.total ?? null
-      if (tot !== null) rows.push(['Package total', '', rupees(tot), sq(tot)])
-      return { cells: [val(p.name), val(packageContractType(p))], rows }
+    // the budget is one figure per package (Rs. Cr), shown in the merged package cells with its Rs. per sq ft of BUA
+    const groups = packages.map((p) => {
+      const tot = b.packages[packages.indexOf(p)]?.total ?? null
+      return {
+        cells: [val(p.name), val(packageContractType(p)), tot === null ? '-' : `${crore(tot)}${sq(tot) ? `\n${sq(tot)}` : ''}`],
+        rows: p.elements.map((e) => [val(e.name), val(e.numberOfContractors), val(e.remarks)]),
+      }
     })
-    if (b.total !== null) groups.push({ cells: ['GRAND TOTAL', ''], rows: [['All packages', '', rupees(b.total), sq(b.total)]] })
-    groupedTable(ctx, 'Contracting Strategy — Packages & Elements', PKG_COLS, 2, groups)
+    if (b.total !== null) groups.push({ cells: ['GRAND TOTAL', '', `${crore(b.total)}${sq(b.total) ? `\n${sq(b.total)}` : ''}`], rows: [['All packages', '', '']] })
+    groupedTable(ctx, 'Contracting Strategy — Packages & Elements', PKG_COLS, 3, groups)
   }
   if (contractors.length) {
     const grades: string[] = []

@@ -1,7 +1,7 @@
 /*
  * Money entered in the PMO modules (all amounts in Rs.):
  *   Consultant Strategy — order value (fee) per appointed consultant; output Rs. per sq ft of BUA (fee ÷ Module 6 Built Up Area)
- *   Contracting Strategy — budget per package element; package totals and grand total (also Rs. per sq ft of BUA)
+ *   Contracting Strategy — one budget per package, entered in Rs. Crore; grand total (also Rs. per sq ft of BUA)
  */
 const n = (v: unknown) => {
   const x = parseFloat(String(v ?? '').replace(/,/g, ''))
@@ -13,6 +13,8 @@ export const isAppointed = (status: unknown) => /^appointed$/i.test(str(status))
 
 /** "4,50,00,000" (Indian grouping, no decimals) */
 export const rupees = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? '-' : Math.round(v).toLocaleString('en-IN'))
+/** "659.25" — Rs. amount shown in crore */
+export const crore = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? '-' : (v / 1e7).toLocaleString('en-IN', { maximumFractionDigits: 2 }))
 /** short form: "4.5 Cr", "12.4 L", "85,000" */
 export function rupeesShort(v: number | null | undefined) {
   if (v === null || v === undefined || !Number.isFinite(v)) return '-'
@@ -41,18 +43,19 @@ export function consultantFees(summary: Record<string, unknown> | null | undefin
   return { lines, total, perSqft: total !== null && bua ? total / bua : null, bua }
 }
 
-export type PackageBudget = { name: string; elements: { name: string; budget: number | null }[]; total: number | null; perSqft: number | null }
+/** total is in Rs. (budgetCr × 1 crore) */
+export type PackageBudget = { name: string; elements: string[]; total: number | null; perSqft: number | null }
 export type ContractBudgets = { packages: PackageBudget[]; total: number | null; perSqft: number | null; bua: number | null }
 
 const PLACEHOLDER = /^Element \d+$/i
 export function contractBudgets(summary: Record<string, unknown> | null | undefined, packagesOverride?: unknown[]): ContractBudgets {
   const bua = buaOf(summary)
   const cs = (summary?.contractingStrategyData ?? {}) as { packages?: unknown[] }
-  const pkgs = (packagesOverride ?? cs.packages ?? []) as { name?: string; elements?: { name?: string; budget?: string }[] }[]
+  const pkgs = (packagesOverride ?? cs.packages ?? []) as { name?: string; budgetCr?: string; elements?: { name?: string }[] }[]
   const packages = pkgs.map((p): PackageBudget => {
-    const elements = (p.elements ?? []).filter((e) => str(e.name) && !PLACEHOLDER.test(str(e.name))).map((e) => ({ name: str(e.name), budget: n(e.budget) }))
-    const b = elements.map((e) => e.budget).filter((x): x is number => x !== null)
-    const total = b.length ? b.reduce((a, c) => a + c, 0) : null
+    const elements = (p.elements ?? []).map((e) => str(e.name)).filter((x) => x && !PLACEHOLDER.test(x))
+    const cr = n(p.budgetCr)
+    const total = cr !== null ? cr * 1e7 : null
     return { name: str(p.name), elements, total, perSqft: total !== null && bua ? total / bua : null }
   })
   const t = packages.map((p) => p.total).filter((x): x is number => x !== null)

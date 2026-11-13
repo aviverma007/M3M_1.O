@@ -15,7 +15,7 @@ export type LandscapeAmenitiesData = {
 
 /* Contracting Strategy */
 export type Contractor = { id: number; name: string; grade: string; benchmark: string; previous: string; remarks: string }
-export type PackageElement = { id: string; name: string; type: string; numberOfContractors: string; typeOfContractors: string; remarks: string }
+export type PackageElement = { id: string; name: string; type: string; numberOfContractors: string; typeOfContractors: string; remarks: string; /** budget in Rs. */ budget?: string }
 export type ContractPackage = { id: number; name: string; elements: PackageElement[] }
 export type ContractingStrategyData = { contractors?: Contractor[]; packages?: ContractPackage[]; availableElements?: string[] }
 
@@ -28,6 +28,8 @@ export type ConsultantRow = {
   plannedDate: string
   actualDate: string
   remarks: string
+  /** order value / fee in Rs. (entered once appointed) */
+  fee?: string
 }
 
 /* Phasing Plan */

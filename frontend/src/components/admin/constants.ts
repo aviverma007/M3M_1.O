@@ -53,6 +53,7 @@ export const ACCESS_MODULES: { name: string; moduleNo: number | null; category: 
   { name: 'Project Level Design', moduleNo: null, category: 'DPR Modules' },
   { name: 'Unit Level Design', moduleNo: null, category: 'DPR Modules' },
   { name: 'Service Design Consideration', moduleNo: null, category: 'DPR Modules' },
+  { name: 'Façade & Envelope', moduleNo: null, category: 'DPR Modules' },
   { name: 'ID Specifications', moduleNo: null, category: 'DPR Modules' },
   { name: 'Common Area', moduleNo: null, category: 'DPR Modules' },
   { name: 'Landscape & Amenities', moduleNo: null, category: 'DPR Modules' },

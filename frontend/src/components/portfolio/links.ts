@@ -10,6 +10,7 @@ const CHAPTER: Record<string, string> = {
   'Common Area': 'design-chapters/common-area',
   'Landscape & Amenities': 'design-chapters/landscape-amenities',
   'Service Design': 'design-chapters/service-design',
+  'Façade & Envelope': 'design-chapters/facade',
   'Contracting Strategy': 'design-chapters/contracting-strategy',
   'Consultant Strategy': 'design-chapters/consultant-strategy',
   'Phasing Plan': 'design-chapters/phasing-plan',

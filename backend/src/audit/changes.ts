@@ -70,6 +70,7 @@ const SUMMARY_MODULES: Record<string, string> = {
   commonAreaData: 'Common Area',
   landscapeAmenitiesData: 'Landscape & Amenities',
   serviceDesignData: 'Service Design',
+  facadeData: 'Façade & Envelope',
   contractingStrategyData: 'Contracting Strategy',
   consultantStrategyData: 'Consultant Strategy',
   phasingPlanData: 'Phasing Plan',

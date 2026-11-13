@@ -1,6 +1,7 @@
 import { config } from './config.js'
 import { connect } from './db/pool.js'
 import { verifySchemaAccess } from './db/table.js'
+import { runDataMigrations } from './db/migrations.js'
 import { createApp } from './app.js'
 import { loadRoutes } from './routes/index.js'
 
@@ -13,6 +14,7 @@ async function main() {
     console.error('[db] startup failed — check DB_* settings in .env and that database/01-02 scripts ran', e)
     process.exit(1)
   }
+  await runDataMigrations()
   const failed = await loadRoutes()
   if (failed.length) console.warn(`[routes] running WITHOUT: ${failed.join(', ')}`)
   createApp().listen(config.port, '0.0.0.0', () => {

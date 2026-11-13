@@ -146,7 +146,7 @@ route('POST', '/project', async ({ body, user }) => {
   // one projectModules row per module of the project's type (same defaults as the original seed)
   await query(
     `INSERT INTO dbo.projectModules (projectId, moduleId, allParams, deviations, benchmarkParams, flags, complianceScore, moduleStatus, completedChapters, status, data)
-     SELECT @pid, m.id, 5, 0, 5, 0, 0, 0, 0, N'pending', NULL FROM dbo.modules m WHERE m.projectType = @type ORDER BY m.id`,
+     SELECT @pid, m.id, 5, 0, 5, 0, 0, 0, 0, N'pending', NULL FROM dbo.modules m WHERE m.projectType = @type ORDER BY m.moduleNumber, m.id`,
     { pid: p.id, type: String(p.projectType || 'residential') },
   )
   await audit(user, 'Project Created', `${user!.name} created project "${p.name}".`, p.id)
@@ -190,7 +190,7 @@ route('GET', '/project/:id/module', async ({ params, query: qs }) => {
        FROM dbo.modules m
        LEFT JOIN dbo.projectModules pm ON pm.moduleId = m.id AND pm.projectId = @pid
       WHERE m.projectType = @type
-      ORDER BY m.id`,
+      ORDER BY m.moduleNumber, m.id`,
     { pid: p.id, type },
   )
   const ids = mods.map((m) => Number(m.id))

@@ -10,6 +10,7 @@ import unitLevel from './unit-level.js'
 import { idSpecifications, commonArea } from './specs.js'
 import landscape from './landscape.js'
 import serviceDesign from './service-design.js'
+import facade from './facade.js'
 import structure from './structure.js'
 import mep from './mep.js'
 import consultant from './consultant.js'
@@ -29,6 +30,7 @@ export const MODULE_RENDERERS: Record<string, ModuleRenderer> = {
   'Common Area': commonArea,
   'Landscape & Amenities': landscape,
   'Service Design Consideration': serviceDesign,
+  'Façade & Envelope': facade,
   'Contracting Strategy': contracting,
   'Consultant Strategy': consultant,
   'Phasing Plan': phasingPlan,

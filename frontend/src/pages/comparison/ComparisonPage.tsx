@@ -1,6 +1,6 @@
 /**
  * Module 21 "Comparison": /dashboard/project/:projectId/comparison?ids=1,2,3   (old links: ?b=<id>)
- * 2–5 projects side by side (management view) with morphing values and bars, the portfolio reference for every row
+ * 2–5 projects side by side (management view) with morphing values (numbers only), key-ratio drop cards per project, the portfolio reference for every row
  * (average, best project), an efficiency radar, saved comparison sets and a PDF in the DPR format.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -11,23 +11,26 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { downloadBlob } from '@/lib/download'
 import { cn } from '@/lib/utils'
-import { barShares, buildComparison, fmtNum, type CompareInput, type CompareRow, type Comparison, type RowStat } from '@/lib/projectComparison'
+import { buildComparison, fmtNum, type CompareInput, type CompareRow, type Comparison, type RowStat } from '@/lib/projectComparison'
 import {
   deleteComparisonSet,
   downloadComparisonPdf,
   getComparisonInputs,
   getComparisonProjects,
   getComparisonSets,
+  getKeyRatios,
   getPortfolioRef,
   lastCompared,
   rememberCompared,
   saveComparisonSet,
   type ComparisonSet,
   type PortfolioRef,
+  type ProjectKeyRatios,
   type ProjectOption,
 } from '@/api/comparison'
 import { getProjectHealth, type PortfolioProject } from '@/api/portfolio'
 import { HealthRing, StatusPill } from '@/components/portfolio/HealthBits'
+import KeyRatioCard from '@/components/comparison/KeyRatioCard'
 
 /** one colour per project slot (same as the PDF) */
 const SLOT = ['#1A3566', '#5B8FC7', '#0E7490', '#B45309', '#7C3AED']
@@ -76,14 +79,6 @@ function Morph({ text, n, className }: { text: string; n?: number | null; classN
   )
 }
 
-function Bar({ share, color }: { share: number; color: string }) {
-  return (
-    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-      <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: `${Math.round(share * 100)}%`, background: color }} />
-    </div>
-  )
-}
-
 /* ------------------------------------------------------------------ page */
 export default function ComparisonPage() {
   const { projectId = '' } = useParams()
@@ -108,6 +103,8 @@ export default function ComparisonPage() {
   const [downloading, setDownloading] = useState(false)
   const [active, setActive] = useState('')
   const [saveName, setSaveName] = useState<string | null>(null)
+  const [keyRatios, setKeyRatios] = useState<Record<string, ProjectKeyRatios>>({})
+  const [krOpen, setKrOpen] = useState<Record<string, boolean>>({})
 
   const valid = ids.filter((x, i) => x && ids.indexOf(x) === i)
 
@@ -153,6 +150,9 @@ export default function ComparisonPage() {
         toast.error('Failed to load the comparison')
       })
       .finally(() => setLoading(false))
+    getKeyRatios(valid)
+      .then((k) => setKeyRatios((m) => ({ ...m, ...k })))
+      .catch(() => undefined)
     valid.forEach((id) => {
       if (!health[id])
         getProjectHealth(id)
@@ -294,35 +294,47 @@ export default function ComparisonPage() {
 
       {cmp && (
         <div className={cn('space-y-6 transition-opacity duration-300', loading && 'opacity-60')}>
-          {/* hero cards with health */}
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cmp.heads.length}, minmax(0, 1fr))` }}>
+          {/* hero cards with health, and each project's key ratios as a drop card underneath */}
+          <div className="grid gap-4 items-start" style={{ gridTemplateColumns: `repeat(${cmp.heads.length}, minmax(0, 1fr))` }}>
             {cmp.heads.map((h, i) => (
-              <Hero key={i} p={h} tag={`Project ${String.fromCharCode(65 + i)}`} color={SLOT[i]} health={health[h.id]} compact={cmp.heads.length > 3} />
+              <div key={i} className="space-y-3 min-w-0">
+                <Hero p={h} tag={`Project ${String.fromCharCode(65 + i)}`} color={SLOT[i]} health={health[h.id]} compact={cmp.heads.length > 3} />
+                <KeyRatioCard data={keyRatios[h.id]} color={SLOT[i]} open={!!krOpen[h.id]} onToggle={() => setKrOpen((o) => ({ ...o, [h.id]: !o[h.id] }))} />
+              </div>
             ))}
+          </div>
+          <div className="flex justify-end -mt-3">
+            <button
+              onClick={() => {
+                const all = cmp.heads.every((h) => krOpen[h.id])
+                setKrOpen(Object.fromEntries(cmp.heads.map((h) => [h.id, !all])))
+              }}
+              className="text-[11px] font-bold text-[#00509d] hover:underline"
+            >
+              {cmp.heads.every((h) => krOpen[h.id]) ? 'Close all key ratios' : 'Open all key ratios'}
+            </button>
           </div>
 
           {/* key figures + radar */}
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
             <div className="xl:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4 content-start">
-              {cmp.kpis.map((k, ki) => {
-                const s = barShares(k.nums)
-                return (
-                  <div key={k.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cmp-rise" style={{ animationDelay: `${ki * 40}ms` }}>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      {k.label}
-                      {k.unit ? ` (${k.unit})` : ''}
-                    </p>
-                    <div className="mt-2 space-y-1.5">
-                      {k.values.map((v, i) => (
-                        <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-3">
-                          <Bar share={s[i]} color={SLOT[i]} />
-                          <Morph text={v} n={k.nums[i]} className="text-sm font-black min-w-[80px] text-right" />
-                        </div>
-                      ))}
-                    </div>
+              {cmp.kpis.map((k, ki) => (
+                <div key={k.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cmp-rise" style={{ animationDelay: `${ki * 40}ms` }}>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                    {k.label}
+                    {k.unit ? ` (${k.unit})` : ''}
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    {k.values.map((v, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: SLOT[i] }} />
+                        <span className="text-[11px] text-gray-500 truncate flex-1">{cmp.heads[i]?.name}</span>
+                        <Morph text={v} n={k.nums[i]} className="text-sm font-black text-right" />
+                      </div>
+                    ))}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
             <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-baseline justify-between">
@@ -533,7 +545,6 @@ function Hero({ p, tag, color, health, compact }: { p: Comparison['heads'][numbe
 
 function Scorecard({ cmp }: { cmp: Comparison }) {
   const { wins, tie, measured } = cmp.score
-  const total = Math.max(1, wins.reduce((a, b) => a + b, 0) + tie)
   const max = Math.max(...wins)
   const top = cmp.heads.filter((_, i) => wins[i] === max)
   const lead = !measured
@@ -553,12 +564,6 @@ function Scorecard({ cmp }: { cmp: Comparison }) {
               {lead}
             </span>
           </p>
-          <div className="mt-4 h-3 rounded-full overflow-hidden flex bg-white/10">
-            {wins.map((w, i) => (
-              <div key={i} className="h-full transition-[width] duration-700 ease-out" style={{ width: `${(w / total) * 100}%`, background: i === 0 ? '#FFFFFF' : SLOT[i] }} />
-            ))}
-            <div className="h-full transition-[width] duration-700 ease-out bg-white/30" style={{ width: `${(tie / total) * 100}%` }} />
-          </div>
           <p className="text-[11px] text-[#A8C8E8] mt-2">Rows where a better value is defined (efficiency, cost, parking, delivery): {measured}</p>
         </div>
         <div className="flex flex-wrap gap-3 shrink-0">
@@ -586,7 +591,6 @@ function Count({ n, label, color }: { n: number; label: string; color: string })
 }
 
 function RowView({ r, n, stat }: { r: CompareRow; n: number; stat?: RowStat }) {
-  const share = barShares(r.nums)
   const numeric = r.nums.filter((x) => x !== null).length >= 2
   const same = !numeric && r.values.every((v) => v !== '-' && v.toLowerCase() === r.values[0].toLowerCase())
   return (
@@ -612,11 +616,6 @@ function RowView({ r, n, stat }: { r: CompareRow; n: number; stat?: RowStat }) {
               <Morph text={v} n={numeric ? r.nums[i] : null} className={cn('text-[14px] font-bold truncate', win ? 'text-green-600' : 'text-gray-800')} />
               {win && <span className="cmp-morph shrink-0 text-[9px] font-black uppercase tracking-wider text-green-700 bg-green-100 rounded-full px-2 py-0.5">Best</span>}
             </div>
-            {numeric && r.nums[i] !== null && (
-              <div className="mt-1.5">
-                <Bar share={share[i]} color={SLOT[i]} />
-              </div>
-            )}
           </div>
         )
       })}

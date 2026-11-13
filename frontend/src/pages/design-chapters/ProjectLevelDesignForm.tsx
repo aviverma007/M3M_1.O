@@ -173,7 +173,14 @@ export default function ProjectLevelDesignForm() {
           />
         </div>
         <div className="lg:col-span-7 space-y-6">
-          <OutputPanel keyRatio={keyRatio} area={area} extra={extra} clusters={clusters} benchmarks={benchmarks} />
+          <OutputPanel
+            keyRatio={keyRatio}
+            area={area}
+            extra={extra}
+            clusters={clusters}
+            benchmarks={benchmarks}
+            landscapeSelected={(base?.summary?.landscapeAmenitiesData as { selectedAmenities?: unknown } | undefined)?.selectedAmenities}
+          />
         </div>
       </div>
 

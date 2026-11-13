@@ -10,6 +10,8 @@ import { DateCell, ListCard, ListPageHeader, SubmitFooter, greenAddBtn, thCls } 
 import { errorMessage, saveSummary, useSummaryLoader } from '@/api/chapters-b'
 import { cn } from '@/lib/utils'
 import type { ConsultantRow } from '@/types/chapters-b'
+import { buaOf, consultantFees, rupees, rupeesShort } from '@/lib/fees'
+import { fmtNum } from '@/lib/projectComparison'
 
 const DEFAULT_CONSULTANTS = [
   'Architect',
@@ -43,10 +45,12 @@ export default function ConsultantStrategyForm() {
   const navigate = useNavigate()
   const [saving, setSaving] = useState(false)
   const [rows, setRows] = useState<ConsultantRow[]>([])
+  const [summary, setSummary] = useState<Record<string, unknown> | null>(null)
 
   const loading = useSummaryLoader(
     projectId,
     (s) => {
+      setSummary((s as Record<string, unknown>) ?? null)
       if (s?.consultantStrategyData && s.consultantStrategyData.length > 0) setRows(s.consultantStrategyData)
       else setRows(DEFAULT_CONSULTANTS.map((t, i) => blank(i, t)))
     },
@@ -54,6 +58,8 @@ export default function ConsultantStrategyForm() {
   )
 
   const update = (id: number, key: keyof ConsultantRow, value: string) => setRows((r) => r.map((x) => (x.id === id ? { ...x, [key]: value } : x)))
+  const fees = consultantFees(summary, rows)
+  const bua = buaOf(summary)
 
   const submit = async () => {
     setSaving(true)
@@ -86,12 +92,14 @@ export default function ConsultantStrategyForm() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#00509d] text-white">
-              <th className={`${thCls} w-[18%]`}>Types of Consultants Needed</th>
-              <th className={`${thCls} w-[15%]`}>Name</th>
-              <th className={`${thCls} w-[12%]`}>Status</th>
-              <th className={`${thCls} w-[15%]`}>Planned Date</th>
-              <th className={`${thCls} w-[15%]`}>Actual Date</th>
-              <th className={`${thCls} w-[20%]`}>Remarks</th>
+              <th className={`${thCls} w-[15%]`}>Types of Consultants Needed</th>
+              <th className={`${thCls} w-[12%]`}>Name</th>
+              <th className={`${thCls} w-[11%]`}>Status</th>
+              <th className={`${thCls} w-[11%]`}>Planned Date</th>
+              <th className={`${thCls} w-[11%]`}>Actual Date</th>
+              <th className={`${thCls} w-[13%]`}>Order Value (Rs.)</th>
+              <th className={`${thCls} w-[9%] text-right`}>Rs. / sq ft BUA</th>
+              <th className={`${thCls} w-[14%]`}>Remarks</th>
               <th className={`${thCls} w-12 text-center`} />
             </tr>
           </thead>
@@ -131,6 +139,31 @@ export default function ConsultantStrategyForm() {
                   <DateCell value={t.actualDate} onChange={(v) => update(t.id, 'actualDate', v)} className={`${cellInput} pl-3 pr-8`} />
                 </td>
                 <td className="px-4 py-3">
+                  {(() => {
+                    const appointed = t.status === 'Appointed'
+                    const v = parseFloat(String(t.fee ?? '').replace(/,/g, ''))
+                    return (
+                      <div title={appointed ? undefined : 'Mark the consultant Appointed to enter the order value'}>
+                        <Input
+                          value={t.fee ?? ''}
+                          onChange={(e) => update(t.id, 'fee', e.target.value.replace(/[^0-9.,]/g, ''))}
+                          disabled={!appointed}
+                          inputMode="decimal"
+                          className={cn(cellInput, 'text-right', !appointed && 'bg-gray-100 text-gray-400 cursor-not-allowed')}
+                          placeholder={appointed ? 'e.g. 2500000' : 'Not appointed'}
+                        />
+                        {appointed && Number.isFinite(v) && v > 0 && <p className="text-[10px] text-gray-400 text-right mt-0.5">Rs. {rupeesShort(v)}</p>}
+                      </div>
+                    )
+                  })()}
+                </td>
+                <td className="px-4 py-3 text-right text-[12px] font-bold text-[#1A3566] whitespace-nowrap">
+                  {(() => {
+                    const line = fees.lines[rows.indexOf(t)]
+                    return line?.perSqft !== null && line?.perSqft !== undefined ? fmtNum(line.perSqft, 2) : <span className="text-gray-300 font-normal">—</span>
+                  })()}
+                </td>
+                <td className="px-4 py-3">
                   <Input value={t.remarks} onChange={(e) => update(t.id, 'remarks', e.target.value)} className={cellInput} placeholder="Enter Remarks" />
                 </td>
                 <td className="px-4 py-3 text-center">
@@ -141,6 +174,19 @@ export default function ConsultantStrategyForm() {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="bg-[#1A3566] text-white">
+              <td colSpan={5} className="px-4 py-3 text-[12px] font-black uppercase tracking-wider">
+                Total consultant fees ({fees.lines.filter((l) => l.fee !== null).length} appointed with value)
+                <span className="block text-[10px] font-semibold normal-case tracking-normal text-[#A8C8E8]">
+                  {bua ? `Built Up Area ${fmtNum(bua, 0)} sq ft (Module 6)` : 'Enter Built Up Area in Module 6 to see Rs. per sq ft'}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-right text-[13px] font-black whitespace-nowrap">Rs. {rupees(fees.total)}</td>
+              <td className="px-4 py-3 text-right text-[13px] font-black whitespace-nowrap">{fees.perSqft !== null ? fmtNum(fees.perSqft, 2) : '—'}</td>
+              <td colSpan={2} className="px-4 py-3 text-[11px] text-[#A8C8E8]">{fees.total !== null ? `= Rs. ${rupeesShort(fees.total)}` : ''}</td>
+            </tr>
+          </tfoot>
         </table>
       </ListCard>
       <SubmitFooter saving={saving} onSubmit={submit} />

@@ -1,14 +1,14 @@
 /*
  * ?focus=<field label> on any page: once the page has rendered, scroll to the field with that label and flash it.
  * Used by the Portfolio page's links ("Floor to Floor Height Apt 3450 m vs 3 to 3.15" -> Module 6, that field).
- * Collapsed sections ("Additional Elements 2/2" …) are opened when the field isn't visible yet.
+ * Collapsed sections ("Cluster level Parameters" …) are opened when the field isn't visible yet.
  */
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
-const SECTION_TOGGLES = /^(area statement|additional elements( 2\/2)?|key ratio)$/i
+const SECTION_TOGGLES = /^(area statement|additional elements( 2\/2)?|cluster level parameters|club & amenities|key ratio)$/i
 
 function findField(target: string): HTMLElement | null {
   const t = norm(target)

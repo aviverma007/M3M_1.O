@@ -10,7 +10,9 @@ import { SaveProjectFooter } from '@/components/design-chapters-b/PageChrome'
 import { errorMessage, saveSummary, useSummaryLoader } from '@/api/chapters-b'
 import { cn } from '@/lib/utils'
 import type { FieldValue } from '@/types/chapters-b'
-import { SERVICE_DESIGN, serviceDetailText, type ServiceParam as Param } from '@/components/design-chapters-b/serviceCatalogue'
+import { SERVICE_DESIGN, benchText, serviceDetailText, type ServiceParam as Param } from '@/components/design-chapters-b/serviceCatalogue'
+import { servicesContextOf, servicesOutputRows, servicesOutputs } from '@/lib/services'
+import { fmtNum } from '@/lib/projectComparison'
 
 const OTHER_RE = /^(other|others|any other|any others)$/
 
@@ -19,14 +21,25 @@ export default function ServiceDesignForm() {
   const navigate = useNavigate()
   const [saving, setSaving] = useState(false)
   const [values, setValues] = useState<Record<string, FieldValue>>({})
+  const [summary, setSummary] = useState<Record<string, unknown> | null>(null)
 
-  const loading = useSummaryLoader(projectId, (s) => s?.serviceDesignData && setValues(s.serviceDesignData), { label: 'service design data' })
+  const loading = useSummaryLoader(
+    projectId,
+    (s) => {
+      setSummary((s as Record<string, unknown>) ?? null)
+      if (s?.serviceDesignData) setValues(s.serviceDesignData)
+    },
+    { label: 'service design data' },
+  )
+  const sizing = servicesOutputRows(servicesOutputs(values, servicesContextOf(summary)))
   const set = (name: string, v: FieldValue) => setValues((p) => ({ ...p, [name]: v }))
 
   /** null = not filled, true = matches benchmark, false = deviates (strict string equality, as original) */
   const matches = (p: Param) => {
     const v = values[p.name]
-    return v === undefined || v === '' ? null : String(v) === String(p.benchmark)
+    const b = benchText(p)
+    if (!b || v === undefined || v === '') return null
+    return String(v === true ? 'Yes' : v) === b || String(v) === String(p.benchmark)
   }
 
   const save = async () => {
@@ -87,9 +100,11 @@ export default function ServiceDesignForm() {
                       <td className="px-6 py-6">
                         <span className={`text-[12px] font-medium ${m === false ? 'text-red-600' : 'text-gray-600'}`}>{p.label}</span>
                         {m === false && <span className="ml-2 text-[10px] text-red-500 font-semibold">● Benchmark</span>}
-                        <p className="text-[10px] mt-1 text-gray-400">
-                          Req: <span className="font-semibold text-blue-400">{p.benchmark === true ? 'Yes' : String(p.benchmark)}</span>
-                        </p>
+                        {benchText(p) && (
+                          <p className="text-[10px] mt-1 text-gray-400">
+                            Req: <span className="font-semibold text-blue-400">{benchText(p)}</span>
+                          </p>
+                        )}
                       </td>
                       <td className="px-6 py-6">
                         <div className="space-y-2">
@@ -109,6 +124,25 @@ export default function ServiceDesignForm() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-24 -mt-14">
+        <div className="bg-[#1A3566] px-6 py-3">
+          <h2 className="text-white font-semibold uppercase tracking-wider text-xs">Services Sizing — Calculated Output</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 divide-x divide-y divide-gray-100">
+          {sizing.map((o) => (
+            <div key={o.label} className="p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{o.label}</p>
+              <p className="mt-1">
+                <span className={cn('text-lg font-black', o.value === null ? 'text-gray-300' : 'text-[#1A3566]')}>{o.value === null ? '—' : fmtNum(o.value, o.dp)}</span>
+                <span className="text-[10px] text-gray-400 ml-1">{o.unit}</span>
+              </p>
+              {o.note && <p className="text-[10px] text-gray-400">{o.note}</p>}
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px] text-gray-400 px-6 py-3 border-t">Uses Module 6 No. of Units and Total Number of Cars. The new services rows have no company benchmark yet, so they show without a Req: line.</p>
       </div>
 
       <SaveProjectFooter saving={saving} onSave={save} innerClassName="w-full px-6 flex justify-end gap-3" />

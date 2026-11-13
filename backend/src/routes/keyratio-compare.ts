@@ -19,6 +19,8 @@ import { fail, ok, route } from '../http/router.js'
 import { audit } from '../http/helpers.js'
 import type { AuthUser } from '../http/auth.js'
 import { moduleImporters } from './shared/module-importers.js'
+import { loadDprInput } from '../dpr/load.js'
+import { projectLevelKeyRatios } from '../dpr/modules/project-level.js'
 import {
   checkValidity,
   commercialValue,
@@ -461,3 +463,67 @@ export async function importKeyRatioCsv({ projectId, moduleId, text, user }: { p
   return saveResidential({ project_id: p.id, module_id: moduleId, ...fields }, true, user)
 }
 moduleImporters.set('Key Ratio', importKeyRatioCsv)
+
+
+/* ------------------------------------------------------------------ comparison: key-ratio drop cards */
+type KrRow = { group: string; label: string; value: string; unit: string; req?: string; ok?: boolean }
+
+/** benchmark range for the project's category ("0.64-0.7") and whether the value is inside it */
+function rangeCheck(value: unknown, range: unknown) {
+  const v = parseFloat(String(value ?? '').replace(/,/g, ''))
+  const m = /^\s*(-?[0-9.]+)\s*-\s*(-?[0-9.]+)\s*$/.exec(String(range ?? ''))
+  if (!m || !Number.isFinite(v)) return undefined
+  return v >= parseFloat(m[1]) && v <= parseFloat(m[2])
+}
+const shown = (v: unknown) => {
+  if (v === null || v === undefined || v === '') return ''
+  const x = Number(v)
+  return Number.isFinite(x) ? String(Math.round(x * 1000) / 1000) : String(v)
+}
+
+/** Module 1 Key Ratio (residential keyRatios / commercial comKeyRatios) as flat rows with the category's benchmark */
+async function module1Rows(p: Row): Promise<KrRow[]> {
+  const cat = String(p.category ?? '').toLowerCase().replace(/[-\s]+/g, '_')
+  const out: KrRow[] = []
+  if (String(p.projectType) === 'commercial') {
+    if (!(await comRecord(p.id))) return out
+    const { keyRatioData } = await commercialPayload(p)
+    for (const [tab, secs] of Object.entries(keyRatioData.outputData as Record<string, Record<string, Obj[]>>))
+      for (const [sec, fields] of Object.entries(secs))
+        for (const f of fields) {
+          const value = shown(f.field_value)
+          if (!value) continue
+          const req = String(f[cat] ?? f.high_street ?? '') || undefined
+          out.push({ group: `${tab} · ${sec}`, label: String(f.field_name), value, unit: String(f.units ?? ''), req, ok: rangeCheck(f.field_value, req) })
+        }
+    return out
+  }
+  if (!(await residentialRecord(p.id))) return out
+  const { keyCalFields } = await residentialPayload(p)
+  for (const [tab, secs] of Object.entries(keyCalFields))
+    for (const [sec, fields] of Object.entries(secs))
+      for (const f of fields as unknown as Obj[]) {
+        const value = shown(f.value)
+        if (!value) continue
+        const req = String(f[cat] ?? f.premium ?? '') || undefined
+        out.push({ group: `${tab} · ${sec}`, label: String(f.field_name), value, unit: String(f.units ?? ''), req, ok: rangeCheck(f.value, req) })
+      }
+  return out
+}
+
+/** GET /comparison/key-ratios?ids=1,2 -> { [id]: { module6: groups[], module1: rows[] } } */
+route('GET', '/comparison/key-ratios', async ({ query: q }) => {
+  const ids = String(q.ids ?? '')
+    .split(',')
+    .map((x) => Number(x))
+    .filter((x) => Number.isInteger(x) && x > 0)
+    .slice(0, 5)
+  const out: Record<string, unknown> = {}
+  for (const id of ids) {
+    const p = await project(id)
+    if (!p) continue
+    const input = await loadDprInput(p)
+    out[id] = { module6: projectLevelKeyRatios(input).filter((g) => g.rows.length), module1: await module1Rows(p) }
+  }
+  return ok(out)
+})

@@ -9,7 +9,8 @@ export type ServiceParam = {
   type: 'select' | 'input' | 'switch'
   options?: string[]
   unit?: string
-  benchmark: string | boolean
+  /** company standard; undefined = no benchmark (value shown neutral, no "Req:") */
+  benchmark?: string | boolean
   detail?: ServiceDetail
   /** false = the DPR shows no "Req:" line, only the value (green when it matches the benchmark) and the detail line */
   reqInReport?: boolean
@@ -139,4 +140,76 @@ export const SERVICE_DESIGN: { category: string; parameters: ServiceParam[] }[] 
       { name: 'fibreConnectivity', label: 'Fibre Connectivity', type: 'switch', benchmark: true, reqInReport: false },
     ],
   },
+  /* ---- Services sizing (Nov 2026): no company benchmarks yet, so values are shown neutral ---- */
+  {
+    category: 'Electrical Load & Backup',
+    parameters: [
+      { name: 'loadPerUnit', label: 'Connected Load per Unit', type: 'input', unit: 'kVA', reqInReport: false },
+      { name: 'totalConnectedLoad', label: 'Total Connected Load', type: 'input', unit: 'kVA', reqInReport: false },
+      {
+        name: 'transformers',
+        label: 'No. of Transformers',
+        type: 'input',
+        reqInReport: false,
+        detail: { kind: 'input', name: 'transformerCapacity', placeholder: 'Capacity of each, e.g. 1600', unit: 'kVA', prefix: 'Each: ' },
+      },
+      { name: 'dgBackupUnits', label: 'DG Backup — Units', type: 'input', unit: '%', reqInReport: false },
+      { name: 'dgBackupCommon', label: 'DG Backup — Common Areas', type: 'input', unit: '%', reqInReport: false },
+    ],
+  },
+  {
+    category: 'Water',
+    parameters: [
+      { name: 'waterDemandLpcd', label: 'Water Demand', type: 'input', unit: 'LPCD', reqInReport: false },
+      { name: 'ugTankCapacity', label: 'Underground Tank Capacity', type: 'input', unit: 'KL', reqInReport: false },
+      { name: 'ohTankCapacity', label: 'Overhead Tank Capacity', type: 'input', unit: 'KL', reqInReport: false },
+      { name: 'wtpCapacity', label: 'WTP Capacity', type: 'input', unit: 'KLD', reqInReport: false },
+      { name: 'recycledWaterPct', label: 'STP Water Reused (flushing / landscape)', type: 'input', unit: '%', reqInReport: false },
+      { name: 'rwhPits', label: 'Rainwater Harvesting Pits', type: 'input', unit: 'nos', reqInReport: false },
+    ],
+  },
+  {
+    category: 'Energy & Gas',
+    parameters: [
+      { name: 'solarPvKwp', label: 'Solar PV', type: 'input', unit: 'kWp', reqInReport: false },
+      { name: 'hotWaterSource', label: 'Hot Water Source', type: 'select', options: ['Solar', 'Heat Pump', 'Electric Geyser', 'Gas Geyser', 'Not Provided'], reqInReport: false },
+      { name: 'pngPipeline', label: 'PNG Gas Pipeline', type: 'switch', reqInReport: false },
+    ],
+  },
+  {
+    category: 'Fire Safety',
+    parameters: [
+      { name: 'sprinklers', label: 'Sprinklers', type: 'select', options: ['Full Building', 'Basement & Common Areas Only', 'Not Provided'], reqInReport: false },
+      { name: 'wetRiser', label: 'Wet Riser', type: 'switch', reqInReport: false },
+      { name: 'refugeFloors', label: 'Refuge Floors', type: 'input', unit: 'nos', reqInReport: false },
+    ],
+  },
+  {
+    category: 'EV, Basement Air & Waste',
+    parameters: [
+      { name: 'evChargerPct', label: 'EV Charging Points', type: 'input', unit: '% of car parks', reqInReport: false },
+      { name: 'jetFans', label: 'Basement Jet Fans', type: 'switch', reqInReport: false },
+      { name: 'coSensors', label: 'Basement CO Sensors', type: 'switch', reqInReport: false },
+      { name: 'garbageChute', label: 'Garbage Chute', type: 'switch', reqInReport: false },
+      {
+        name: 'owc',
+        label: 'Organic Waste Converter',
+        type: 'switch',
+        reqInReport: false,
+        detail: { kind: 'input', name: 'owcCapacity', placeholder: 'Capacity, e.g. 500', unit: 'kg/day', prefix: 'Capacity: ', onlyWhenYes: true },
+      },
+    ],
+  },
+  {
+    category: 'Security & Smart Features',
+    parameters: [
+      { name: 'cctv', label: 'CCTV', type: 'select', options: ['Perimeter + Common Areas + Basements', 'Perimeter + Common Areas', 'Perimeter Only', 'Not Provided'], reqInReport: false },
+      { name: 'videoDoorPhone', label: 'Video Door Phone', type: 'switch', reqInReport: false },
+      { name: 'bms', label: 'Building Management System (BMS)', type: 'switch', reqInReport: false },
+      { name: 'smartHomeLevel', label: 'Smart Home Level', type: 'select', options: ['None', 'Basic (lighting)', 'Standard (lighting + AC)', 'Full Automation'], reqInReport: false },
+    ],
+  },
 ]
+
+/** benchmark text ("Yes", "6", …), '' when the parameter has no benchmark */
+export const benchText = (p: ServiceParam) => (p.benchmark === undefined || p.benchmark === '' ? '' : p.benchmark === true ? 'Yes' : String(p.benchmark))

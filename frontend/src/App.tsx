@@ -46,6 +46,7 @@ const P = {
   ExportConfiguration: lazy(() => import('@/pages/design-chapters/ExportConfigurationForm')),
   StructureChapter: lazy(() => import('@/pages/design-chapters/StructureChapterForm')),
   MEPChapter: lazy(() => import('@/pages/design-chapters/MEPChapterForm')),
+  Facade: lazy(() => import('@/pages/design-chapters/FacadeForm')),
   RolesAccess: lazy(() => import('@/pages/admin/RolesAccessPage')),
   AuditLogs: lazy(() => import('@/pages/admin/AuditLogsPage')),
 }
@@ -120,6 +121,7 @@ export default function App() {
             <Route path="design-chapters/common-area" element={L(P.CommonArea)} />
             <Route path="design-chapters/landscape-amenities" element={L(P.LandscapeAmenities)} />
             <Route path="design-chapters/service-design" element={L(P.ServiceDesign)} />
+            <Route path="design-chapters/facade" element={L(P.Facade)} />
             <Route path="design-chapters/contracting-strategy" element={L(P.ContractingStrategy)} />
             <Route path="design-chapters/consultant-strategy" element={L(P.ConsultantStrategy)} />
             <Route path="design-chapters/phasing-plan" element={L(P.PhasingPlan)} />

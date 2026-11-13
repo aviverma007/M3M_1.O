@@ -10,10 +10,12 @@ import type { Project } from '@/types'
 
 /** chapter ids each department may open (same table as the original) */
 const DEPARTMENT_CHAPTERS: Record<string, number[]> = {
-  super_admin: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
-  design: [21, 22, 23, 24, 29, 30],
+  super_admin: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 37, 31, 32, 33, 34, 35, 36],
+  design: [21, 22, 23, 24, 29, 30, 37],
+  design_arch: [22, 23, 24, 27, 28, 29, 30, 37, 32, 33, 35],
   structure: [25],
-  mep: [26],
+  mep: [26, 37],
+  design_mep: [26, 37],
   interior: [27, 28],
   pmo: [31, 32, 33, 34, 35, 36, 40],
 }
@@ -26,6 +28,7 @@ const CHAPTERS: { id: number; name: string; slug: string }[] = [
   { id: 28, name: 'Common Area', slug: 'common-area' },
   { id: 29, name: 'Landscape & Amenities', slug: 'landscape-amenities' },
   { id: 30, name: 'Service Design Consideration', slug: 'service-design' },
+  { id: 37, name: 'Façade & Envelope', slug: 'facade' },
   { id: 31, name: 'Contracting Strategy', slug: 'contracting-strategy' },
   { id: 32, name: 'Consultant Strategy', slug: 'consultant-strategy' },
   { id: 33, name: 'Phasing Plan', slug: 'phasing-plan' },

@@ -9,6 +9,7 @@ import PackagesBoard from '@/components/design-chapters-b/PackagesBoard'
 import ContractorRepository from '@/components/design-chapters-b/ContractorRepository'
 import { errorMessage, saveSummary, useSummaryLoader } from '@/api/chapters-b'
 import type { ContractPackage, Contractor } from '@/types/chapters-b'
+import { buaOf } from '@/lib/fees'
 
 const DEFAULT_ELEMENTS = ['Facade', 'Fire Fighting', 'Lift & Escalator', 'HVAC', 'Structure']
 
@@ -31,10 +32,12 @@ export default function ContractingStrategyForm() {
   const [contractors, setContractors] = useState<Contractor[]>(DEFAULT_CONTRACTORS)
   const [elements, setElements] = useState<string[]>([...DEFAULT_ELEMENTS])
   const [packages, setPackages] = useState<ContractPackage[]>([{ id: 1, name: 'Package 1', elements: [] }])
+  const [bua, setBua] = useState<number | null>(null)
 
   const loading = useSummaryLoader(
     projectId,
     (s) => {
+      setBua(buaOf(s as Record<string, unknown> | null))
       const d = s?.contractingStrategyData
       if (!d) {
         setElements([...DEFAULT_ELEMENTS])
@@ -69,7 +72,7 @@ export default function ContractingStrategyForm() {
       <div className="max-w-[1500px] mx-auto mb-6">
         <BackLink label="Contracting Strategy & Repository" animated={false} />
         <h1 className="text-2xl font-bold text-gray-800 mb-8">Contracting Strategy</h1>
-        <PackagesBoard elements={elements} setElements={setElements} packages={packages} setPackages={setPackages} />
+        <PackagesBoard elements={elements} setElements={setElements} packages={packages} setPackages={setPackages} bua={bua} />
       </div>
       <ContractorRepository contractors={contractors} onChange={setContractors} />
       <div className="max-w-[1500px] mx-auto mt-8 flex justify-end gap-4 pb-12">

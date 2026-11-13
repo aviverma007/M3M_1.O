@@ -1,5 +1,7 @@
 /* Service Design Considerations — "Parameter | Details" table with Req: lines. */
-import { SERVICE_DESIGN, serviceDetailText } from '@/components/design-chapters-b/serviceCatalogue'
+import { SERVICE_DESIGN, benchText as benchOf, serviceDetailText } from '@/components/design-chapters-b/serviceCatalogue'
+import { servicesContextOf, servicesOutputRows, servicesOutputs } from '@/lib/services'
+import { fmtNum } from '@/lib/projectComparison'
 import { contentPage, emptyMessage } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { DprInput } from '../index.js'
@@ -50,11 +52,12 @@ export function serviceDesignSections(input: DprInput): ParamSection[] {
       .filter((p) => !isEmpty(data?.[p.name]))
       .map((p): ParamRow => {
         const v = data![p.name]
-        const benchText = String(p.benchmark === true ? 'Yes' : p.benchmark)
+        const benchText = benchOf(p)
         if (p.reqInReport === false) {
-          // newer parameters: value (green when it matches the benchmark, red when not) + grey detail line, no "Req:"
+          // newer parameters: value (green when it matches the benchmark, red when not; neutral without one) + grey detail line, no "Req:"
           const note = serviceDetailText(p, data)
-          return { label: p.label, value: show(v), unit: p.unit, note: note || undefined, ok: show(v) === benchText }
+          const value = show(v)
+          return { label: p.label, value, unit: p.unit && /^-?[0-9.,]+$/.test(value) ? p.unit : undefined, note: note || undefined, ok: benchText ? value === benchText : undefined }
         }
         const rule = RULES[p.name] ?? { req: String(p.benchmark === true ? 'Yes' : p.benchmark), ok: (x: unknown) => show(x) === String(p.benchmark === true ? 'Yes' : p.benchmark) }
         const value = show(v)
@@ -62,6 +65,11 @@ export function serviceDesignSections(input: DprInput): ParamSection[] {
         return { label: rule.label ?? p.label, value, unit, req: rule.req, ok: rule.req === undefined ? undefined : rule.ok?.(v) ?? undefined }
       }),
   }))
+  // services sizing outputs (Module 6 units / car parks)
+  const out = servicesOutputRows(servicesOutputs(data, servicesContextOf(input.summary)))
+    .filter((o) => o.value !== null)
+    .map((o): ParamRow => ({ label: o.label, value: fmtNum(o.value, o.dp), unit: o.unit, note: o.note }))
+  if (out.length) sections.push({ title: 'Services Sizing — Calculated Output', rows: out })
   return sections
 }
 

@@ -3,7 +3,7 @@
  * (A4 landscape, same cover gradient, navy header/footer chrome, General Sans, same colours).
  * Rows, winners and the portfolio reference come from frontend/src/lib/projectComparison.ts, the logic the page uses.
  */
-import { buildComparison, barShares, fmtNum, type CompareInput, type CompareRow, type Comparison, type RowStat } from '@/lib/projectComparison'
+import { buildComparison, fmtNum, type CompareInput, type CompareRow, type Comparison, type RowStat } from '@/lib/projectComparison'
 import { C, H, MARGIN, W, brandFor, contentPage, createDoc, fmtDate, thankYouPage, toBuffer, txt, type Ctx, type Doc } from './doc.js'
 
 const X = MARGIN
@@ -90,21 +90,18 @@ function summaryPage(ctx: Ctx, cmp: Comparison) {
     txt(doc, 'VS', W / 2 - 22, 119, 'B', 13, C.navy, { width: 44, align: 'center' })
   }
 
-  // key figures: label column + one column per project with a bar
+  // key figures: label column + one column per project (numbers only)
   let y = 190
   txt(doc, 'Key Figures', X, y, 'B', 12, C.text)
   y += 22
   const lw = 150
   const vw = (TW - lw) / n
   for (const k of cmp.kpis) {
-    const share = barShares(k.nums)
     doc.rect(X, y, TW, 28).fill(ALT)
     txt(doc, k.label + (k.unit ? ` (${k.unit})` : ''), X + 10, y + 9, 'S', 8.5, C.text, { width: lw - 16 })
     k.values.forEach((v, i) => {
       const x0 = X + lw + i * vw + 8
-      txt(doc, v, x0, y + 4, 'B', 9.5, SLOT_COLORS[i], { width: vw - 16, ellipsis: true })
-      doc.roundedRect(x0, y + 18, vw - 16, 4, 2).fill('#E2E8F0')
-      if (share[i] > 0) doc.roundedRect(x0, y + 18, Math.max((vw - 16) * share[i], 3), 4, 2).fill(SLOT_COLORS[i])
+      txt(doc, v, x0, y + 9, 'B', 9.5, SLOT_COLORS[i], { width: vw - 16, ellipsis: true })
     })
     y += 31
   }
@@ -193,21 +190,15 @@ function drawRow(doc: Doc, r: CompareRow, y: number, h: number, alt: boolean, co
   const right = X + TW
   doc.rect(X, y, TW, h).fill(alt ? ALT : C.white)
   txt(doc, r.label + (r.unit ? ` (${r.unit})` : ''), X + 8, y + 10, 'S', 8.5, C.text, { width: cols[1] - X - 16, ellipsis: true })
-  const share = barShares(r.nums)
-  const numeric = r.nums.filter((x) => x !== null).length >= 2
   r.values.forEach((v, i) => {
     const x0 = cols[i + 1] + 8
     const w = cols[i + 2] - cols[i + 1] - 16
     const win = r.best.includes(i)
     const pill = win && w > 70
-    txt(doc, v, x0, y + (numeric ? 6 : 10), win ? 'B' : 'S', 9, win ? C.green : C.text, { width: w - (pill ? 38 : 0), ellipsis: true })
+    txt(doc, v, x0, y + 10, win ? 'B' : 'S', 9, win ? C.green : C.text, { width: w - (pill ? 38 : 0), ellipsis: true })
     if (pill) {
-      doc.roundedRect(x0 + w - 34, y + 5.5, 34, 11, 5.5).fill('#DCFCE7')
-      txt(doc, 'BEST', x0 + w - 34, y + 7.6, 'B', 6, C.green, { width: 34, align: 'center' })
-    }
-    if (numeric && r.nums[i] !== null) {
-      doc.roundedRect(x0, y + 20, w, 4, 2).fill('#E2E8F0')
-      if (share[i] > 0) doc.roundedRect(x0, y + 20, Math.max(w * share[i], 3), 4, 2).fill(SLOT_COLORS[i])
+      doc.roundedRect(x0 + w - 34, y + 8.5, 34, 11, 5.5).fill('#DCFCE7')
+      txt(doc, 'BEST', x0 + w - 34, y + 10.6, 'B', 6, C.green, { width: 34, align: 'center' })
     }
   })
   if (cols.length > n + 2) {

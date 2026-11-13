@@ -55,3 +55,11 @@ export function rememberCompared(projectId: string, ids: string[]) {
     /* storage unavailable */
   }
 }
+
+/* key-ratio drop cards: Module 6 key ratio panel + Module 1 Key Ratio, per project */
+export type KrCell = { label: string; value: string; unit: string; req?: string; ok?: boolean }
+export type ProjectKeyRatios = { module6: { name: string; rows: KrCell[] }[]; module1: (KrCell & { group: string })[] }
+export async function getKeyRatios(ids: (string | number)[]) {
+  const r = await http.get<Envelope<Record<string, ProjectKeyRatios>>>(`/comparison/key-ratios?ids=${ids.join(',')}`)
+  return r.data
+}

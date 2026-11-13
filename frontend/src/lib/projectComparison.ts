@@ -6,6 +6,10 @@
 import { comparisonRatios } from '@/components/design-chapters/project-level/calc'
 import { SERVICE_DESIGN } from '@/components/design-chapters-b/serviceCatalogue'
 import { parkingRequired } from '@/lib/parkingRequired'
+import { facadeContextOf, facadeOutputs, facadeText, type FacadeData } from '@/lib/facade'
+import { servicesContextOf, servicesOutputs } from '@/lib/services'
+import { amenityOutputsOf } from '@/lib/amenities'
+import { consultantFees, contractBudgets } from '@/lib/fees'
 import type { ProjectLevelDesignData } from '@/types/chapters-a'
 
 type Obj = Record<string, unknown>
@@ -163,7 +167,7 @@ export function projectFacts(x: CompareInput) {
   for (const c of SERVICE_DESIGN)
     for (const prm of c.parameters) {
       const v = sd[prm.name]
-      if (v === undefined || v === '') continue
+      if (v === undefined || v === '' || prm.benchmark === undefined) continue
       sdFilled++
       if (String(v) === String(prm.benchmark)) sdOk++
     }
@@ -205,6 +209,12 @@ type Facts = ReturnType<typeof projectFacts>
 type Def = { section: string; title: string; label: string; get: (f: Facts, x: CompareInput) => unknown; sane?: (v: number) => boolean } & RowOpts
 
 const sd = (x: CompareInput) => obj(obj(x.summary).serviceDesignData)
+const fd = (x: CompareInput) => obj(x.summary).facadeData as FacadeData | undefined
+const fo = (x: CompareInput) => facadeOutputs(fd(x), facadeContextOf(x.summary, x.mep))
+const so = (x: CompareInput) => servicesOutputs(sd(x), servicesContextOf(x.summary))
+const ao = (x: CompareInput) => amenityOutputsOf(x.summary)
+const cf = (x: CompareInput) => consultantFees(x.summary)
+const cb = (x: CompareInput) => contractBudgets(x.summary)
 const req = (f: Facts) => parkingRequired(f.other.extraParkingReqs, f.pd.tableRows).total || null
 const gsvOf = (f: Facts) => (f.saleable && f.price ? f.saleable * f.price : null)
 const costOf = (f: Facts) => (f.bua && f.cost ? f.bua * f.cost : null)
@@ -217,8 +227,13 @@ const SECTIONS: [string, string][] = [
   ['efficiency', 'Design Efficiency'],
   ['parking', 'Parking & Basements'],
   ['commercials', 'Commercials'],
+  ['consultants', 'Consultant Charges (Rs. per sq ft BUA)'],
+  ['contracts', 'Contract Package Budgets'],
   ['structure', 'Structure'],
   ['mep', 'MEP'],
+  ['facade', 'Façade & Envelope'],
+  ['services', 'Services Sizing'],
+  ['club', 'Club & Amenities'],
   ['amenities', 'Landscape, Amenities & Services'],
   ['governance', 'Delivery & Governance'],
 ]
@@ -296,6 +311,47 @@ const FIXED_DEFS: Def[] = [
   d('mep', 'Tonnage per Apartment', (f) => f.mp.tonnageApartment),
   d('mep', 'Cooling Efficiency (Apartment)', (f) => f.mp.efficiencyApartment, { unit: 'sq ft/TR' }),
 
+  // Façade & Envelope (module 14 / commercial 10)
+  d('facade', 'Façade System', (_f, x) => facadeText(fd(x), 'facadeSystem'), { text: true }),
+  d('facade', 'Glass Type', (_f, x) => facadeText(fd(x), 'glassType'), { text: true }),
+  d('facade', 'SHGC', (_f, x) => fd(x)?.shgc, { better: 'lower', dp: 2, sane: (v) => v >= 0 && v <= 1 }),
+  d('facade', 'U-Value', (_f, x) => fd(x)?.uValue, { unit: 'W/m²K', better: 'lower', dp: 2 }),
+  d('facade', 'Glazing %', (_f, x) => fo(x).glazingPct, { unit: '%', dp: 1 }),
+  d('facade', 'Façade Cost per sq ft (façade)', (_f, x) => fd(x)?.facadeCostPerSqft, { unit: 'Rs./sq ft', dp: 0 }),
+  d('facade', 'Façade Cost per sq ft Saleable', (_f, x) => fo(x).costPerSaleable, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+  d('facade', 'Heat-Gain Index', (_f, x) => fo(x).heatGainIndex, { unit: 'per 1,000 sq ft saleable', better: 'lower', dp: 1 }),
+  d('facade', 'Glass Load per TR', (_f, x) => fo(x).glassPerTR, { unit: 'sq ft/TR', better: 'lower', dp: 1 }),
+  d('facade', 'Shading Devices', (_f, x) => facadeText(fd(x), 'shadingDevices'), { text: true }),
+  d('facade', 'Façade Cleaning', (_f, x) => facadeText(fd(x), 'cleaningMethod'), { text: true }),
+
+  // Services sizing (module 13)
+  d('services', 'Connected Load per Unit', (_f, x) => so(x).kvaPerUnit, { unit: 'kVA', dp: 2 }),
+  d('services', 'Transformer Loading', (_f, x) => so(x).transformerLoading, { unit: '%', dp: 0 }),
+  d('services', 'DG Backup — Units', (_f, x) => so(x).dgUnits, { unit: '%', better: 'higher', dp: 0 }),
+  d('services', 'DG Backup — Common Areas', (_f, x) => so(x).dgCommon, { unit: '%', better: 'higher', dp: 0 }),
+  d('services', 'Water Demand', (_f, x) => sd(x).waterDemandLpcd, { unit: 'LPCD', dp: 0 }),
+  d('services', 'Water Storage', (_f, x) => so(x).storageDays, { unit: 'days', dp: 1 }),
+  d('services', 'Water Recycled', (_f, x) => so(x).recycledPct, { unit: '%', better: 'higher', dp: 0 }),
+  d('services', 'Solar PV', (_f, x) => sd(x).solarPvKwp, { unit: 'kWp', dp: 0 }),
+  d('services', 'Solar Share of Load', (_f, x) => so(x).solarSharePct, { unit: '%', better: 'higher', dp: 1 }),
+  d('services', 'EV Charging Points', (_f, x) => so(x).evPoints, { unit: 'nos', better: 'higher', dp: 0 }),
+  d('services', 'EV Charging (% of car parks)', (_f, x) => so(x).evPct, { unit: '%', better: 'higher', dp: 0 }),
+  d('services', 'Hot Water Source', (_f, x) => sd(x).hotWaterSource, { text: true }),
+  d('services', 'Sprinklers', (_f, x) => sd(x).sprinklers, { text: true }),
+  d('services', 'Smart Home Level', (_f, x) => sd(x).smartHomeLevel, { text: true }),
+
+  // Club & Amenities (module 6)
+  d('club', 'Clubhouse Area', (_f, x) => ao(x).clubArea, { unit: 'sq ft', dp: 0 }),
+  d('club', 'Club Area / Unit', (_f, x) => ao(x).clubPerUnit, { unit: 'sq ft/unit', better: 'higher', dp: 1 }),
+  d('club', 'Pool Area / Unit', (_f, x) => ao(x).poolPerUnit, { unit: 'sq ft/unit', better: 'higher', dp: 2 }),
+  d('club', 'Amenities per 100 Units', (_f, x) => ao(x).amenitiesPer100, { better: 'higher', dp: 1 }),
+  d('club', 'Sports Courts', (_f, x) => ao(x).courts, { better: 'higher', dp: 0 }),
+  d('club', 'Entrance Lobby', (_f, x) => ao(x).lobby, { text: true }),
+
+  // Contract package budgets (module 15 Contracting Strategy)
+  d('contracts', 'Total Package Budget', (_f, x) => (cb(x).total !== null ? cb(x).total! / 1e7 : null), { unit: 'Rs. Cr', dp: 2 }),
+  d('contracts', 'Package Budget per sq ft BUA', (_f, x) => cb(x).perSqft, { unit: 'Rs./sq ft', better: 'lower', dp: 0 }),
+
   d('amenities', 'Total Landscape Area', (f) => f.ld.totalLandscapeArea, { unit: 'sq m', better: 'higher' }),
   d('amenities', 'Amenities Provided', (f) => f.amenities || null, { better: 'higher' }),
   d('amenities', 'Landscape Zoning', (f) => f.ld.landscapeZoning, { text: true }),
@@ -314,6 +370,24 @@ const FIXED_DEFS: Def[] = [
   d('governance', 'Phases', (f) => f.phases || null),
 ]
 
+/** Rs. per sq ft BUA for each consultant type any of the projects has a fee for, then the total */
+function consultantDefs(inputs: CompareInput[]): Def[] {
+  const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const types: string[] = []
+  for (const x of inputs)
+    for (const l of consultantFees(x.summary).lines) if (l.fee !== null && l.type && !types.some((t) => key(t) === key(l.type))) types.push(l.type)
+  if (!types.length) return []
+  const perType = (x: CompareInput, t: string) => {
+    const ls = consultantFees(x.summary).lines.filter((l) => key(l.type) === key(t) && l.perSqft !== null)
+    return ls.length ? ls.reduce((a, l) => a + l.perSqft!, 0) : null
+  }
+  return [
+    ...types.map((t) => d('consultants', t, (_f, x) => perType(x, t), { unit: 'Rs./sq ft', better: 'lower', dp: 2 })),
+    d('consultants', 'Total Consultant Fees', (_f, x) => cf(x).perSqft, { unit: 'Rs./sq ft', better: 'lower', dp: 2 }),
+    d('consultants', 'Total Consultant Fees (amount)', (_f, x) => (cf(x).total !== null ? cf(x).total! / 1e7 : null), { unit: 'Rs. Cr', dp: 2 }),
+  ]
+}
+
 /** unit-mix rows for the bedroom types any of the projects has */
 function mixDefs(facts: Facts[]): Def[] {
   const keys = [...new Set(facts.flatMap((f) => [...f.mix.keys()]))].sort((x, y) => order(x) - order(y))
@@ -323,10 +397,10 @@ function mixDefs(facts: Facts[]): Def[] {
     d('mix', `${k} — Avg. Size`, (f) => (f.mix.get(k)?.units ? f.mix.get(k)!.area / f.mix.get(k)!.units : null), { unit: 'sq ft', dp: 0 }),
   ])
 }
-function defsFor(facts: Facts[]) {
+function defsFor(facts: Facts[], inputs: CompareInput[] = []) {
   const mix = mixDefs(facts)
-  // keep the section order: overview, unit mix, then the rest
-  return [...FIXED_DEFS.filter((x) => x.section === 'overview'), ...mix, ...FIXED_DEFS.filter((x) => x.section !== 'overview')]
+  // keep the section order: overview, unit mix, then the rest (sections are sorted by SECTIONS afterwards)
+  return [...FIXED_DEFS.filter((x) => x.section === 'overview'), ...mix, ...FIXED_DEFS.filter((x) => x.section !== 'overview'), ...consultantDefs(inputs)]
 }
 
 /* ------------------------------------------------------------------ comparison of 2-5 projects */
@@ -342,7 +416,7 @@ export function buildComparison(...inputs: CompareInput[]): Comparison {
     classification: str(f.p.projectClassification),
   }))
   const sections: CompareSection[] = []
-  for (const def of defsFor(facts)) {
+  for (const def of defsFor(facts, inputs)) {
     const r = row(def.label, facts.map((f, i) => def.get(f, inputs[i])), def)
     if (!r) continue
     let sec = sections.find((x) => x.key === def.section)
@@ -378,7 +452,7 @@ export type RowStat = { avg: number; best: { name: string; v: number }; low: { n
 export function portfolioRowStats(inputs: CompareInput[]): Record<string, RowStat> {
   const facts = inputs.map(projectFacts)
   const out: Record<string, RowStat> = {}
-  for (const def of defsFor(facts)) {
+  for (const def of defsFor(facts, inputs)) {
     if (def.text) continue
     const vals = facts
       .map((f, i) => ({ name: str(f.p.name), v: num(def.get(f, inputs[i])) }))

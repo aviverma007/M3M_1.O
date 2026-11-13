@@ -1,8 +1,10 @@
-/* Right "Calculated Output" panel of Project Level Design (tabs: Key Ratio / Area Statement / Additional Elements 2/2). */
+/* Right "Calculated Output" panel of Project Level Design (tabs: Key Ratio / Area Statement / Cluster level Parameters). */
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/data'
 import { checkDeviation, formatBenchmark, getBenchmark, reqLabel, type BenchmarkMap } from '@/lib/benchmark'
 import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioInputs } from '@/types/chapters-a'
 import { areaStatement, keyRatioFormula, n2 } from './calc'
+import { amenityOutputs } from '@/lib/amenities'
+import { fmtNum } from '@/lib/projectComparison'
 
 type Param = { param: string; val: string; unit: string; subVal?: string }
 
@@ -53,7 +55,7 @@ function Group({ label, first = false }: { label: string; first?: boolean }) {
 
 const ratio = (a: number, b: number) => (b > 0 ? (a / b).toFixed(2) : '-')
 
-function KeyRatioTab({ l, extra, benchmarks }: { l: KeyRatioInputs; extra: AdditionalElements2; benchmarks: BenchmarkMap | null }) {
+function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioInputs; extra: AdditionalElements2; benchmarks: BenchmarkMap | null; landscapeSelected?: unknown }) {
   const efficiency: Param[] = [
     { param: 'BUA/Saleable', val: keyRatioFormula(4, l), unit: 'Ratio' },
     { param: 'Saleable/FAR', val: keyRatioFormula(5, l), unit: 'Ratio' },
@@ -81,6 +83,15 @@ function KeyRatioTab({ l, extra, benchmarks }: { l: KeyRatioInputs; extra: Addit
     { param: 'Parking bay size', val: String((extra.other as Record<string, string>).totalParkingBaySize || '-'), unit: 'sq m' },
     { param: 'No. of Basements', val: l.noOfBasements || '', unit: '#' },
   ]
+  const am = amenityOutputs(extra.other as Record<string, unknown>, n2(l.noOfUnits) || null, landscapeSelected)
+  const f = (v: number | null, dp: number) => (v === null ? '-' : fmtNum(v, dp))
+  const club: Param[] = [
+    { param: 'Club Area / Unit', val: f(am.clubPerUnit, 1), unit: 'sq ft/unit', subVal: am.clubArea !== null ? `Clubhouse ${fmtNum(am.clubArea, 0)} sq ft` : undefined },
+    { param: 'Pool Area / Unit', val: f(am.poolPerUnit, 2), unit: 'sq ft/unit' },
+    { param: 'Amenities per 100 Units', val: f(am.amenitiesPer100, 1), unit: '#', subVal: am.amenityCount ? `${am.amenityCount} amenities` : undefined },
+    { param: 'Sports Courts', val: f(am.courts, 0), unit: '#' },
+    { param: 'Entrance Lobby', val: am.lobby || '-', unit: '' },
+  ]
   return (
     <div className={SCROLL}>
       <table className="w-full text-xs border-collapse">
@@ -100,6 +111,8 @@ function KeyRatioTab({ l, extra, benchmarks }: { l: KeyRatioInputs; extra: Addit
           <ParamRows items={nonAptEff} benchmarks={benchmarks} />
           <Group label="Non-Apt Configuration" />
           <ParamRows items={nonAptCfg} benchmarks={benchmarks} />
+          <Group label="Club & Amenities" />
+          <ParamRows items={club} benchmarks={benchmarks} />
         </tbody>
       </table>
     </div>
@@ -223,12 +236,15 @@ export default function OutputPanel({
   extra,
   clusters,
   benchmarks,
+  landscapeSelected,
 }: {
   keyRatio: KeyRatioInputs
   area: AreaStatementInputs
   extra: AdditionalElements2
   clusters: ClusterConfig[]
   benchmarks: BenchmarkMap | null
+  /** Landscape & Amenities ticked list (for amenities per 100 units) */
+  landscapeSelected?: unknown
 }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col h-full min-h-[85vh]">
@@ -245,11 +261,11 @@ export default function OutputPanel({
             Area Statement
           </TabsTrigger>
           <TabsTrigger value="elements-2" className={TAB}>
-            Additional Elements 2/2
+            Cluster level Parameters
           </TabsTrigger>
         </TabsList>
         <TabsContent value="key-ratio" className="flex-1 p-0 m-0">
-          <KeyRatioTab l={keyRatio} extra={extra} benchmarks={benchmarks} />
+          <KeyRatioTab l={keyRatio} extra={extra} benchmarks={benchmarks} landscapeSelected={landscapeSelected} />
         </TabsContent>
         <TabsContent value="elements-1" className="flex-1 p-0 m-0">
           <AreaStatementTab p={area} />

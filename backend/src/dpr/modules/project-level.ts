@@ -1,13 +1,15 @@
 /*
  * DPR — Project Level Design (summary.projectLevelDesignData):
  *   Development Area Statement · Project Level Parameters (+ Additional Elements) · Key Ratio ·
- *   Additional Elements 2/2 (cluster level design) · Area Ratios Comparison.
+ *   Cluster level Parameters (clusters) · Area Ratios Comparison.
  */
 import { contentPage, emptyMessage, txt, type Ctx, type Doc } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { DprInput } from '../index.js'
 import { areaStatement, comparisonRatios, keyRatioFormula } from '@/components/design-chapters/project-level/calc'
 import { fmtNum, parkingRequired } from '@/lib/parkingRequired'
+import { amenityOutputs } from '@/lib/amenities'
+import { fmtNum as fmtIN } from '@/lib/projectComparison'
 import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioInputs, ParkingReq, ProjectLevelDesignData } from '@/types/chapters-a'
 
 /* ------------------------------------------------------------------ benchmark rules (same as frontend lib/benchmark.ts) */
@@ -577,7 +579,7 @@ function farUtilization(l: KeyRatioInputs) {
   return `${Number(((far / p) * 100).toFixed(2))}%`
 }
 
-function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, display: Record<string, string>) {
+function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, display: Record<string, string>, landscapeSelected?: unknown) {
   const o = (extra?.other ?? {}) as Record<string, unknown>
   const cars = num(l.totalNumberOfCars)
   const v = (k: string) => str(l[k])
@@ -623,12 +625,30 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
         { label: 'No. of Basements', value: v('noOfBasements'), unit: '', bench: ['No. of Basements', 'Number of Basements'] },
       ],
     },
+    clubGroup(l, extra, landscapeSelected),
   ]
   // values the original printed from its separate Key Ratio record (kept on import), rows only when filled
   return groups.map((g) => ({ ...g, rows: g.rows.map((r) => (display[r.label] !== undefined ? { ...r, value: display[r.label] } : r)).filter((r) => r.value !== '-') }))
 }
 
-/* ------------------------------------------------------------------ 4. Additional Elements 2/2 (clusters) */
+/** Club & Amenities (measured in Module 6): club / pool area per unit, amenities per 100 units */
+function clubGroup(l: KeyRatioInputs, extra: AdditionalElements2 | undefined, landscapeSelected: unknown): { name: string; rows: KRow[] } {
+  const a = amenityOutputs((extra?.other ?? {}) as Record<string, unknown>, num(l.noOfUnits) || null, landscapeSelected)
+  const f = (x: number | null, dp: number) => (x === null ? '-' : fmtIN(x, dp))
+  return {
+    name: 'Club & Amenities',
+    rows: [
+      { label: 'Club Area / Unit', value: f(a.clubPerUnit, 1), unit: 'sq ft/unit' },
+      { label: 'Clubhouse Area', value: f(a.clubArea, 0), unit: 'sq ft' },
+      { label: 'Pool Area / Unit', value: f(a.poolPerUnit, 2), unit: 'sq ft/unit' },
+      { label: 'Amenities per 100 Units', value: f(a.amenitiesPer100, 1), unit: '' },
+      { label: 'Sports Courts', value: f(a.courts, 0), unit: '' },
+      { label: 'Entrance Lobby', value: a.lobby || '-', unit: '' },
+    ],
+  }
+}
+
+/* ------------------------------------------------------------------ 4. Cluster level Parameters (clusters) */
 function clusterPages(ctx: Ctx, clusters: ClusterConfig[]) {
   const { doc } = ctx
   const L = 35
@@ -637,7 +657,7 @@ function clusterPages(ctx: Ctx, clusters: ClusterConfig[]) {
   const pct = (a: number, b: number) => (b > 0 ? `${Number(((a / b) * 100).toFixed(2))}%` : '-')
   let y = 0
   const page = () => {
-    contentPage(ctx, 'Design Considerations — Additional Elements 2/2')
+    contentPage(ctx, 'Design Considerations — Cluster level Parameters')
     y = 80
   }
   page()
@@ -814,8 +834,8 @@ const projectLevel: ModuleRenderer = (ctx, input) => {
   areaStatementPage(ctx, d.areaStatementInputs ?? {})
   paramsPages(ctx, parameterRows(l, d.additionalElements2, (s.projectDetailsLayoutData as { tableRows?: unknown } | undefined)?.tableRows), benchmarks)
   breakdownPage(ctx, d.additionalElements2)
-  keyRatioPages(ctx, keyRatioGroups(l, d.additionalElements2, display), benchmarks)
-  // "Additional Elements 2/2": cluster tables, or the empty page the original leaves when there are none
+  keyRatioPages(ctx, keyRatioGroups(l, d.additionalElements2, display, (s.landscapeAmenitiesData as { selectedAmenities?: unknown } | undefined)?.selectedAmenities), benchmarks)
+  // "Cluster level Parameters": cluster tables, or the empty page the original leaves when there are none
   if (d.clusterConfigs?.length) clusterPages(ctx, d.clusterConfigs)
   else ctx.doc.addPage()
   comparisonPage(ctx, input, { ...d, keyRatioInputs: l }, display)
@@ -823,6 +843,23 @@ const projectLevel: ModuleRenderer = (ctx, input) => {
 export default projectLevel
 
 /** Module 6 benchmark checks exactly as the DPR shows them (parameters + key ratios), for the portfolio health score */
+/** Module 6 key ratio panel (all groups incl. Club & Amenities) with Req: text and pass/fail — Comparison drop cards */
+export function projectLevelKeyRatios(input: DprInput) {
+  const s = (input.summary ?? {}) as Record<string, unknown>
+  const d = (s.projectLevelDesignData && typeof s.projectLevelDesignData === 'object' ? s.projectLevelDesignData : {}) as ProjectLevelDesignData & {
+    dprDisplay?: Record<string, string>
+  }
+  const l: KeyRatioInputs = { ...(d.keyRatioInputs ?? {}) }
+  const selected = (s.landscapeAmenitiesData as { selectedAmenities?: unknown } | undefined)?.selectedAmenities
+  return keyRatioGroups(l, d.additionalElements2, d.dprDisplay ?? {}, selected).map((g) => ({
+    name: g.name,
+    rows: g.rows.map((r) => {
+      const b = r.value === '-' ? null : bench(r.bench ?? [r.label], r.value, input.benchmarks)
+      return { label: r.label, value: r.value, unit: r.unit, req: b ? b.req.replace(/^Req:\s*/, '') : undefined, ok: b ? !b.dev : undefined }
+    }),
+  }))
+}
+
 export function projectLevelChecks(input: DprInput) {
   const s = (input.summary ?? {}) as Record<string, unknown>
   const d = (s.projectLevelDesignData && typeof s.projectLevelDesignData === 'object' ? s.projectLevelDesignData : {}) as ProjectLevelDesignData & {

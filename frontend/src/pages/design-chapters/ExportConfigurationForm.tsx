@@ -23,6 +23,7 @@ const EXPORT_MODULES = [
   'Common Area',
   'Landscape & Amenities',
   'Service Design Consideration',
+  'Façade & Envelope',
   'Contracting Strategy',
   'Consultant Strategy',
   'Phasing Plan',

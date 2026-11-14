@@ -272,12 +272,6 @@ export default function ProjectDetailsLayoutForm() {
     toast.success(`Layout files updated for ${managed!.name}`)
   }
 
-  if (loading) return <PageLoader />
-
-  const grand = rows.reduce((s, r) => s + num(r.total), 0)
-  const shownTotal = grand > 0 ? grand : fallbackSaleable
-  const categories = details.projectType === 'residential' ? CAT_RES : details.projectType === 'commercial' || details.projectType === 'retail' ? CAT_COM : [...CAT_RES, ...CAT_COM]
-
   // live data checks on what is on screen (site area, unit rows vs Module 6)
   const liveInput = useMemo<CompareInput | null>(() => {
     if (!base) return null
@@ -289,6 +283,12 @@ export default function ProjectDetailsLayoutForm() {
       mep: null,
     }
   }, [base, rows, details])
+
+  if (loading) return <PageLoader />
+
+  const grand = rows.reduce((s, r) => s + num(r.total), 0)
+  const shownTotal = grand > 0 ? grand : fallbackSaleable
+  const categories = details.projectType === 'residential' ? CAT_RES : details.projectType === 'commercial' || details.projectType === 'retail' ? CAT_COM : [...CAT_RES, ...CAT_COM]
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-6">

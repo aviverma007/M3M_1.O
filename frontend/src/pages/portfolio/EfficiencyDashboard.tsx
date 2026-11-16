@@ -600,11 +600,11 @@ function MatrixRow({
               <span
                 className={cn(
                   'text-[9px] font-black uppercase tracking-wide border rounded-full px-1.5 py-0.5 shrink-0 flex items-center gap-1',
-                  St.cls,
+                  missing ? 'bg-gray-50 text-gray-400 border-gray-200' : St.cls,
                 )}
               >
                 <St.icon size={9} />
-                {r.status === 'missing' ? 'Not captured' : 'Partly'}
+                {r.status === 'missing' ? 'No input yet' : 'Partly'}
               </span>
             )}
             {r.better && (
@@ -615,14 +615,13 @@ function MatrixRow({
           </button>
         </td>
         {missing ? (
-          <td colSpan={projects.length + 1} className="border-b border-gray-50 px-3 py-2">
-            <div
-              className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-rose-700/80 flex items-center gap-2"
-              style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(244,63,94,.06) 0 8px, transparent 8px 16px)' }}
-            >
-              <AlertTriangle size={12} className="shrink-0" /> {r.formula}
-            </div>
-          </td>
+          // no input in the app yet: blank cells (see "How it's calculated" for where it will be entered)
+          <>
+            {projects.map((p) => (
+              <td key={p.id} className="border-b border-gray-50 border-l border-gray-50" />
+            ))}
+            <td className="border-b border-gray-50 border-l border-gray-100 bg-slate-50/70" />
+          </>
         ) : (
           <>
             {projects.map((p) => {
@@ -943,7 +942,11 @@ function HeadlineCard({
       <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00509d] via-sky-400 to-amber-300 opacity-70 group-hover:opacity-100 transition-opacity" />
       <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 flex items-center justify-between h-[14px]">
         {r.label}
-        {r.better === 'lower' ? <TrendingDown size={13} className="text-gray-300" /> : r.better === 'higher' ? <TrendingUp size={13} className="text-gray-300" /> : null}
+        {r.better === 'lower' ? (
+          <TrendingDown size={13} className="text-gray-300" />
+        ) : r.better === 'higher' ? (
+          <TrendingUp size={13} className="text-gray-300" />
+        ) : null}
       </p>
       <p className="mt-1.5 text-[28px] leading-none font-black text-gray-900 tabular-nums">
         {s.avg === null ? '–' : <CountUp value={s.avg} dp={r.dp ?? 2} />}

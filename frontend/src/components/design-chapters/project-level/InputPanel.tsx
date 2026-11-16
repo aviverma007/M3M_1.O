@@ -51,7 +51,7 @@ const FAR_FREE: F[] = [
 /** FAR efficiency, superstructure: common areas counted in FAR */
 const IN_FAR: F[] = [
   { label: 'Ground Floor Lobbies (in FAR)', key: 'groundFloorLobbyFar', unit: 'sq ft' },
-  { label: 'Toilets (in FAR)', key: 'toiletAreaFar', unit: 'sq ft' },
+  { label: 'Toilets Ground Floor (in FAR)', key: 'toiletAreaFar', unit: 'sq ft' },
   { label: 'Services Areas (in FAR)', key: 'servicesAreaFar', unit: 'sq ft' },
 ]
 const NON_APT_CONFIG: F[] = [

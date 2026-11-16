@@ -566,13 +566,13 @@ const ROWS: EffRow[] = [
   {
     id: 'toilets',
     group: 'supFar',
-    label: 'Toilets',
+    label: 'Toilets Ground Floor',
     unit: 'sq ft',
     dp: 0,
     status: 'captured',
     ...M6,
-    focus: 'Toilets (in FAR)',
-    formula: 'Key Ratio › Toilets (in FAR) (sq ft, as entered)',
+    focus: 'Toilets Ground Floor (in FAR)',
+    formula: 'Key Ratio › Toilets Ground Floor (in FAR) (sq ft, as entered)',
     get: (c) => pos(c.kr.toiletAreaFar),
   },
   {

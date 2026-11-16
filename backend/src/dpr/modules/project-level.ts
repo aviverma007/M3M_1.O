@@ -613,6 +613,19 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
           value: cars > 0 ? ((num(l.totalBasementArea) - num(l.circulationArea)) / cars / 10.7639).toFixed(2) : '-',
           unit: 'sqm/car',
         },
+        ...(
+          [
+            ['Services Areas (% of basement)', 'circulationArea'],
+            ['Shafts (% of basement)', 'basementShaftArea'],
+            ['Lobbies other than Fire Towers (% of basement)', 'basementLobbyArea'],
+            ['Staircases other than required for Exit (% of basement)', 'basementStaircaseArea'],
+            ['BOH Facilities (% of basement)', 'basementBohArea'],
+          ] as const
+        ).map(([label, k]) => ({
+          label,
+          value: l[k] && num(l.totalBasementArea) > 0 ? ((num(l[k]) / num(l.totalBasementArea)) * 100).toFixed(2) : '-',
+          unit: '%',
+        })),
       ],
     },
     {
@@ -627,6 +640,19 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
         { label: 'Average Wall Area (Interior + Exterior) Per Basement', value: v('avgWallAreaBasement'), unit: 'sq ft' },
         { label: 'No. of Basements', value: v('noOfBasements'), unit: '', bench: ['No. of Basements', 'Number of Basements'] },
       ],
+    },
+    {
+      name: 'Superstructure Areas',
+      rows: (
+        [
+          ['Stilt Areas — FAR Free', 'stiltAreaFarFree'],
+          ['Staircases — FAR Free', 'staircaseAreaFarFree'],
+          ['Fire Tower — FAR Free', 'fireTowerAreaFarFree'],
+          ['Ground Floor Lobbies (in FAR)', 'groundFloorLobbyFar'],
+          ['Toilets Ground Floor (in FAR)', 'toiletAreaFar'],
+          ['Services Areas (in FAR)', 'servicesAreaFar'],
+        ] as const
+      ).map(([label, k]) => ({ label, value: l[k] ? fmtIN(num(l[k]), 0) : '-', unit: 'sq ft' })),
     },
     clubGroup(l, extra, landscapeSelected),
   ]

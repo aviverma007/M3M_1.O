@@ -75,6 +75,24 @@ function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioI
   const cars = n2(l.totalNumberOfCars)
   const nonAptEff: Param[] = [
     { param: 'Basement parking efficiency', val: cars <= 0 ? '-' : ((n2(l.totalBasementArea) - n2(l.circulationArea)) / cars / 10.7639).toFixed(2), unit: 'sqm/car' },
+    ...(
+      [
+        ['Services Areas (% of basement)', 'circulationArea'],
+        ['Shafts (% of basement)', 'basementShaftArea'],
+        ['Lobbies other than Fire Towers (% of basement)', 'basementLobbyArea'],
+        ['Staircases other than required for Exit (% of basement)', 'basementStaircaseArea'],
+        ['BOH Facilities (% of basement)', 'basementBohArea'],
+      ] as const
+    ).map(([param, k]) => ({ param, val: l[k] && n2(l.totalBasementArea) > 0 ? ((n2(l[k]) / n2(l.totalBasementArea)) * 100).toFixed(2) : '-', unit: '%' })),
+  ]
+  const area = (k: string) => (l[k] ? fmtNum(n2(l[k]), 0) : '-')
+  const superstructure: Param[] = [
+    { param: 'Stilt Areas — FAR Free', val: area('stiltAreaFarFree'), unit: 'sq ft' },
+    { param: 'Staircases — FAR Free', val: area('staircaseAreaFarFree'), unit: 'sq ft' },
+    { param: 'Fire Tower — FAR Free', val: area('fireTowerAreaFarFree'), unit: 'sq ft' },
+    { param: 'Ground Floor Lobbies (in FAR)', val: area('groundFloorLobbyFar'), unit: 'sq ft' },
+    { param: 'Toilets Ground Floor (in FAR)', val: area('toiletAreaFar'), unit: 'sq ft' },
+    { param: 'Services Areas (in FAR)', val: area('servicesAreaFar'), unit: 'sq ft' },
   ]
   const nonAptCfg: Param[] = [
     { param: 'Lobby Corridor Width', val: l.lobbyCorridorWidth || '', unit: 'm' },
@@ -111,6 +129,8 @@ function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioI
           <ParamRows items={nonAptEff} benchmarks={benchmarks} />
           <Group label="Non-Apt Configuration" />
           <ParamRows items={nonAptCfg} benchmarks={benchmarks} />
+          <Group label="Superstructure Areas" />
+          <ParamRows items={superstructure} benchmarks={benchmarks} />
           <Group label="Club & Amenities" />
           <ParamRows items={club} benchmarks={benchmarks} />
         </tbody>

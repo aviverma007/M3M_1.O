@@ -36,7 +36,23 @@ const APT_CONFIG: F[] = [
 const NON_APT_EFF: F[] = [
   { label: 'Total Basement Area', key: 'totalBasementArea', unit: 'sq ft' },
   { label: 'Services Area (only MEP Services Area)', key: 'circulationArea', unit: 'sq ft' },
+  { label: 'Basement Shaft Area', key: 'basementShaftArea', unit: 'sq ft' },
+  { label: 'Basement Lobbies other than Fire Towers', key: 'basementLobbyArea', unit: 'sq ft' },
+  { label: 'Basement Staircases other than required for Exit', key: 'basementStaircaseArea', unit: 'sq ft' },
+  { label: 'Basement BOH Facilities', key: 'basementBohArea', unit: 'sq ft' },
   { label: 'Total Number of Cars', key: 'totalNumberOfCars', unit: '#' },
+]
+/** BUA efficiency, superstructure: areas kept out of FAR */
+const FAR_FREE: F[] = [
+  { label: 'Stilt Areas — FAR Free', key: 'stiltAreaFarFree', unit: 'sq ft' },
+  { label: 'Staircases — FAR Free', key: 'staircaseAreaFarFree', unit: 'sq ft' },
+  { label: 'Fire Tower — FAR Free', key: 'fireTowerAreaFarFree', unit: 'sq ft' },
+]
+/** FAR efficiency, superstructure: common areas counted in FAR */
+const IN_FAR: F[] = [
+  { label: 'Ground Floor Lobbies (in FAR)', key: 'groundFloorLobbyFar', unit: 'sq ft' },
+  { label: 'Toilets (in FAR)', key: 'toiletAreaFar', unit: 'sq ft' },
+  { label: 'Services Areas (in FAR)', key: 'servicesAreaFar', unit: 'sq ft' },
 ]
 const NON_APT_CONFIG: F[] = [
   { label: 'Lobby Corridor Width', key: 'lobbyCorridorWidth', unit: 'm' },
@@ -314,6 +330,14 @@ export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea,
               {kr(NON_APT_CONFIG.slice(0, NON_APT_CONFIG.findIndex((f) => f.key === 'floorToFloorHeightB1GFNonTower') + 1))}
               <FillingMarginInput l={l} setKeyRatio={setKeyRatio} />
               {kr(NON_APT_CONFIG.slice(NON_APT_CONFIG.findIndex((f) => f.key === 'floorToFloorHeightB1GFNonTower') + 1))}
+            </div>
+            <div className="space-y-4 border-t pt-6">
+              <h3 className={H3}>SUPERSTRUCTURE — FAR FREE AREAS</h3>
+              {kr(FAR_FREE)}
+            </div>
+            <div className="space-y-4 border-t pt-6">
+              <h3 className={H3}>SUPERSTRUCTURE — AREAS IN FAR</h3>
+              {kr(IN_FAR)}
             </div>
           </AccordionContent>
         </AccordionItem>

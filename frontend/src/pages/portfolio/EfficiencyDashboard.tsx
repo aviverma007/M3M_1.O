@@ -34,6 +34,7 @@ import { fmtIN } from '@/lib/format'
 import { getEfficiency, type EffProject, type Efficiency } from '@/api/portfolio'
 import { isOutlier, outOfRange, rankScore, rowStats, type EffRowMeta, type EffValue, type RowStats } from '@/lib/efficiency'
 import { moduleLink } from '@/components/portfolio/links'
+import EfficiencyExport from '@/components/portfolio/EfficiencyExport'
 
 const BLUE = '#00509d'
 const STATUS = {
@@ -184,31 +185,12 @@ export default function EfficiencyDashboard() {
     setTimeout(() => setFlash((f) => (f === key ? null : f)), 2600)
   }
 
-  const exportCsv = () => {
-    const q = (s: string) => `"${String(s).replace(/"/g, '""')}"`
-    const head = ['Group', 'Heading', 'Unit', 'Status', 'Source', 'Formula', ...projects.map((p) => p.name), 'Portfolio average']
-    const lines = rows.map((r) => {
-      const g = data?.groups.find((x) => x.id === r.group)?.title ?? ''
-      return [
-        g,
-        r.label,
-        r.unit ?? '',
-        STATUS[r.status].label,
-        `${r.moduleNo} ${r.module}`,
-        r.formula,
-        ...projects.map((p) => fmt(r, p.values[r.id])),
-        stats[r.id].avg === null ? '' : fmtIN(stats[r.id].avg!, r.dp ?? 2),
-      ]
-        .map(q)
-        .join(',')
-    })
-    const blob = new Blob(['﻿' + [head.map(q).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `Project_Design_Efficiencies_${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportGroups = useMemo(() => (group === 'all' ? (data?.groups ?? []).map((g) => g.id) : [group]), [group, data])
+  const exportFilters = useMemo(
+    () => ({ portfolio: brandF === 'All' ? 'All portfolios' : brandF, type: type === 'all' ? 'All types' : 'Residential' }),
+    [brandF, type],
+  )
 
   if (loading && !data)
     return (
@@ -438,9 +420,9 @@ export default function EfficiencyDashboard() {
               />
               <div className="flex items-center gap-1">
                 <button
-                  onClick={exportCsv}
+                  onClick={() => setExportOpen(true)}
                   className="px-3 py-2 rounded-lg text-xs font-bold text-[#00509d] hover:bg-blue-50 flex items-center gap-1.5"
-                  title="Download as CSV (opens in Excel)"
+                  title="Export as PDF, PowerPoint or Excel, with a print preview"
                 >
                   <Download size={14} /> Export
                 </button>
@@ -553,6 +535,15 @@ export default function EfficiencyDashboard() {
           </motion.div>
         </>
       )}
+
+      <EfficiencyExport
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        data={data}
+        projects={projects}
+        initialGroups={exportGroups}
+        filters={exportFilters}
+      />
 
       {/* floating tooltip */}
       <AnimatePresence>

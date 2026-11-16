@@ -1,6 +1,7 @@
 /* Portfolio (owner view): GET /portfolio — figures, completeness, data issues and health score per project */
 import { http } from '@/api/http'
 import type { DataIssue } from '@/lib/dataChecks'
+import type { EffGroup, EffRowMeta, EffValue } from '@/lib/efficiency'
 
 export type HealthStatus = 'on-track' | 'attention' | 'at-risk' | 'no-data'
 export type Problem = { kind: 'benchmark' | 'approval' | 'data'; module: string; text: string; severity: number; field?: string }
@@ -63,4 +64,22 @@ export const STATUS_META: Record<HealthStatus, { label: string; color: string; b
   attention: { label: 'Needs attention', color: '#B45309', bg: '#FEF3C7', ring: '#F59E0B' },
   'at-risk': { label: 'At risk', color: '#B91C1C', bg: '#FEE2E2', ring: '#DC2626' },
   'no-data': { label: 'Not enough data', color: '#64748B', bg: '#F1F5F9', ring: '#94A3B8' },
+}
+
+/* Project Design Efficiencies (management dashboard): GET /portfolio/efficiency */
+export type EffProject = {
+  id: number
+  name: string
+  portfolio: string
+  projectType: string
+  category: string
+  location: string
+  isTest: boolean
+  lastUpdate: { at: string | null; by: string | null }
+  values: Record<string, EffValue>
+}
+export type Efficiency = { generatedAt: string; groups: EffGroup[]; rows: EffRowMeta[]; projects: EffProject[] }
+export async function getEfficiency() {
+  const r = await http.get<{ data: Efficiency }>('/portfolio/efficiency')
+  return r.data
 }

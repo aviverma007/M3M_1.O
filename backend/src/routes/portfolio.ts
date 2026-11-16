@@ -3,6 +3,7 @@
  *
  *  GET /portfolio     every project with its figures, completeness, data issues, benchmark checks and health score
  *  GET /portfolio/:id one project (same shape)
+ *  GET /portfolio/efficiency  every project's Project Design Efficiencies (lib/efficiency.ts) for the management dashboard
  *
  * Bulk-loaded (a handful of queries for the whole portfolio), computed in ../portfolio/health.ts.
  */
@@ -11,6 +12,8 @@ import { query } from '../db/pool.js'
 import { fail, ok, route } from '../http/router.js'
 import { projectPortfolio, WEIGHTS } from '../portfolio/health.js'
 import type { DprInput } from '../dpr/index.js'
+import { EFF_GROUPS, EFF_ROWS, efficiencyValues } from '@/lib/efficiency'
+import { isTestProject } from '@/lib/dataChecks'
 
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v ? String(v) : null)
 
@@ -68,6 +71,27 @@ async function loadAll(onlyId?: number) {
 route('GET', '/portfolio', async () => {
   const projects = await loadAll()
   return ok({ generatedAt: new Date().toISOString(), weights: WEIGHTS, projects })
+})
+
+route('GET', '/portfolio/efficiency', async () => {
+  const [inputs, m1] = await Promise.all([loadInputs(), db.table<Row>('keyRatios').all()])
+  const m1By = new Map(m1.map((r) => [Number(r.projectId), (r.fields ?? {}) as Record<string, unknown>]))
+  const projects = inputs.map(({ input, last }) => {
+    const p = input.project as Record<string, unknown>
+    const id = Number(p.id)
+    return {
+      id,
+      name: String(p.name ?? ''),
+      portfolio: String(p.locationCategory ?? '') || 'Other',
+      projectType: String(p.projectType ?? ''),
+      category: String(p.category ?? ''),
+      location: String(p.location ?? ''),
+      isTest: isTestProject(String(p.name ?? '')),
+      lastUpdate: last,
+      values: efficiencyValues({ project: p, summary: input.summary as Record<string, unknown> | null, structure: input.structure, mep: input.mep, m1: m1By.get(id) ?? null }),
+    }
+  })
+  return ok({ generatedAt: new Date().toISOString(), groups: EFF_GROUPS, rows: EFF_ROWS, projects })
 })
 
 route('GET', '/portfolio/:id', async ({ params }) => {

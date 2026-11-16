@@ -4,8 +4,9 @@
  * projects behind it; project table with health score, top problems and data quality.
  */
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDownUp, ArrowUpRight, ChevronDown, ChevronRight, Columns3, ExternalLink, FileText, History, LoaderCircle, RefreshCw, Search, X } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Activity, ArrowDownUp, LayoutDashboard, ArrowUpRight, ChevronDown, ChevronRight, Columns3, ExternalLink, FileText, History, LoaderCircle, RefreshCw, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -14,6 +15,77 @@ import { getPortfolio as getSelectedPortfolio } from '@/state/portfolio'
 import { getPortfolio, isTestProject, STATUS_META, type HealthStatus, type Portfolio, type PortfolioProject } from '@/api/portfolio'
 import { auditLink, moduleLink, projectModulesLink } from '@/components/portfolio/links'
 import { CompletenessBadge, HealthBreakdown, HealthRing, ProblemList, StatusPill } from '@/components/portfolio/HealthBits'
+import EfficiencyDashboard from './EfficiencyDashboard'
+
+/** Portfolio: the overview (health, totals) or the management efficiency dashboard (?view=efficiency) */
+export default function PortfolioPage() {
+  const [params, setParams] = useSearchParams()
+  const view = params.get('view') === 'efficiency' ? 'efficiency' : 'overview'
+  const setView = (v: string) =>
+    setParams(
+      (p) => {
+        if (v === 'efficiency') p.set('view', v)
+        else p.delete('view')
+        return p
+      },
+      { replace: true },
+    )
+  return (
+    <div className="min-h-screen bg-[#f8fafc] w-full">
+      <div className="px-6 pt-6 flex flex-wrap items-center gap-3">
+        <div className="relative flex bg-white border border-gray-100 shadow-sm rounded-2xl p-1">
+          {(
+            [
+              ['overview', 'Portfolio Overview', Activity],
+              ['efficiency', 'Efficiency Dashboard', LayoutDashboard],
+            ] as const
+          ).map(([k, label, Icon]) => (
+            <button
+              key={k}
+              onClick={() => setView(k)}
+              aria-pressed={view === k}
+              className={cn(
+                'relative px-4 py-2 rounded-xl text-[13px] font-bold flex items-center gap-2 transition-colors',
+                view === k ? 'text-white' : 'text-gray-500 hover:text-gray-800',
+              )}
+            >
+              {view === k && (
+                <motion.span
+                  layoutId="portfolio-view"
+                  className="absolute inset-0 rounded-xl bg-[#00509d] shadow-md"
+                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                />
+              )}
+              <Icon size={15} className="relative" />
+              <span className="relative">{label}</span>
+            </button>
+          ))}
+        </div>
+        {view === 'efficiency' && (
+          <span className="text-[11px] font-semibold text-gray-400">Project design efficiencies across the portfolio — for management review</span>
+        )}
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.22 }}
+        >
+          {view === 'efficiency' ? (
+            <div className="p-6">
+              <EfficiencyDashboard />
+            </div>
+          ) : (
+            <PortfolioOverview />
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
+
 
 type Focus = { key: string; label: string; test: (p: PortfolioProject) => boolean } | null
 type SortKey = 'health' | 'name' | 'units' | 'saleable' | 'gsv' | 'carpet' | 'farUtil' | 'data' | 'updated'
@@ -25,7 +97,7 @@ const avg = (xs: (number | null)[]) => {
 const sum = (xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0)
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')
 
-export default function PortfolioPage() {
+function PortfolioOverview() {
   const navigate = useNavigate()
   const [data, setData] = useState<Portfolio | null>(null)
   const [loading, setLoading] = useState(true)

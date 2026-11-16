@@ -28,6 +28,19 @@ const metres = (v: unknown) => {
   return x === null ? null : x > 20 ? x / 1000 : x
 }
 
+/**
+ * Landscape Filling Margin (Module 6 › Non-Apt Configuration): the entered value, else
+ * Floor to Floor Height (B1–GF) Tower Area − Floor to Floor Height (B1–GF) Non Tower Area.
+ */
+export function fillingMargin(kr: Record<string, unknown> | null | undefined): { value: number | null; auto: number | null; overridden: boolean } {
+  const k = kr ?? {}
+  const t = metres(k.floorToFloorHeightB1GFTower)
+  const nt = metres(k.floorToFloorHeightB1GFNonTower)
+  const auto = t !== null && nt !== null ? Math.round((t - nt) * 1000) / 1000 : null
+  const entered = effNum(k.landscapeFillingMargin)
+  return { value: entered ?? auto, auto, overridden: entered !== null }
+}
+
 export type EffInput = {
   project: Obj
   summary: Obj | null
@@ -137,7 +150,6 @@ const M6 = { module: 'Project Level Design', moduleNo: 'Module 6' }
 const M7 = { module: 'Unit Level Design', moduleNo: 'Module 7' }
 const M8 = { module: 'Structure', moduleNo: 'Module 8' }
 const M9 = { module: 'MEP', moduleNo: 'Module 9' }
-const M12 = { module: 'Landscape & Amenities', moduleNo: 'Module 12' }
 const NEW = (where: typeof M6, what: string) => ({
   ...where,
   status: 'missing' as const,
@@ -283,7 +295,12 @@ const ROWS: EffRow[] = [
     label: 'Landscape Filling Margin',
     unit: 'm',
     dp: 2,
-    ...NEW(M12, 'Landscape Filling Margin (m) over the podium / basement roof'),
+    sane: [0, 5],
+    status: 'captured',
+    ...M6,
+    focus: 'Landscape Filling Margin',
+    formula: 'Key Ratio › Landscape Filling Margin; by default Floor to Floor Height (B1–GF) Tower Area − Non Tower Area (editable)',
+    get: (c) => fillingMargin(c.kr).value,
   },
   {
     id: 'steelPlanned',
@@ -635,7 +652,19 @@ const ROWS: EffRow[] = [
     formula: 'Key Ratio › Floor to Floor Height (Apartment); millimetre entries are read as metres',
     get: (c) => metres(c.kr.floorToFloorHeightApt) ?? metres(c.m1.floor_to_floor_height_apt),
   },
-  { id: 'fillMargin2', group: 'cost', label: 'Landscape Filling Margin', unit: 'm', ...NEW(M12, 'Landscape Filling Margin (m)') },
+  {
+    id: 'fillMargin2',
+    group: 'cost',
+    label: 'Landscape Filling Margin',
+    unit: 'm',
+    dp: 2,
+    sane: [0, 5],
+    status: 'captured',
+    ...M6,
+    focus: 'Landscape Filling Margin',
+    formula: 'Key Ratio › Landscape Filling Margin; by default Floor to Floor Height (B1–GF) Tower Area − Non Tower Area (editable)',
+    get: (c) => fillingMargin(c.kr).value,
+  },
 ]
 
 export const EFF_ROWS: EffRowMeta[] = ROWS.map(({ get: _g, ...meta }) => meta) // eslint-disable-line @typescript-eslint/no-unused-vars

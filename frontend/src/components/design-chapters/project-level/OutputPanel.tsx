@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/data'
 import { checkDeviation, formatBenchmark, getBenchmark, reqLabel, type BenchmarkMap } from '@/lib/benchmark'
 import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioInputs } from '@/types/chapters-a'
 import { areaStatement, keyRatioFormula, n2 } from './calc'
+import { fillingMargin } from '@/lib/efficiency'
 import { amenityOutputs } from '@/lib/amenities'
 import { fmtNum } from '@/lib/projectComparison'
 
@@ -81,6 +82,7 @@ function KeyRatioTab({ l, extra, benchmarks, landscapeSelected }: { l: KeyRatioI
     { param: 'Floor to Floor Height Ground Lobby', val: l.floorToFloorHeightGroundLobby || '', unit: 'm' },
     { param: 'Floor to Floor Height (B1 - GF) Tower Area', val: l.floorToFloorHeightB1GFTower || '', unit: 'm' },
     { param: 'Floor to Floor Height (B1 - GF) Non Tower Area', val: l.floorToFloorHeightB1GFNonTower || '', unit: 'm' },
+    { param: 'Landscape Filling Margin', val: fillingMargin(l).value === null ? '' : String(Number(fillingMargin(l).value!.toFixed(3))), unit: 'm' },
     { param: 'Floor to Floor Height (B2 - B1)', val: l.floorToFloorHeightB2B1 || '', unit: 'm' },
     { param: 'Floor to Floor Height (B3 - B2)', val: l.floorToFloorHeightB3B2 || '', unit: 'm' },
     { param: 'Parking bay size', val: String((extra.other as Record<string, string>).totalParkingBaySize || '-'), unit: 'sq m' },

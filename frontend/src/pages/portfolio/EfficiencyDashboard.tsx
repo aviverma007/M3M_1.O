@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   ArrowRight,
   BookOpen,
+  Building2,
   CheckCircle2,
   ChevronDown,
   CircleDashed,
@@ -20,10 +21,12 @@ import {
   LayoutGrid,
   LoaderCircle,
   RefreshCw,
+  Search,
   Sparkles,
   Star,
   TrendingDown,
   TrendingUp,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -59,6 +62,22 @@ export default function EfficiencyDashboard() {
   const [open, setOpen] = useState<string | null>(null)
   const [flash, setFlash] = useState<string | null>(null)
   const [tip, setTip] = useState<Tip>(null)
+  // projects picked in the selector (empty = every project the filters allow); remembered in this browser
+  const [picked, setPicked] = useState<number[]>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('eff-picked') ?? '[]')
+      return Array.isArray(v) ? v.filter((x) => typeof x === 'number') : []
+    } catch {
+      return []
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('eff-picked', JSON.stringify(picked))
+    } catch {
+      /* storage unavailable */
+    }
+  }, [picked])
 
   const load = () => {
     setLoading(true)
@@ -76,7 +95,7 @@ export default function EfficiencyDashboard() {
   const brands = useMemo(() => ['All', ...[...new Set((data?.projects ?? []).map((p) => brand(p.portfolio)))].sort()], [data])
 
   /** projects in scope, grouped by portfolio (like the sheet's M3M / SMARTWORLD bands) */
-  const projects = useMemo(() => {
+  const candidates = useMemo(() => {
     const captured = rows.filter((r) => r.status !== 'missing')
     const filled = (p: EffProject) => captured.filter((r) => p.values[r.id] !== null).length
     return (data?.projects ?? [])
@@ -89,6 +108,10 @@ export default function EfficiencyDashboard() {
       )
       .sort((a, b) => brand(a.portfolio).localeCompare(brand(b.portfolio)) || a.portfolio.localeCompare(b.portfolio) || a.name.localeCompare(b.name))
   }, [data, rows, brandF, type, hideTest, withData])
+  const projects = useMemo(() => {
+    const sel = candidates.filter((p) => picked.includes(p.id))
+    return sel.length ? sel : candidates
+  }, [candidates, picked])
 
   const bands = useMemo(() => {
     const out: { name: string; n: number }[] = []
@@ -203,23 +226,25 @@ export default function EfficiencyDashboard() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="relative overflow-hidden rounded-2xl text-white shadow-lg"
+        className="relative z-30 rounded-2xl text-white shadow-lg"
         style={{ background: 'linear-gradient(120deg, #003366 0%, #00509d 55%, #0a6fc2 100%)' }}
       >
-        <div
-          className="absolute inset-0 opacity-[0.12] pointer-events-none"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-          }}
-        />
-        <motion.div
-          className="absolute -top-24 -right-24 w-80 h-80 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(250,204,21,.35), transparent 65%)' }}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+          <div
+            className="absolute inset-0 opacity-[0.12] pointer-events-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          />
+          <motion.div
+            className="absolute -top-24 -right-24 w-80 h-80 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(250,204,21,.35), transparent 65%)' }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
         <div className="relative p-6 lg:p-7 flex flex-col xl:flex-row xl:items-end gap-6">
           <div className="flex-1 min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-200 flex items-center gap-2">
@@ -230,7 +255,10 @@ export default function EfficiencyDashboard() {
               Every heading of the efficiencies sheet, calculated live from each project&apos;s modules. Red = worse than the portfolio by a wide
               margin, ★ = best. Click any value to open the module it comes from.
             </p>
-            <div className="flex flex-wrap gap-2 mt-4">
+            <div className="mt-4">
+              <ProjectPicker candidates={candidates} picked={picked} setPicked={setPicked} />
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
               {brands.map((b) => (
                 <Chip key={b} on={brandF === b} onClick={() => setBrandF(b)} dark>
                   {b === 'All' ? 'All portfolios' : b}
@@ -903,6 +931,139 @@ function Methodology({ data, rows, projects, onRow }: { data: Efficiency; rows: 
           })}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+/* ================================================================== project selector (multi-select dropdown) */
+function ProjectPicker({ candidates, picked, setPicked }: { candidates: EffProject[]; picked: number[]; setPicked: (v: number[]) => void }) {
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false)
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', esc)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', esc)
+    }
+  }, [open])
+  const sel = candidates.filter((p) => picked.includes(p.id))
+  const all = !sel.length
+  const t = q.trim().toLowerCase()
+  const list = candidates.filter((p) => !t || `${p.name} ${p.location} ${p.portfolio}`.toLowerCase().includes(t))
+  const groups = [...new Set(list.map((p) => p.portfolio))]
+  const toggle = (id: number) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id])
+  const setGroup = (g: string, on: boolean) => {
+    const ids = list.filter((p) => p.portfolio === g).map((p) => p.id)
+    setPicked(on ? [...new Set([...picked, ...ids])] : picked.filter((x) => !ids.includes(x)))
+  }
+  return (
+    <div ref={box} className="relative inline-block w-full max-w-[560px]">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center gap-2 bg-white text-gray-800 rounded-xl pl-3 pr-2.5 py-2 shadow-md hover:shadow-lg transition-shadow text-left"
+      >
+        <Building2 size={15} className="text-[#00509d] shrink-0" />
+        <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 shrink-0">Projects</span>
+        <span className="flex-1 min-w-0 flex items-center gap-1 overflow-hidden">
+          {all ? (
+            <span className="text-[13px] font-bold">All projects ({candidates.length})</span>
+          ) : (
+            <>
+              {sel.slice(0, 3).map((p) => (
+                <span
+                  key={p.id}
+                  className="shrink-0 inline-flex items-center gap-1 bg-blue-50 text-[#00509d] rounded-md pl-2 pr-1 py-0.5 text-[11px] font-bold max-w-[150px]"
+                >
+                  <span className="truncate">{p.name}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggle(p.id)
+                    }}
+                    className="hover:bg-blue-100 rounded p-0.5"
+                    title={`Remove ${p.name}`}
+                  >
+                    <X size={10} />
+                  </span>
+                </span>
+              ))}
+              {sel.length > 3 && <span className="text-[11px] font-bold text-gray-500 shrink-0">+{sel.length - 3} more</span>}
+            </>
+          )}
+        </span>
+        <ChevronDown size={15} className={cn('text-gray-400 transition-transform shrink-0', open && 'rotate-180')} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 right-0 top-full mt-2 z-50 bg-white text-gray-800 rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+          >
+            <div className="p-2 border-b border-gray-100 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  autoFocus
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search projects"
+                  className="w-full h-8 pl-7 pr-2 rounded-lg border border-gray-200 text-[12px] focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </div>
+              <button
+                onClick={() => setPicked([...new Set([...picked, ...list.map((p) => p.id)])])}
+                className="text-[11px] font-bold text-[#00509d] hover:bg-blue-50 rounded-md px-2 py-1.5"
+              >
+                Select all
+              </button>
+              <button onClick={() => setPicked([])} className="text-[11px] font-bold text-gray-500 hover:bg-gray-100 rounded-md px-2 py-1.5">
+                Clear
+              </button>
+            </div>
+            <div className="max-h-[320px] overflow-y-auto py-1">
+              {!list.length && <p className="px-4 py-6 text-center text-[12px] text-gray-400">No projects match.</p>}
+              {groups.map((g) => {
+                const ps = list.filter((p) => p.portfolio === g)
+                const on = ps.every((p) => picked.includes(p.id))
+                return (
+                  <div key={g}>
+                    <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-[10px] font-black uppercase tracking-wider text-gray-500 cursor-pointer">
+                      <input type="checkbox" checked={on} onChange={(e) => setGroup(g, e.target.checked)} className="accent-[#00509d]" />
+                      {g} <span className="font-semibold normal-case tracking-normal text-gray-400">({ps.length})</span>
+                    </label>
+                    {ps.map((p) => (
+                      <label key={p.id} className="flex items-center gap-2.5 px-4 py-1.5 hover:bg-blue-50/60 cursor-pointer">
+                        <input type="checkbox" checked={picked.includes(p.id)} onChange={() => toggle(p.id)} className="accent-[#00509d]" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[12px] font-bold text-gray-800 truncate">{p.name}</span>
+                          {p.location && <span className="block text-[10px] text-gray-400 truncate">{p.location}</span>}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="px-3 py-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+              <span>{all ? 'No selection — showing all projects' : `${sel.length} of ${candidates.length} selected`}</span>
+              <button onClick={() => setOpen(false)} className="font-bold text-white bg-[#00509d] hover:bg-[#003f7a] rounded-md px-3 py-1">
+                Done
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

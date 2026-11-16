@@ -3,6 +3,7 @@
  *   Development Area Statement · Project Level Parameters (+ Additional Elements) · Key Ratio ·
  *   Cluster level Parameters (clusters) · Area Ratios Comparison.
  */
+import { fillingMargin } from '@/lib/efficiency'
 import { contentPage, emptyMessage, txt, type Ctx, type Doc } from '../doc.js'
 import type { ModuleRenderer } from './index.js'
 import type { DprInput } from '../index.js'
@@ -621,6 +622,7 @@ function keyRatioGroups(l: KeyRatioInputs, extra: AdditionalElements2 | undefine
         { label: 'Driveway Width Basement', value: v('drivewayWidthBasement'), unit: 'm' },
         { label: 'Floor to Floor Height Ground Lobby', value: v('floorToFloorHeightGroundLobby'), unit: 'm' },
         { label: 'Floor to Floor Height Basement B1/B2', value: v('floorToFloorHeightBasementB1B2'), unit: 'm', bench: ['Floor to Floor Height Basement B1 B2'] },
+        { label: 'Landscape Filling Margin', value: fillingMargin(l).value === null ? '-' : fmtIN(fillingMargin(l).value!, 2), unit: 'm' },
         { label: 'Parking bay size', value: str(o.totalParkingBaySize), unit: 'sq ft', bench: ['Total Parking Bay size', 'Parking bay size'] },
         { label: 'Average Wall Area (Interior + Exterior) Per Basement', value: v('avgWallAreaBasement'), unit: 'sq ft' },
         { label: 'No. of Basements', value: v('noOfBasements'), unit: '', bench: ['No. of Basements', 'Number of Basements'] },

@@ -7,6 +7,7 @@ import type { AdditionalElements2, AreaStatementInputs, ClusterConfig, KeyRatioI
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui'
 import { newCluster } from './calc'
 import { fmtNum, module5Units, parkingRequired } from '@/lib/parkingRequired'
+import { fillingMargin } from '@/lib/efficiency'
 
 type F = { label: string; key: string; unit: string }
 
@@ -117,6 +118,49 @@ function BenchInput({ f, value, onChange, benchmarks, focusBg = true }: { f: F; 
           {reqLabel()} <span className="font-semibold text-blue-400">{req}</span>
         </p>
       )}
+    </div>
+  )
+}
+
+/**
+ * Landscape Filling Margin: calculated (B1–GF Tower Area − Non Tower Area) until someone types a value;
+ * clearing the box (or "Use calculated") goes back to the calculated figure.
+ */
+function FillingMarginInput({ l, setKeyRatio }: { l: KeyRatioInputs; setKeyRatio: (v: KeyRatioInputs) => void }) {
+  const fm = fillingMargin(l)
+  const typed = Object.prototype.hasOwnProperty.call(l, 'landscapeFillingMargin') && l.landscapeFillingMargin !== undefined
+  const shown = typed ? (l.landscapeFillingMargin ?? '') : fm.auto === null ? '' : String(Number(fm.auto.toFixed(3)))
+  const reset = () => {
+    const next = { ...l }
+    delete next.landscapeFillingMargin
+    setKeyRatio(next)
+  }
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-gray-500 flex items-center gap-2">
+        Landscape Filling Margin
+        <span className={`text-[9px] font-black uppercase tracking-wide rounded-full px-1.5 py-0.5 ${fm.overridden ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-600'}`}>
+          {fm.overridden ? 'Edited' : 'Calculated'}
+        </span>
+      </label>
+      <div className="relative">
+        <Input
+          value={shown}
+          onChange={(e) => setKeyRatio({ ...l, landscapeFillingMargin: e.target.value })}
+          onBlur={() => typed && !String(l.landscapeFillingMargin ?? '').trim() && reset()}
+          placeholder="Tower − Non Tower"
+          className="bg-gray-50/50 text-sm h-10 pr-12 focus:bg-white border-gray-100"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 font-medium italic">m</span>
+      </div>
+      <p className="text-[10px] text-gray-400">
+        Default = Floor to Floor Height (B1 - GF) Tower Area − Non Tower Area{fm.auto !== null ? ` = ${Number(fm.auto.toFixed(3))} m` : ''}
+        {fm.overridden && fm.auto !== null && (
+          <button type="button" onClick={reset} className="ml-2 font-semibold text-blue-600 hover:underline">
+            Use calculated
+          </button>
+        )}
+      </p>
     </div>
   )
 }
@@ -267,7 +311,9 @@ export default function InputPanel({ keyRatio: l, setKeyRatio, area: p, setArea,
             </div>
             <div className="space-y-4 border-t pt-6">
               <h3 className={H3}>NON-APT CONFIGURATION</h3>
-              {kr(NON_APT_CONFIG)}
+              {kr(NON_APT_CONFIG.slice(0, NON_APT_CONFIG.findIndex((f) => f.key === 'floorToFloorHeightB1GFNonTower') + 1))}
+              <FillingMarginInput l={l} setKeyRatio={setKeyRatio} />
+              {kr(NON_APT_CONFIG.slice(NON_APT_CONFIG.findIndex((f) => f.key === 'floorToFloorHeightB1GFNonTower') + 1))}
             </div>
           </AccordionContent>
         </AccordionItem>

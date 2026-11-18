@@ -19,6 +19,11 @@ const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/account
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  // Tell the IT Manager usage tracker (index.html) who is signed in
+  useEffect(() => {
+    const u = user as (User & { email?: string; name?: string; fullName?: string }) | null
+    ;(window as unknown as { ITM_USER?: string }).ITM_USER = u ? u.email || u.fullName || u.name || '' : ''
+  }, [user])
   const [initialized, setInitialized] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
